@@ -9,7 +9,14 @@ import {
   primaryKey,
   foreignKey,
   boolean,
+  bigint,
+  integer,
+  jsonb,
+  pgSchema,
 } from 'drizzle-orm/pg-core';
+
+// Create Mastra schema
+export const mastraSchema = pgSchema('mastra');
 
 export const user = pgTable('User', {
   id: uuid('id').primaryKey().notNull().defaultRandom(),
@@ -168,3 +175,78 @@ export const stream = pgTable(
 );
 
 export type Stream = InferSelectModel<typeof stream>;
+
+// Mastra schema tables
+export const mastraThreads = mastraSchema.table('threads', {
+  id: uuid('id').primaryKey().notNull().defaultRandom(),
+  resourceId: text('resourceId').notNull(),
+  title: text('title').notNull(),
+  metadata: text('metadata').default('{}'),
+  createdAt: timestamp('createdAt').notNull().defaultNow(),
+  updatedAt: timestamp('updatedAt').notNull().defaultNow(),
+});
+
+export type MastraThread = InferSelectModel<typeof mastraThreads>;
+
+export const mastraMessages = mastraSchema.table('messages', {
+  id: uuid('id').primaryKey().notNull().defaultRandom(),
+  threadId: uuid('thread_id')
+    .notNull()
+    .references(() => mastraThreads.id, { onDelete: 'cascade' }),
+  resourceId: uuid('resourceId'),
+  content: text('content').notNull(),
+  role: varchar('role', { enum: ['user', 'assistant'] }).notNull(),
+  createdAt: timestamp('createdAt').notNull().defaultNow(),
+});
+
+export type MastraMessage = InferSelectModel<typeof mastraMessages>;
+
+export const mastraWorkflows = mastraSchema.table(
+  'workflows',
+  {
+    workflowName: text('workflow_name').notNull(),
+    runId: uuid('run_id').notNull(),
+    snapshot: text('snapshot').notNull(),
+    createdAt: timestamp('createdAt').notNull().defaultNow(),
+    updatedAt: timestamp('updatedAt').notNull().defaultNow(),
+  },
+  (table) => ({
+    pk: primaryKey({ columns: [table.workflowName, table.runId] }),
+  }),
+);
+
+export type MastraWorkflow = InferSelectModel<typeof mastraWorkflows>;
+
+export const mastraEvalDatasets = mastraSchema.table('eval_datasets', {
+  input: text('input').notNull(),
+  output: text('output').notNull(),
+  result: jsonb('result').notNull(),
+  agentName: text('agent_name').notNull(),
+  metricName: text('metric_name').notNull(),
+  instructions: text('instructions').notNull(),
+  testInfo: jsonb('test_info').notNull(),
+  globalRunId: uuid('global_run_id').notNull(),
+  runId: uuid('run_id').notNull(),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+});
+
+export type MastraEvalDataset = InferSelectModel<typeof mastraEvalDatasets>;
+
+export const mastraTraces = mastraSchema.table('traces', {
+  id: text('id').primaryKey().notNull(),
+  parentSpanId: text('parentSpanId'),
+  name: text('name').notNull(),
+  traceId: text('traceId').notNull(),
+  scope: text('scope').notNull(),
+  kind: integer('kind').notNull(),
+  attributes: jsonb('attributes'),
+  status: jsonb('status'),
+  events: jsonb('events'),
+  links: jsonb('links'),
+  other: text('other'),
+  startTime: bigint('startTime', { mode: 'number' }).notNull(),
+  endTime: bigint('endTime', { mode: 'number' }).notNull(),
+  createdAt: timestamp('createdAt').notNull().defaultNow(),
+});
+
+export type MastraTrace = InferSelectModel<typeof mastraTraces>;

@@ -1,7 +1,7 @@
 import { openai } from '@ai-sdk/openai';
 import { Agent } from '@mastra/core/agent';
-// import { Memory } from '@mastra/memory';
-// import { LibSQLStore } from '@mastra/libsql';
+import { Memory } from '@mastra/memory';
+import { PostgresStore } from '@mastra/pg';
 import { weatherTool } from '../tools/weather-tool';
 
 export const weatherAgent = new Agent({
@@ -20,10 +20,10 @@ export const weatherAgent = new Agent({
 `,
   model: openai('gpt-4o-mini'),
   tools: { weatherTool },
-  // Disable memory for now to avoid LibSQL issues - we'll add it back later
-  // memory: new Memory({
-  //   storage: new LibSQLStore({
-  //     url: 'file:../mastra.db', // path is relative to the .mastra/output directory
-  //   }),
-  // }),
+  memory: new Memory({
+    storage: new PostgresStore({
+      connectionString: process.env.POSTGRES_URL!,
+      schemaName: 'mastra',
+    }),
+  }),
 });
