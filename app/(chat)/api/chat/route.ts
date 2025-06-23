@@ -36,6 +36,7 @@ import { after } from 'next/server';
 import type { Chat } from '@/lib/db/schema';
 import { differenceInSeconds } from 'date-fns';
 import { ChatSDKError } from '@/lib/errors';
+import { streamWithMastraAgent, selectAgentForMessages } from '@/lib/ai/mastra-integration';
 
 export const maxDuration = 60;
 
@@ -145,7 +146,22 @@ export async function POST(request: Request) {
     await createStreamId({ streamId, chatId: id });
 
     const stream = createDataStream({
-      execute: (dataStream) => {
+      execute: async (dataStream) => {
+        const selectedAgent = selectAgentForMessages(messages);
+        
+        if (selectedAgent && selectedChatModel !== 'chat-model-reasoning') {
+          try {
+            const agentStream = await streamWithMastraAgent(selectedAgent, messages);
+            
+            agentStream.mergeIntoDataStream(dataStream);
+            return;
+          } catch (error) {
+            console.error('Mastra agent error, falling back to AI SDK:', error);
+          }
+        }
+        
+        // AI SDK fallback for non-agent queries
+        // This maintains your existing functionality while adding Mastra enhancements
         const result = streamText({
           model: myProvider.languageModel(selectedChatModel),
           system: systemPrompt({ selectedChatModel, requestHints }),

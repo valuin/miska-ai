@@ -42,6 +42,26 @@ interface WeatherAtLocation {
   };
 }
 
+// Mastra weather tool simplified result format
+interface MastraWeatherResult {
+  temperature: number;
+  feelsLike: number;
+  humidity: number;
+  windSpeed: number;
+  windGust: number;
+  conditions: string;
+  location: string;
+}
+
+// Type guard to check if result is Mastra format
+function isMastraWeatherResult(result: any): result is MastraWeatherResult {
+  return result && typeof result === 'object' && 
+         'temperature' in result && 
+         'feelsLike' in result && 
+         'conditions' in result &&
+         'location' in result;
+}
+
 const SAMPLE = {
   latitude: 37.763283,
   longitude: -122.41286,
@@ -201,21 +221,64 @@ function n(num: number): number {
   return Math.ceil(num);
 }
 
+// Component for displaying Mastra's simplified weather result
+function MastraWeatherDisplay({ weather }: { weather: MastraWeatherResult }) {
+  return (
+    <div className="border rounded-lg p-4 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/50 dark:to-indigo-950/50">
+      <div className="flex items-center justify-between mb-3">
+        <div>
+          <h3 className="font-semibold text-lg">{weather.location}</h3>
+          <p className="text-sm text-muted-foreground">{weather.conditions}</p>
+        </div>
+        <div className="text-right">
+          <div className="text-3xl font-bold">{Math.round(weather.temperature)}°</div>
+          <div className="text-sm text-muted-foreground">
+            Feels like {Math.round(weather.feelsLike)}°
+          </div>
+        </div>
+      </div>
+      
+      <div className="grid grid-cols-3 gap-4 text-sm">
+        <div className="text-center">
+          <div className="text-muted-foreground">Humidity</div>
+          <div className="font-medium">{weather.humidity}%</div>
+        </div>
+        <div className="text-center">
+          <div className="text-muted-foreground">Wind</div>
+          <div className="font-medium">{Math.round(weather.windSpeed)} km/h</div>
+        </div>
+        <div className="text-center">
+          <div className="text-muted-foreground">Gusts</div>
+          <div className="font-medium">{Math.round(weather.windGust)} km/h</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function Weather({
   weatherAtLocation = SAMPLE,
 }: {
-  weatherAtLocation?: WeatherAtLocation;
+  weatherAtLocation?: WeatherAtLocation | MastraWeatherResult;
 }) {
+  // Check if this is Mastra's simplified format
+  if (isMastraWeatherResult(weatherAtLocation)) {
+    return <MastraWeatherDisplay weather={weatherAtLocation} />;
+  }
+
+  // Handle AI SDK's detailed format (existing logic)
+  const detailedWeather = weatherAtLocation as WeatherAtLocation;
+  
   const currentHigh = Math.max(
-    ...weatherAtLocation.hourly.temperature_2m.slice(0, 24),
+    ...detailedWeather.hourly.temperature_2m.slice(0, 24),
   );
   const currentLow = Math.min(
-    ...weatherAtLocation.hourly.temperature_2m.slice(0, 24),
+    ...detailedWeather.hourly.temperature_2m.slice(0, 24),
   );
 
-  const isDay = isWithinInterval(new Date(weatherAtLocation.current.time), {
-    start: new Date(weatherAtLocation.daily.sunrise[0]),
-    end: new Date(weatherAtLocation.daily.sunset[0]),
+  const isDay = isWithinInterval(new Date(detailedWeather.current.time), {
+    start: new Date(detailedWeather.daily.sunrise[0]),
+    end: new Date(detailedWeather.daily.sunset[0]),
   });
 
   const [isMobile, setIsMobile] = useState(false);
@@ -234,16 +297,16 @@ export function Weather({
   const hoursToShow = isMobile ? 5 : 6;
 
   // Find the index of the current time or the next closest time
-  const currentTimeIndex = weatherAtLocation.hourly.time.findIndex(
-    (time) => new Date(time) >= new Date(weatherAtLocation.current.time),
+  const currentTimeIndex = detailedWeather.hourly.time.findIndex(
+    (time) => new Date(time) >= new Date(detailedWeather.current.time),
   );
 
   // Slice the arrays to get the desired number of items
-  const displayTimes = weatherAtLocation.hourly.time.slice(
+  const displayTimes = detailedWeather.hourly.time.slice(
     currentTimeIndex,
     currentTimeIndex + hoursToShow,
   );
-  const displayTemperatures = weatherAtLocation.hourly.temperature_2m.slice(
+  const displayTemperatures = detailedWeather.hourly.temperature_2m.slice(
     currentTimeIndex,
     currentTimeIndex + hoursToShow,
   );
@@ -274,8 +337,8 @@ export function Weather({
             )}
           />
           <div className="text-4xl font-medium text-blue-50">
-            {n(weatherAtLocation.current.temperature_2m)}
-            {weatherAtLocation.current_units.temperature_2m}
+            {n(detailedWeather.current.temperature_2m)}
+            {detailedWeather.current_units.temperature_2m}
           </div>
         </div>
 
@@ -301,7 +364,7 @@ export function Weather({
             />
             <div className="text-blue-50 text-sm">
               {n(displayTemperatures[index])}
-              {weatherAtLocation.hourly_units.temperature_2m}
+              {detailedWeather.hourly_units.temperature_2m}
             </div>
           </div>
         ))}
