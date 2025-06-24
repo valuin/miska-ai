@@ -15,7 +15,6 @@ import {
 } from 'react';
 import { toast } from 'sonner';
 import { useLocalStorage, useWindowSize } from 'usehooks-ts';
-
 import { ArrowUpIcon, PaperclipIcon, StopIcon } from './icons';
 import { PreviewAttachment } from './preview-attachment';
 import { Button } from './ui/button';
@@ -27,6 +26,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { ArrowDown } from 'lucide-react';
 import { useScrollToBottom } from '@/hooks/use-scroll-to-bottom';
 import type { VisibilityType } from './visibility-selector';
+import { upload } from '@vercel/blob/client';
 
 function PureMultimodalInput({
   chatId,
@@ -132,28 +132,27 @@ function PureMultimodalInput({
     chatId,
   ]);
 
-  const uploadFile = async (file: File) => {
-    const formData = new FormData();
-    formData.append('file', file);
-
+  const uploadFile = async (file: File): Promise<Attachment | undefined> => {
     try {
-      const response = await fetch('/api/files/upload', {
-        method: 'POST',
-        body: formData,
+      const newBlob = await upload(file.name, file, {
+        access: 'public',
+        handleUploadUrl: '/api/files/upload-blob',
+        multipart: true,
       });
 
-      if (response.ok) {
-        const data = await response.json();
-        const { url, pathname, contentType } = data;
+      await fetch('/api/files/save-blob-document', {
+        method: 'POST',
+        body: JSON.stringify({
+          name: newBlob.pathname,
+          url: newBlob.url,
+        }),
+      });
 
-        return {
-          url,
-          name: pathname,
-          contentType: contentType,
-        };
-      }
-      const { error } = await response.json();
-      toast.error(error);
+      return {
+        url: newBlob.url,
+        name: newBlob.pathname,
+        contentType: newBlob.contentType,
+      };
     } catch (error) {
       toast.error('Failed to upload file, please try again!');
     }

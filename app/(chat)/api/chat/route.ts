@@ -5,13 +5,12 @@ import {
   smoothStream,
   streamText,
 } from 'ai';
-import { auth, type UserType } from '@/app/(auth)/auth';
+import { auth } from '@/app/(auth)/auth';
 import { type RequestHints, systemPrompt } from '@/lib/ai/prompts';
 import {
   createStreamId,
   deleteChatById,
   getChatById,
-  getMessageCountByUserId,
   getMessagesByChatId,
   getStreamIdsByChatId,
   saveChat,
@@ -25,7 +24,6 @@ import { requestSuggestions } from '@/lib/ai/tools/request-suggestions';
 import { getWeather } from '@/lib/ai/tools/get-weather';
 import { isProductionEnvironment } from '@/lib/constants';
 import { myProvider } from '@/lib/ai/providers';
-import { entitlementsByUserType } from '@/lib/ai/entitlements';
 import { postRequestBodySchema, type PostRequestBody } from './schema';
 import { geolocation } from '@vercel/functions';
 import {
@@ -36,7 +34,10 @@ import { after } from 'next/server';
 import type { Chat } from '@/lib/db/schema';
 import { differenceInSeconds } from 'date-fns';
 import { ChatSDKError } from '@/lib/errors';
-import { streamWithMastraAgent, selectAgentForMessages } from '@/lib/ai/mastra-integration';
+import {
+  streamWithMastraAgent,
+  selectAgentForMessages,
+} from '@/lib/ai/mastra-integration';
 
 export const maxDuration = 60;
 
@@ -148,20 +149,24 @@ export async function POST(request: Request) {
     const stream = createDataStream({
       execute: async (dataStream) => {
         const selectedAgent = selectAgentForMessages(messages);
-        
+
         if (selectedAgent && selectedChatModel !== 'chat-model-reasoning') {
           try {
-            const agentStream = await streamWithMastraAgent(selectedAgent, messages, {
-              chatId: id,
-            });
-            
+            const agentStream = await streamWithMastraAgent(
+              selectedAgent,
+              messages,
+              {
+                chatId: id,
+              },
+            );
+
             agentStream.mergeIntoDataStream(dataStream);
             return;
           } catch (error) {
             console.error('Mastra agent error, falling back to AI SDK:', error);
           }
         }
-        
+
         // AI SDK fallback for non-agent queries
         // This maintains your existing functionality while adding Mastra enhancements
         const result = streamText({

@@ -27,6 +27,7 @@ import {
   type DBMessage,
   type Chat,
   stream,
+  upload,
 } from './schema';
 import type { ArtifactKind } from '@/components/artifact';
 import { generateUUID } from '../utils';
@@ -531,5 +532,31 @@ export async function getStreamIdsByChatId({ chatId }: { chatId: string }) {
       'bad_request:database',
       'Failed to get stream ids by chat id',
     );
+  }
+}
+
+export async function uploadFile({
+  name,
+  url,
+  userId,
+}: {
+  name: string;
+  url: string;
+  userId: string;
+}) {
+  try {
+    const [uploadedFile] = await db
+      .insert(upload)
+      .values({
+        name,
+        url,
+        userId,
+        createdAt: new Date(),
+      })
+      .returning({ id: upload.id });
+
+    return { id: uploadedFile.id };
+  } catch (error) {
+    throw new ChatSDKError('bad_request:database', 'Failed to save document');
   }
 }

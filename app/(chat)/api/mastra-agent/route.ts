@@ -1,5 +1,5 @@
 import { mastra } from '@/mastra';
-import { NextRequest } from 'next/server';
+import type { NextRequest } from 'next/server';
 
 /**
  * Pure Mastra Agent API Route
@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
 
     // Direct Mastra agent usage - RECOMMENDED pattern
     const weatherAgent = mastra.getAgent('weatherAgent');
-    
+
     if (!weatherAgent) {
       return new Response('Weather agent not available', { status: 503 });
     }
@@ -34,7 +34,6 @@ export async function POST(request: NextRequest) {
         'Access-Control-Allow-Origin': '*',
       },
     });
-
   } catch (error) {
     console.error('Mastra agent API error:', error);
     return new Response('Internal server error', { status: 500 });
