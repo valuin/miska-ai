@@ -278,13 +278,11 @@ export async function getVotesByChatId({ id }: { id: string }) {
 }
 
 export async function saveDocument({
-  id,
   title,
   kind,
   content,
   userId,
 }: {
-  id: string;
   title: string;
   kind: ArtifactKind;
   content: string;
@@ -294,7 +292,6 @@ export async function saveDocument({
     return await db
       .insert(document)
       .values({
-        id,
         title,
         kind,
         content,
