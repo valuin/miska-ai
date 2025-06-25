@@ -160,6 +160,8 @@ function PureMultimodalInput({
 
   const handleFileChange = useCallback(
     async (event: ChangeEvent<HTMLInputElement>) => {
+      console.log('handleFileChange', event);
+
       const files = Array.from(event.target.files || []);
 
       setUploadQueue(files.map((file) => file.name));
@@ -191,6 +193,12 @@ function PureMultimodalInput({
       scrollToBottom();
     }
   }, [status, scrollToBottom]);
+
+  const unattachFile = (name: string) => {
+    setAttachments((currentAttachments) =>
+      currentAttachments.filter((a) => a.name !== name),
+    );
+  };
 
   return (
     <div className="relative w-full flex flex-col gap-4">
@@ -244,12 +252,17 @@ function PureMultimodalInput({
           className="flex flex-row gap-2 overflow-x-scroll items-end"
         >
           {attachments.map((attachment) => (
-            <PreviewAttachment key={attachment.url} attachment={attachment} />
+            <PreviewAttachment
+              key={attachment.url}
+              attachment={attachment}
+              unattachFile={() => unattachFile(attachment.name ?? '')}
+            />
           ))}
 
           {uploadQueue.map((filename) => (
             <PreviewAttachment
               key={filename}
+              unattachFile={() => unattachFile(filename)}
               attachment={{
                 url: '',
                 name: filename,
