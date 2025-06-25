@@ -4,12 +4,14 @@ import { LoaderIcon, FileIcon, CrossSmallIcon } from './icons';
 
 export const PreviewAttachment = ({
   attachment,
+  readOnly = false,
   isUploading = false,
   unattachFile,
 }: {
   attachment: Attachment;
+  readOnly?: boolean;
   isUploading?: boolean;
-  unattachFile: () => void;
+  unattachFile?: () => void;
 }) => {
   const { name, url, contentType } = attachment;
 
@@ -18,13 +20,15 @@ export const PreviewAttachment = ({
       data-testid="input-attachment-preview"
       className="flex flex-col gap-2 relative"
     >
-      <button
-        type="button"
-        onClick={unattachFile}
-        className="absolute top-0 right-0 z-10"
-      >
-        <CrossSmallIcon size={16} />
-      </button>
+      {!readOnly && unattachFile && (
+        <button
+          type="button"
+          onClick={unattachFile}
+          className="absolute top-0 right-0 z-10"
+        >
+          <CrossSmallIcon size={16} />
+        </button>
+      )}
 
       <div className="w-20 h-16 aspect-video bg-muted rounded-md relative flex flex-col items-center justify-center">
         {contentType ? (

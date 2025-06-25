@@ -1,6 +1,7 @@
 import {
   appendClientMessage,
   appendResponseMessages,
+  type Attachment,
   createDataStream,
   smoothStream,
   streamText,
@@ -61,6 +62,23 @@ function getStreamContext() {
   }
 
   return globalStreamContext;
+}
+
+async function getAttachmentText(file: Attachment) {
+  if (file.contentType?.startsWith('image/')) return '';
+
+  const response = await fetch(
+    'https://markitdown.up.railway.app/convert-url',
+    {
+      method: 'POST',
+      body: JSON.stringify({ url: file.url, name: file.name }),
+      headers: { 'Content-Type': 'application/json' },
+    },
+  );
+
+  const data = await response.json();
+  console.log(data);
+  return data.text;
 }
 
 export async function POST(request: Request) {
@@ -149,15 +167,20 @@ export async function POST(request: Request) {
     const stream = createDataStream({
       execute: async (dataStream) => {
         const selectedAgent = selectAgentForMessages(messages);
+        const files = messages.at(-1)?.experimental_attachments;
+        const getFileTexts = await Promise.all(
+          files?.map((file) => getAttachmentText(file)) ?? [],
+        );
+        const fileTexts = getFileTexts.filter((text) => text !== '');
+        console.log(fileTexts);
+        // @val do the rest of the code
 
         if (selectedAgent && selectedChatModel !== 'chat-model-reasoning') {
           try {
             const agentStream = await streamWithMastraAgent(
               selectedAgent,
               messages,
-              {
-                chatId: id,
-              },
+              { chatId: id },
             );
 
             agentStream.mergeIntoDataStream(dataStream);

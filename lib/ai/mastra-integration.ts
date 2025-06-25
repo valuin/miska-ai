@@ -1,17 +1,18 @@
+import { generateUUID } from '@/lib/utils';
 import { mastra } from '@/mastra';
 import { saveMessages } from '@/lib/db/queries';
-import { generateUUID } from '@/lib/utils';
+import type { Message } from 'ai';
 
 export async function streamWithMastraAgent(
   agentName: keyof ReturnType<typeof mastra.getAgents>,
-  messages: any[],
+  messages: Message[],
   options?: {
-    chatId?: string;
+    chatId: string;
     onToolCall?: (toolCall: any) => Promise<void>;
-  }
+  },
 ) {
   const agent = mastra.getAgent(agentName);
-  
+
   if (!agent) {
     throw new Error(`Agent ${String(agentName)} not found`);
   }
@@ -35,10 +36,10 @@ export async function streamWithMastraAgent(
         // Save the assistant message after the stream completes
         if (result.text || result.toolCalls) {
           await saveMastraMessage(
-            options.chatId!,
+            options.chatId,
             'assistant',
             result.text || '',
-            result.toolCalls
+            result.toolCalls,
           );
         }
       } catch (error) {
@@ -49,7 +50,6 @@ export async function streamWithMastraAgent(
 
   // agent.stream() returns AI SDK compatible stream
   const stream = await agent.stream(messages, streamOptions);
-
   return stream;
 }
 
@@ -59,18 +59,18 @@ export async function streamWithMastraAgent(
 export async function streamWithMastraAgentAndSave(
   agentName: keyof ReturnType<typeof mastra.getAgents>,
   messages: any[],
-  chatId: string
+  chatId: string,
 ) {
   const agent = mastra.getAgent(agentName);
-  
+
   if (!agent) {
     throw new Error(`Agent ${String(agentName)} not found`);
   }
 
   // Use chatId as resourceId for Mastra memory continuity
   const threadId = generateUUID(); // Generate a new thread for each conversation
-  
-  const stream = await agent.stream(messages, { 
+
+  const stream = await agent.stream(messages, {
     memory: {
       resource: chatId,
       thread: threadId,
@@ -82,7 +82,7 @@ export async function streamWithMastraAgentAndSave(
           chatId,
           'assistant',
           result.text || '',
-          result.toolCalls
+          result.toolCalls,
         );
       } catch (error) {
         console.error('Failed to save Mastra agent message:', error);
@@ -100,18 +100,18 @@ export async function saveMastraMessage(
   chatId: string,
   role: 'user' | 'assistant',
   content: string,
-  toolInvocations?: any[]
+  toolInvocations?: any[],
 ) {
   const messageId = generateUUID();
-  
+
   // Convert Mastra message format to your database format
   const parts: any[] = [];
-  
+
   // Add text content if present
-  if (content && content.trim()) {
+  if (content?.trim()) {
     parts.push({ type: 'text', text: content });
   }
-  
+
   // Add tool invocations if present
   if (toolInvocations && toolInvocations.length > 0) {
     for (const invocation of toolInvocations) {
@@ -121,7 +121,7 @@ export async function saveMastraMessage(
         toolName: invocation.toolName,
         args: invocation.args,
       });
-      
+
       // Add tool result if available
       if (invocation.result !== undefined) {
         parts.push({
@@ -132,7 +132,7 @@ export async function saveMastraMessage(
       }
     }
   }
-  
+
   // Ensure we have at least one part
   if (parts.length === 0) {
     parts.push({ type: 'text', text: '' });
@@ -157,10 +157,10 @@ export async function saveMastraMessage(
 export async function streamWithStructuredOutput(
   agentName: keyof ReturnType<typeof mastra.getAgents>,
   messages: any[],
-  outputSchema: any
+  outputSchema: any,
 ) {
   const agent = mastra.getAgent(agentName);
-  
+
   if (!agent) {
     throw new Error(`Agent ${String(agentName)} not found`);
   }
@@ -173,16 +173,28 @@ export async function streamWithStructuredOutput(
  * Route messages to appropriate agent based on content
  * smart routing as recommended in documentation
  */
-export function selectAgentForMessages(messages: any[]): keyof ReturnType<typeof mastra.getAgents> | null {
+export function selectAgentForMessages(
+  messages: any[],
+): keyof ReturnType<typeof mastra.getAgents> | null {
   if (!messages || messages.length === 0) return null;
-  
+
   const lastMessage = messages[messages.length - 1]?.content || '';
-  const weatherKeywords = ['weather', 'temperature', 'forecast', 'climate', 'rain', 'snow', 'sunny'];
-  
+  const weatherKeywords = [
+    'weather',
+    'temperature',
+    'forecast',
+    'climate',
+    'rain',
+    'snow',
+    'sunny',
+  ];
+
   // Route to weather agent for weather-related queries
-  if (weatherKeywords.some(keyword => 
-    lastMessage.toLowerCase().includes(keyword)
-  )) {
+  if (
+    weatherKeywords.some((keyword) =>
+      lastMessage.toLowerCase().includes(keyword),
+    )
+  ) {
     return 'weatherAgent';
   }
   return null;
@@ -197,11 +209,11 @@ export function getAvailableAgents() {
  * Use this for standalone Mastra-powered chat endpoints
  */
 export async function createMastraAgentAPIRoute(
-  agentName: keyof ReturnType<typeof mastra.getAgents>
+  agentName: keyof ReturnType<typeof mastra.getAgents>,
 ) {
-  return async function(request: Request) {
+  return async (request: Request) => {
     const { messages } = await request.json();
-    
+
     const agent = mastra.getAgent(agentName);
     if (!agent) {
       return new Response('Agent not found', { status: 404 });

@@ -82,6 +82,7 @@ const PurePreviewMessage = ({
                     <PreviewAttachment
                       key={attachment.url}
                       attachment={attachment}
+                      readOnly={isReadonly}
                     />
                   ))}
                 </div>
@@ -164,10 +165,13 @@ const PurePreviewMessage = ({
                     <div
                       key={toolCallId}
                       className={cx({
-                        skeleton: ['getWeather', 'get-weather'].includes(toolName),
+                        skeleton: ['getWeather', 'get-weather'].includes(
+                          toolName,
+                        ),
                       })}
                     >
-                      {(toolName === 'getWeather' || toolName === 'get-weather') ? (
+                      {toolName === 'getWeather' ||
+                      toolName === 'get-weather' ? (
                         <Weather />
                       ) : toolName === 'createDocument' ? (
                         <DocumentPreview isReadonly={isReadonly} args={args} />
@@ -193,7 +197,8 @@ const PurePreviewMessage = ({
 
                   return (
                     <div key={toolCallId}>
-                      {(toolName === 'getWeather' || toolName === 'get-weather') ? (
+                      {toolName === 'getWeather' ||
+                      toolName === 'get-weather' ? (
                         <Weather weatherAtLocation={result} />
                       ) : toolName === 'createDocument' ? (
                         <DocumentPreview
