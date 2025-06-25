@@ -535,14 +535,17 @@ export async function getStreamIdsByChatId({ chatId }: { chatId: string }) {
   }
 }
 
+
 export async function uploadFile({
   name,
   url,
   userId,
+  text = '',
 }: {
   name: string;
   url: string;
   userId: string;
+  text?: string;
 }) {
   try {
     const [uploadedFile] = await db
@@ -550,6 +553,7 @@ export async function uploadFile({
       .values({
         name,
         url,
+        text,
         userId,
         createdAt: new Date(),
       })

@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { auth } from '@/app/(auth)/auth';
 import { uploadFile } from '@/lib/db/queries';
 import { allowedContentTypes } from './content-types';
+import { getAttachmentText } from '@/lib/utils/text-extraction';
 
 export async function POST(request: Request) {
   const session = await auth();
@@ -28,9 +29,11 @@ export async function POST(request: Request) {
         console.log('blob upload completed', blob, tokenPayload);
 
         try {
+          const text = await getAttachmentText({ url: blob.url, name: blob.pathname });
           await uploadFile({
             name: blob.pathname,
             url: blob.url,
+            text,
             userId: session.user.id,
           });
         } catch (error) {

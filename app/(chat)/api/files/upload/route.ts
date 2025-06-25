@@ -3,6 +3,8 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { auth } from '@/app/(auth)/auth';
+import { uploadFile } from '@/lib/db/queries';
+import { getAttachmentText } from '@/lib/utils/text-extraction';
 
 // Use Blob instead of File since File is not available in Node.js environment
 const FileSchema = z.object({
@@ -54,6 +56,19 @@ export async function POST(request: Request) {
       const data = await put(`${filename}`, fileBuffer, {
         access: 'public',
       });
+
+      try {
+        const text = await getAttachmentText({ url: data.url, name: filename });
+        await uploadFile({
+          name: filename,
+          url: data.url,
+          text,
+          userId: session.user.id,
+        });
+      } catch (dbError) {
+        console.warn(`Failed to save file to database: ${filename}`, dbError);
+
+      }
 
       return NextResponse.json(data);
     } catch (error) {

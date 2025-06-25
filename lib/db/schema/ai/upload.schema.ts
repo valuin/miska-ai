@@ -14,6 +14,7 @@ export const upload = pgTable(
     id: uuid('id').notNull().defaultRandom(),
     name: text('name').notNull(),
     url: text('url').notNull(),
+    text: text('text').notNull().default(''),
     userId: uuid('userId')
       .notNull()
       .references(() => user.id),

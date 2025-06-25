@@ -16,6 +16,7 @@ import {
   getStreamIdsByChatId,
   saveChat,
   saveMessages,
+  uploadFile,
 } from '@/lib/db/queries';
 import { generateUUID, getTrailingMessageId } from '@/lib/utils';
 import { generateTitleFromUserMessage } from '../../actions';
@@ -39,6 +40,7 @@ import {
   streamWithMastraAgent,
   selectAgentForMessages,
 } from '@/lib/ai/mastra-integration';
+import { getAttachmentText } from '@/lib/utils/text-extraction';
 
 export const maxDuration = 60;
 
@@ -62,23 +64,6 @@ function getStreamContext() {
   }
 
   return globalStreamContext;
-}
-
-async function getAttachmentText(file: Attachment) {
-  if (file.contentType?.startsWith('image/')) return '';
-
-  const response = await fetch(
-    'https://markitdown.up.railway.app/convert-url',
-    {
-      method: 'POST',
-      body: JSON.stringify({ url: file.url, name: file.name }),
-      headers: { 'Content-Type': 'application/json' },
-    },
-  );
-
-  const data = await response.json();
-  console.log(data);
-  return data.text;
 }
 
 export async function POST(request: Request) {
@@ -168,12 +153,31 @@ export async function POST(request: Request) {
       execute: async (dataStream) => {
         const selectedAgent = selectAgentForMessages(messages);
         const files = messages.at(-1)?.experimental_attachments;
-        const getFileTexts = await Promise.all(
-          files?.map((file) => getAttachmentText(file)) ?? [],
+        
+        // Extract text and save files in one pass
+        const fileTextsAndSave = await Promise.all(
+          files?.map(async (file, index) => {
+            const text = await getAttachmentText(file);
+            console.log('Attachment text:', text);
+            
+            // Save to database with extracted text
+            try {
+              await uploadFile({
+                name: file.name || `attachment-${Date.now()}-${index}`,
+                url: file.url || '',
+                text,
+                userId: session.user.id,
+              });
+            } catch (error) {
+              console.warn(`Failed to save attachment ${file.name}:`, error);
+            }
+            
+            return text;
+          }) ?? [],
         );
-        const fileTexts = getFileTexts.filter((text) => text !== '');
-        console.log(fileTexts);
-        // @val do the rest of the code
+        
+        const fileTexts = fileTextsAndSave.filter((text) => text !== '');
+        console.log('File texts:', fileTexts);
 
         if (selectedAgent && selectedChatModel !== 'chat-model-reasoning') {
           try {
