@@ -1,4 +1,4 @@
-import { CoreMessage, LanguageModelV1StreamPart } from 'ai';
+import type { CoreMessage, LanguageModelV1StreamPart } from 'ai';
 import { TEST_PROMPTS } from './basic';
 
 export function compareMessages(

@@ -1,7 +1,6 @@
 import {
   appendClientMessage,
   appendResponseMessages,
-  type Attachment,
   createDataStream,
   smoothStream,
   streamText,
