@@ -28,6 +28,9 @@ import {
   type Chat,
   stream,
   upload,
+  documentVault,
+  documentChunks,
+  tempDocuments,
 } from './schema';
 import type { ArtifactKind } from '@/components/artifact';
 import { generateUUID } from '../utils';
@@ -562,5 +565,25 @@ export async function uploadFile({
     return { id: uploadedFile.id };
   } catch (error) {
     throw new ChatSDKError('bad_request:database', 'Failed to save document');
+  }
+}
+
+export async function getUserUploads({ userId }: { userId: string }) {
+  try {
+    return await db
+      .select({
+        id: upload.id,
+        name: upload.name,
+        url: upload.url,
+        createdAt: upload.createdAt,
+      })
+      .from(upload)
+      .where(eq(upload.userId, userId))
+      .orderBy(desc(upload.createdAt));
+  } catch (error) {
+    throw new ChatSDKError(
+      'bad_request:database',
+      'Failed to get user uploads',
+    );
   }
 }

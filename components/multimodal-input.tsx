@@ -134,27 +134,75 @@ function PureMultimodalInput({
 
   const uploadFile = async (file: File): Promise<Attachment | undefined> => {
     try {
+      // Step 1: Upload file to blob storage
       const newBlob = await upload(file.name, file, {
         access: 'public',
         handleUploadUrl: '/api/files/upload-blob',
         multipart: true,
       });
 
-      await fetch('/api/files/save-blob-document', {
+      // Step 2: Process document with RAG system
+      console.log('Processing document:', file.name);
+      console.log('Blob URL:', newBlob.url);
+      const processResponse = await fetch('/api/files/process-document', {
         method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify({
-          name: newBlob.pathname,
-          url: newBlob.url,
+          fileUrl: newBlob.url,
+          filename: file.name,
+          contentType: file.type,
         }),
       });
 
+      if (!processResponse.ok) {
+        throw new Error('Failed to process document');
+      }
+
+      const processResult = await processResponse.json();
+
+      // Step 3: Show save to vault option
+      if (processResult.success && processResult.document.canSaveToVault) {
+        toast.success(
+          `Document "${file.name}" processed successfully. You can save it to your vault for future reference.`,
+          {
+            action: {
+              label: 'Save to Vault',
+              onClick: async () => {
+                try {
+                  const saveResponse = await fetch('/api/vault/save', {
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                      tempDocumentId: processResult.document.id,
+                    }),
+                  });
+
+                  if (saveResponse.ok) {
+                    toast.success('Document saved to vault successfully!');
+                  } else {
+                    toast.error('Failed to save document to vault');
+                  }
+                } catch (error) {
+                  toast.error('Failed to save document to vault');
+                }
+              },
+            },
+          }
+        );
+      }
+
       return {
         url: newBlob.url,
-        name: newBlob.pathname,
-        contentType: newBlob.contentType,
+        name: file.name,
+        contentType: file.type,
       };
     } catch (error) {
-      toast.error('Failed to upload file, please try again!');
+      console.error('File upload error:', error);
+      toast.error('Failed to upload and process file, please try again!');
     }
   };
 

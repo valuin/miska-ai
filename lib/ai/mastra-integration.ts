@@ -9,6 +9,7 @@ export async function streamWithMastraAgent(
   options?: {
     chatId: string;
     onToolCall?: (toolCall: any) => Promise<void>;
+    runtimeContext?: Record<string, any>;
   },
 ) {
   const agent = mastra.getAgent(agentName);
@@ -21,12 +22,13 @@ export async function streamWithMastraAgent(
   const resourceId = options?.chatId || generateUUID();
   const threadId = generateUUID(); // Generate a new thread for each conversation
 
-  // Configure stream options with message saving
+  // Configure stream options with message saving and runtime context
   const streamOptions: any = {
     memory: {
       resource: resourceId,
       thread: threadId,
     },
+    runtimeContext: options?.runtimeContext,
   };
 
   // Add onFinish callback to save messages if chatId is provided
@@ -179,6 +181,8 @@ export function selectAgentForMessages(
   if (!messages || messages.length === 0) return null;
 
   const lastMessage = messages[messages.length - 1]?.content || '';
+  
+  // Check for weather keywords
   const weatherKeywords = [
     'weather',
     'temperature',
@@ -197,6 +201,34 @@ export function selectAgentForMessages(
   ) {
     return 'weatherAgent';
   }
+
+  // Check for document-related queries or if user has uploaded documents
+  const documentKeywords = [
+    'document',
+    'file',
+    'vault',
+    'uploaded',
+    'search my',
+    'find in',
+    'analyze',
+    'summarize',
+    'what does',
+    'explain',
+    'tell me about',
+  ];
+  
+  const hasDocumentKeywords = documentKeywords.some((keyword) =>
+    lastMessage.toLowerCase().includes(keyword),
+  );
+  
+  const hasAttachments = messages.some((msg) =>
+    msg.experimental_attachments && msg.experimental_attachments.length > 0,
+  );
+  
+  if (hasDocumentKeywords || hasAttachments) {
+    return 'ragChatAgent';
+  }
+
   return null;
 }
 

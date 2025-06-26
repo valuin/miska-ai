@@ -1,37 +1,54 @@
-import { MDocument } from "@mastra/rag";
-import { embedMany } from "ai";
-import { openai } from "@ai-sdk/openai";
-import pdfParse from "pdf-parse";
+import { MDocument } from '@mastra/rag';
+import { embedMany } from 'ai';
+import { openai } from '@ai-sdk/openai';
+import { getAttachmentText } from '@/lib/utils/text-extraction';
 
 export class DocumentProcessor {
-  async processDocument(file: File): Promise<{
+  /**
+   * Processes uploaded files using the text extraction microservice
+   * @param fileUrl - URL of the uploaded file 
+   * @param filename - Original filename
+   * @param contentType - File MIME type
+   */
+  async processDocument(
+    fileUrl: string,
+    filename: string,
+    contentType?: string
+  ): Promise<{
     content: string;
     chunks: any[];
     embeddings: number[][];
     metadata: any;
   }> {
-    const content = await this.extractText(file);
+    // Extract text using the microservice
+    const content = await getAttachmentText({ 
+      url: fileUrl, 
+      name: filename, 
+      contentType 
+    });
+    
+    if (!content) {
+      console.warn(`No text extracted from ${filename}. Saving with empty content.`);
+    }
 
+    // Create MDocument and chunk following Mastra patterns
     const doc = MDocument.fromText(content, {
-      filename: file.name,
+      filename,
       uploadedAt: new Date().toISOString(),
-      fileType: file.type,
-      size: file.size,
+      fileType: contentType,
+      source: fileUrl,
     });
 
     const chunks = await doc.chunk({
-      strategy: this.getChunkingStrategy(file.type),
+      strategy: this.getChunkingStrategy(contentType),
       size: 512,
       overlap: 50,
-      extract: {
-        summary: true,
-        keywords: true,
-      },
     });
 
+    // Generate embeddings using AI SDK
     const { embeddings } = await embedMany({
-      model: openai.embedding("text-embedding-3-small"),
-      values: chunks.map((chunk) => chunk.text),
+      model: openai.embedding('text-embedding-3-small'),
+      values: chunks.map(chunk => chunk.text),
     });
 
     return {
@@ -39,38 +56,18 @@ export class DocumentProcessor {
       chunks,
       embeddings,
       metadata: {
-        filename: file.name,
-        fileType: file.type,
-        size: file.size,
+        filename,
+        fileType: contentType,
+        source: fileUrl,
         processedAt: new Date().toISOString(),
         chunkCount: chunks.length,
       },
     };
   }
 
-  private async extractText(file: File): Promise<string> {
-    if (file.type === "application/pdf") {
-      const buffer = await file.arrayBuffer();
-
-      const data = await pdfParse(Buffer.from(buffer));
-
-      return data.text;
-    } else if (file.type === "text/plain") {
-      return await file.text();
-    } else if (file.type === "text/markdown") {
-      return await file.text();
-    }
-
-    throw new Error(`Unsupported file type: ${file.type}`);
-  }
-
-  private getChunkingStrategy(
-    fileType: string
-  ): "markdown" | "html" | "recursive" {
-    if (fileType === "text/markdown") return "markdown";
-
-    if (fileType === "text/html") return "html";
-
-    return "recursive";
+  private getChunkingStrategy(fileType?: string): 'markdown' | 'html' | 'recursive' {
+    if (fileType === 'text/markdown') return 'markdown';
+    if (fileType === 'text/html') return 'html';
+    return 'recursive';
   }
 }

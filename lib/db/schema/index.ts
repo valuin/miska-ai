@@ -6,6 +6,7 @@ export * from './ai/document.schema';
 export * from './ai/suggestion.schema';
 export * from './ai/stream.schema';
 export * from './ai/upload.schema';
+export * from './ai/document-vault.schema';
 
 // Mastra schemas
 export * from './mastra/mastra';

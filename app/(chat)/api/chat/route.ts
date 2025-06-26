@@ -183,7 +183,12 @@ export async function POST(request: Request) {
             const agentStream = await streamWithMastraAgent(
               selectedAgent,
               messages,
-              { chatId: id },
+              {
+                chatId: id,
+                runtimeContext: {
+                  userId: session.user.id,
+                },
+              },
             );
 
             agentStream.mergeIntoDataStream(dataStream);

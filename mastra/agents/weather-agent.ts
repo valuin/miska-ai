@@ -1,7 +1,6 @@
 import { openai } from '@ai-sdk/openai';
 import { Agent } from '@mastra/core/agent';
 import { Memory } from '@mastra/memory';
-import { PostgresStore } from '@mastra/pg';
 import { weatherTool } from '../tools/weather-tool';
 
 export const weatherAgent = new Agent({
@@ -20,10 +19,5 @@ export const weatherAgent = new Agent({
 `,
   model: openai('gpt-4o-mini'),
   tools: { weatherTool },
-  memory: new Memory({
-    storage: new PostgresStore({
-      connectionString: process.env.POSTGRES_URL!,
-      schemaName: 'mastra',
-    }),
-  }),
+  memory: new Memory({}),
 });

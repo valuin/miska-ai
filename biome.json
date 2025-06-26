@@ -45,7 +45,7 @@
         "noUnusedImports": "warn",
         "useJsxKeyInIterable": "off",
         "useExhaustiveDependencies": "off",
-        "noUnusedVariables": "off",
+        "noUnusedVariables": "off"
       },
       "security": {
         "noDangerouslySetInnerHtml": "off"
@@ -59,7 +59,8 @@
         "noUselessElse": "off"
       },
       "suspicious": {
-        "noExplicitAny": "off"
+        "noExplicitAny": "off",
+        "noArrayIndexKey": "off"
       },
       "nursery": {
         "recommended": true

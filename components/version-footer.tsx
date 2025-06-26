@@ -14,13 +14,13 @@ import { Button } from './ui/button';
 import { useArtifact } from '@/hooks/use-artifact';
 
 interface VersionFooterProps {
-  handleVersionChange: (type: 'next' | 'prev' | 'toggle' | 'latest') => void;
+  handleVersionChangeAction: (type: 'next' | 'prev' | 'toggle' | 'latest') => void;
   documents: Array<Document> | undefined;
   currentVersionIndex: number;
 }
 
 export const VersionFooter = ({
-  handleVersionChange,
+  handleVersionChangeAction,
   documents,
   currentVersionIndex,
 }: VersionFooterProps) => {
@@ -96,7 +96,7 @@ export const VersionFooter = ({
         <Button
           variant="outline"
           onClick={() => {
-            handleVersionChange('latest');
+            handleVersionChangeAction('latest');
           }}
         >
           Back to latest version
