@@ -1,13 +1,9 @@
 /* eslint-disable @next/next/no-img-element */
 import { useEffect, useState } from "react";
-import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuItem,
-} from "./ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuTrigger } from "./ui/dropdown-menu";
 import { ChevronDownIcon } from "./icons";
-import { LightbulbIcon } from "lucide-react";
+import { LightbulbIcon, SearchIcon } from "lucide-react";
+import Task from "./tasks";
 
 type SearchResult = {
   url: string;
@@ -47,13 +43,27 @@ export default function Sources({
   }, [streaming]);
 
   if (!results || results.length === 0) {
-    return null;
+    return (
+      <Task icon={<SearchIcon className="size-4" />} text="Searching..." />
+    );
   }
 
-  console.log(results);
-
   return (
-    <div>
+    <div className="flex flex-col gap-2">
+      <Task
+        icon={<SearchIcon className="size-4" />}
+        text={
+          <p>
+            Searched{" "}
+            <span
+              className="text-muted-foreground/80 font-bold"
+              style={{ fontFamily: "Courier New" }}
+            >
+              {query}
+            </span>
+          </p>
+        }
+      />
       <DropdownMenu open={open} onOpenChange={setOpen}>
         <DropdownMenuTrigger asChild>
           <button
@@ -77,14 +87,11 @@ export default function Sources({
           </button>
         </DropdownMenuTrigger>
         <div
-          style={{
-            maxHeight: open ? "300px" : "0px",
-            padding: open ? "1rem" : "0px",
-          }}
-          className="overflow-y-auto"
+          style={{ maxHeight: open ? "300px" : "0px" }}
+          className="overflow-y-auto !pt-0"
         >
           {results.map((result) => (
-            <div key={result.url} className="hover:bg-muted-foreground/20">
+            <div key={result.url} className="hover:bg-muted-foreground/20 px-3">
               <a
                 href={result.url}
                 target="_blank"
