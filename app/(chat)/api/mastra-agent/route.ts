@@ -1,5 +1,5 @@
-import { mastra } from '@/mastra';
-import type { NextRequest } from 'next/server';
+import { mastra } from "@/mastra";
+import type { NextRequest } from "next/server";
 
 /**
  * Pure Mastra Agent API Route
@@ -14,29 +14,29 @@ export async function POST(request: NextRequest) {
     const { messages } = await request.json();
 
     if (!messages || !Array.isArray(messages)) {
-      return new Response('Invalid messages format', { status: 400 });
+      return new Response("Invalid messages format", { status: 400 });
     }
 
     // Direct Mastra agent usage - RECOMMENDED pattern
-    const weatherAgent = mastra.getAgent('weatherAgent');
+    const researchAgent = mastra.getAgent("researchAgent");
 
-    if (!weatherAgent) {
-      return new Response('Weather agent not available', { status: 503 });
+    if (!researchAgent) {
+      return new Response("Research agent not available", { status: 503 });
     }
 
     // Use agent.stream() - returns AI SDK compatible stream
-    const stream = await weatherAgent.stream(messages);
+    const stream = await researchAgent.stream(messages);
 
     // Perfect compatibility with AI SDK frontend hooks
     return stream.toDataStreamResponse({
       headers: {
-        'X-Powered-By': 'Mastra',
-        'Access-Control-Allow-Origin': '*',
+        "X-Powered-By": "Mastra",
+        "Access-Control-Allow-Origin": "*",
       },
     });
   } catch (error) {
-    console.error('Mastra agent API error:', error);
-    return new Response('Internal server error', { status: 500 });
+    console.error("Mastra agent API error:", error);
+    return new Response("Internal server error", { status: 500 });
   }
 }
 
@@ -44,9 +44,9 @@ export async function OPTIONS() {
   return new Response(null, {
     status: 200,
     headers: {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type',
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "POST, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type",
     },
   });
 }

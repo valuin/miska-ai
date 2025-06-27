@@ -1,10 +1,9 @@
-import { generateUUID } from '@/lib/utils';
-import { mastra } from '@/mastra';
-import { saveMessages } from '@/lib/db/queries';
-import type { Message } from 'ai';
+import { generateUUID } from "@/lib/utils";
+import { mastra } from "@/mastra";
+import { saveMessages } from "@/lib/db/queries";
+import type { Message } from "ai";
 
 export async function streamWithMastraAgent(
-  agentName: keyof ReturnType<typeof mastra.getAgents>,
   messages: Message[],
   options?: {
     chatId: string;
@@ -12,10 +11,16 @@ export async function streamWithMastraAgent(
     runtimeContext?: Record<string, any>;
   },
 ) {
-  const agent = mastra.getAgent(agentName);
+  const selectedAgent = selectAgentForMessages(messages);
+
+  if (!selectedAgent) {
+    throw new Error("No agent selected");
+  }
+
+  const agent = mastra.getAgent(selectedAgent);
 
   if (!agent) {
-    throw new Error(`Agent ${String(agentName)} not found`);
+    throw new Error(`Agent ${String(selectedAgent)} not found`);
   }
 
   // Set up a resourceId and threadId for Mastra memory if chatId is provided
@@ -39,13 +44,13 @@ export async function streamWithMastraAgent(
         if (result.text || result.toolCalls) {
           await saveMastraMessage(
             options.chatId,
-            'assistant',
-            result.text || '',
+            "assistant",
+            result.text || "",
             result.toolCalls,
           );
         }
       } catch (error) {
-        console.error('Failed to save Mastra agent message:', error);
+        console.error("Failed to save Mastra agent message:", error);
       }
     };
   }
@@ -82,12 +87,12 @@ export async function streamWithMastraAgentAndSave(
         // Save the assistant message with tool calls
         await saveMastraMessage(
           chatId,
-          'assistant',
-          result.text || '',
+          "assistant",
+          result.text || "",
           result.toolCalls,
         );
       } catch (error) {
-        console.error('Failed to save Mastra agent message:', error);
+        console.error("Failed to save Mastra agent message:", error);
       }
     },
   });
@@ -100,7 +105,7 @@ export async function streamWithMastraAgentAndSave(
  */
 export async function saveMastraMessage(
   chatId: string,
-  role: 'user' | 'assistant',
+  role: "user" | "assistant",
   content: string,
   toolInvocations?: any[],
 ) {
@@ -111,14 +116,14 @@ export async function saveMastraMessage(
 
   // Add text content if present
   if (content?.trim()) {
-    parts.push({ type: 'text', text: content });
+    parts.push({ type: "text", text: content });
   }
 
   // Add tool invocations if present
   if (toolInvocations && toolInvocations.length > 0) {
     for (const invocation of toolInvocations) {
       parts.push({
-        type: 'tool-call',
+        type: "tool-call",
         toolCallId: invocation.toolCallId || generateUUID(),
         toolName: invocation.toolName,
         args: invocation.args,
@@ -127,7 +132,7 @@ export async function saveMastraMessage(
       // Add tool result if available
       if (invocation.result !== undefined) {
         parts.push({
-          type: 'tool-result',
+          type: "tool-result",
           toolCallId: invocation.toolCallId || generateUUID(),
           result: invocation.result,
         });
@@ -137,7 +142,7 @@ export async function saveMastraMessage(
 
   // Ensure we have at least one part
   if (parts.length === 0) {
-    parts.push({ type: 'text', text: '' });
+    parts.push({ type: "text", text: "" });
   }
 
   const dbMessage = {
@@ -176,57 +181,38 @@ export async function streamWithStructuredOutput(
  * smart routing as recommended in documentation
  */
 export function selectAgentForMessages(
-  messages: any[],
+  messages: Message[],
 ): keyof ReturnType<typeof mastra.getAgents> | null {
   if (!messages || messages.length === 0) return null;
 
-  const lastMessage = messages[messages.length - 1]?.content || '';
-  
-  // Check for weather keywords
-  const weatherKeywords = [
-    'weather',
-    'temperature',
-    'forecast',
-    'climate',
-    'rain',
-    'snow',
-    'sunny',
-  ];
-
-  // Route to weather agent for weather-related queries
-  if (
-    weatherKeywords.some((keyword) =>
-      lastMessage.toLowerCase().includes(keyword),
-    )
-  ) {
-    return 'weatherAgent';
-  }
+  const lastMessage = messages[messages.length - 1]?.content || "";
 
   // Check for document-related queries or if user has uploaded documents
   const documentKeywords = [
-    'document',
-    'file',
-    'vault',
-    'uploaded',
-    'search my',
-    'find in',
-    'analyze',
-    'summarize',
-    'what does',
-    'explain',
-    'tell me about',
+    "document",
+    "file",
+    "vault",
+    "uploaded",
+    "search my",
+    "find in",
+    "analyze",
+    "summarize",
+    "what does",
+    "explain",
+    "tell me about",
   ];
-  
+
   const hasDocumentKeywords = documentKeywords.some((keyword) =>
     lastMessage.toLowerCase().includes(keyword),
   );
-  
-  const hasAttachments = messages.some((msg) =>
-    msg.experimental_attachments && msg.experimental_attachments.length > 0,
+
+  const hasAttachments = messages.some(
+    (msg) =>
+      msg.experimental_attachments && msg.experimental_attachments.length > 0,
   );
-  
+
   if (hasDocumentKeywords || hasAttachments) {
-    return 'ragChatAgent';
+    return "ragChatAgent";
   }
 
   return null;
@@ -248,7 +234,7 @@ export async function createMastraAgentAPIRoute(
 
     const agent = mastra.getAgent(agentName);
     if (!agent) {
-      return new Response('Agent not found', { status: 404 });
+      return new Response("Agent not found", { status: 404 });
     }
     const stream = await agent.stream(messages);
     return stream.toDataStreamResponse();
