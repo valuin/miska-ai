@@ -18,6 +18,7 @@ import { MessageEditor } from "./message-editor";
 import { DocumentPreview } from "./document-preview";
 import { MessageReasoning } from "./message-reasoning";
 import type { UseChatHelpers } from "@ai-sdk/react";
+import Sources from "./sources";
 
 const PurePreviewMessage = ({
   chatId,
@@ -164,11 +165,11 @@ const PurePreviewMessage = ({
                     <div
                       key={toolCallId}
                       className={cx({
-                        skeleton: ["research"].includes(toolName),
+                        skeleton: ["searxng"].includes(toolName),
                       })}
                     >
-                      {toolName === "research" ? (
-                        <pre>{JSON.stringify(args, null, 2)}</pre>
+                      {toolName === "searxng" ? (
+                        <Sources args={args} streaming={true} />
                       ) : toolName === "createDocument" ? (
                         <DocumentPreview isReadonly={isReadonly} args={args} />
                       ) : toolName === "updateDocument" ? (
@@ -193,8 +194,8 @@ const PurePreviewMessage = ({
 
                   return (
                     <div key={toolCallId}>
-                      {toolName === "research" ? (
-                        <pre>{JSON.stringify(result, null, 2)}</pre>
+                      {toolName === "searxng" ? (
+                        <Sources args={result} streaming={false} />
                       ) : toolName === "createDocument" ? (
                         <DocumentPreview
                           isReadonly={isReadonly}
