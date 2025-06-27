@@ -43,15 +43,13 @@ export default function Sources({
   }, [streaming]);
 
   if (!results || results.length === 0) {
-    return (
-      <Task icon={<SearchIcon className="size-4" />} text="Searching..." />
-    );
+    return <Task icon={SearchIcon} text="Searching..." />;
   }
 
   return (
     <div className="flex flex-col gap-2">
       <Task
-        icon={<SearchIcon className="size-4" />}
+        icon={SearchIcon}
         text={
           <p className="whitespace-nowrap flex flex-row gap-1">
             Searched{" "}

@@ -20,6 +20,7 @@ import { MessageReasoning } from "./message-reasoning";
 import type { UseChatHelpers } from "@ai-sdk/react";
 import Sources from "./sources";
 import Options from "./options";
+import { WorkflowGenerator, ClarificationTool } from "./workflow";
 
 const PurePreviewMessage = ({
   chatId,
@@ -203,6 +204,10 @@ const PurePreviewMessage = ({
                         <Sources args={result} streaming={false} />
                       ) : toolName === "optionsTool" ? (
                         <Options options={result.options} append={append} />
+                      ) : toolName === "workflowGenerator" ? (
+                        <WorkflowGenerator result={result} />
+                      ) : toolName === "clarificationTool" ? (
+                        <ClarificationTool result={result} />
                       ) : toolName === "createDocument" ? (
                         <DocumentPreview
                           isReadonly={isReadonly}

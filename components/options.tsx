@@ -20,7 +20,6 @@ export default function Options({
           key={option.value}
           className="bg-primary text-primary-foreground px-4 py-2 rounded-md"
           onClick={() => {
-            console.log("clicked", option.value);
             append({ role: "user", content: option.value });
           }}
         >

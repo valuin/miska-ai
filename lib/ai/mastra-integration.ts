@@ -1,10 +1,9 @@
 import { generateUUID } from "@/lib/utils";
 import { getAgentType } from "@/mastra/agents/agent-router";
 import { mastra } from "@/mastra";
-import { saveMessages } from "@/lib/db/queries";
-import { type DataStreamWriter, streamText, type Message } from "ai";
-import { openai } from "@ai-sdk/openai";
 import { optionsAgent } from "@/mastra/tools/utility-tools";
+import { saveMessages } from "@/lib/db/queries";
+import type { DataStreamWriter, Message } from "ai";
 
 export async function streamWithMastraAgent(
   messages: Message[],
@@ -19,6 +18,9 @@ export async function streamWithMastraAgent(
   const selectedAgent = await getAgentType(messages);
   const agent = mastra.getAgent(selectedAgent);
 
+  // tell the frontend which agent is being used
+  dataStream.writeData({ agent: selectedAgent });
+
   // Set up a resourceId and threadId for Mastra memory if chatId is provided
   const resourceId = options?.chatId || generateUUID();
   const threadId = generateUUID(); // Generate a new thread for each conversation
@@ -31,9 +33,7 @@ export async function streamWithMastraAgent(
     },
     runtimeContext: options?.runtimeContext,
     onFinish: async (result: any) => {
-      if (
-        !result.toolCalls.some((call: any) => call.toolName === "optionsTool")
-      ) {
+      if (selectedAgent === "researchAgent") {
         const optionsStream = await optionsAgent.stream(messages);
         optionsStream.mergeIntoDataStream(dataStream);
       }
