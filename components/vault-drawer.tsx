@@ -31,14 +31,14 @@ export function VaultDrawer() {
   const fetchUserUploads = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch('/api/vault/documents');
+      const response = await fetch("/api/vault/documents");
       if (!response.ok) {
-        throw new Error('Failed to fetch vault documents');
+        throw new Error("Failed to fetch vault documents");
       }
       const data = await response.json();
       setUploads(data.documents || []);
     } catch (error) {
-      console.error('Error fetching vault documents:', error);
+      console.error("Error fetching vault documents:", error);
       setUploads([]);
     } finally {
       setIsLoading(false);
@@ -51,10 +51,14 @@ export function VaultDrawer() {
     }
   }, [isOpen]);
   return (
-    <Drawer direction="right" shouldScaleBackground={false} onOpenChange={setIsOpen}>
+    <Drawer
+      direction="right"
+      shouldScaleBackground={false}
+      onOpenChange={setIsOpen}
+    >
       <DrawerTrigger asChild>
         <Button variant="outline" className="flex items-center gap-2">
-          <FileIcon className="w-4 h-4" />
+          <FileIcon className="size-4" />
           Open Vault
         </Button>
       </DrawerTrigger>
@@ -78,7 +82,7 @@ export function VaultDrawer() {
               {isLoading ? (
                 Array.from({ length: 3 }).map((_, index) => (
                   <div key={index} className="flex items-center gap-2">
-                    <Skeleton className="h-4 w-4 rounded" />
+                    <Skeleton className="size-4 rounded" />
                     <Skeleton className="h-4 w-24" />
                   </div>
                 ))

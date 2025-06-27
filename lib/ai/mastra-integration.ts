@@ -2,16 +2,20 @@ import { generateUUID } from "@/lib/utils";
 import { getAgentType } from "@/mastra/agents/agent-router";
 import { mastra } from "@/mastra";
 import { saveMessages } from "@/lib/db/queries";
-import type { Message } from "ai";
+import { type DataStreamWriter, streamText, type Message } from "ai";
+import { openai } from "@ai-sdk/openai";
+import { optionsAgent } from "@/mastra/tools/utility-tools";
 
 export async function streamWithMastraAgent(
   messages: Message[],
-  options?: {
+  options: {
     chatId: string;
     onToolCall?: (toolCall: any) => Promise<void>;
     runtimeContext?: Record<string, any>;
+    dataStream: DataStreamWriter;
   },
 ) {
+  const { dataStream } = options;
   const selectedAgent = await getAgentType(messages);
   const agent = mastra.getAgent(selectedAgent);
 
@@ -26,13 +30,15 @@ export async function streamWithMastraAgent(
       thread: threadId,
     },
     runtimeContext: options?.runtimeContext,
-  };
+    onFinish: async (result: any) => {
+      if (
+        !result.toolCalls.some((call: any) => call.toolName === "optionsTool")
+      ) {
+        const optionsStream = await optionsAgent.stream(messages);
+        optionsStream.mergeIntoDataStream(dataStream);
+      }
 
-  // Add onFinish callback to save messages if chatId is provided
-  if (options?.chatId) {
-    streamOptions.onFinish = async (result: any) => {
       try {
-        // Save the assistant message after the stream completes
         if (result.text || result.toolCalls) {
           await saveMastraMessage(
             options.chatId,
@@ -44,51 +50,10 @@ export async function streamWithMastraAgent(
       } catch (error) {
         console.error("Failed to save Mastra agent message:", error);
       }
-    };
-  }
+    },
+  };
 
-  // agent.stream() returns AI SDK compatible stream
   const stream = await agent.stream(messages, streamOptions);
-  return stream;
-}
-
-/**
- * Enhanced stream function that saves tool calls to database
- */
-export async function streamWithMastraAgentAndSave(
-  agentName: keyof ReturnType<typeof mastra.getAgents>,
-  messages: any[],
-  chatId: string,
-) {
-  const agent = mastra.getAgent(agentName);
-
-  if (!agent) {
-    throw new Error(`Agent ${String(agentName)} not found`);
-  }
-
-  // Use chatId as resourceId for Mastra memory continuity
-  const threadId = generateUUID(); // Generate a new thread for each conversation
-
-  const stream = await agent.stream(messages, {
-    memory: {
-      resource: chatId,
-      thread: threadId,
-    },
-    onFinish: async (result: any) => {
-      try {
-        // Save the assistant message with tool calls
-        await saveMastraMessage(
-          chatId,
-          "assistant",
-          result.text || "",
-          result.toolCalls,
-        );
-      } catch (error) {
-        console.error("Failed to save Mastra agent message:", error);
-      }
-    },
-  });
-
   return stream;
 }
 

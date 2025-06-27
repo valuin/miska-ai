@@ -53,14 +53,11 @@ export default function Sources({
       <Task
         icon={<SearchIcon className="size-4" />}
         text={
-          <p>
+          <p className="whitespace-nowrap flex flex-row gap-1">
             Searched{" "}
-            <span
-              className="text-muted-foreground/80 font-bold"
-              style={{ fontFamily: "Courier New" }}
-            >
+            <code className="text-muted-foreground/80 font-semibold">
               {query}
-            </span>
+            </code>
           </p>
         }
       />

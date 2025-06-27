@@ -24,9 +24,8 @@ export const researchAgent = new Agent({
       - When presenting results, summarize and cite the most relevant findings
 
       Use the Searxng search tool to perform web searches and answer user questions. Include the search citations as links throughout your response.
-
-      At the end of your response, you can use the options tool to send a set of option buttons to the user to choose from.
   `,
   model: openai("gpt-4o-mini"),
   tools: { ...createMastraTools(searxng), optionsTool },
+  defaultGenerateOptions: { maxSteps: 4 },
 });

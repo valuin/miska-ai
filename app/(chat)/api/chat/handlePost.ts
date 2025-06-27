@@ -67,8 +67,11 @@ async function handleChatStreaming({
   await processAttachments({ files, session });
   const agentStream = await streamWithMastraAgent(messages, {
     chatId: id,
+    dataStream,
   });
-  agentStream.mergeIntoDataStream(dataStream);
+  agentStream.mergeIntoDataStream(dataStream, {
+    experimental_sendFinish: false,
+  });
 }
 
 export async function handlePost(request: Request) {

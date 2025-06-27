@@ -19,6 +19,7 @@ import { DocumentPreview } from "./document-preview";
 import { MessageReasoning } from "./message-reasoning";
 import type { UseChatHelpers } from "@ai-sdk/react";
 import Sources from "./sources";
+import Options from "./options";
 
 const PurePreviewMessage = ({
   chatId,
@@ -29,6 +30,7 @@ const PurePreviewMessage = ({
   reload,
   isReadonly,
   requiresScrollPadding,
+  append,
 }: {
   chatId: string;
   message: UIMessage;
@@ -38,6 +40,7 @@ const PurePreviewMessage = ({
   reload: UseChatHelpers["reload"];
   isReadonly: boolean;
   requiresScrollPadding: boolean;
+  append: UseChatHelpers["append"];
 }) => {
   const [mode, setMode] = useState<"view" | "edit">("view");
 
@@ -87,6 +90,8 @@ const PurePreviewMessage = ({
                   ))}
                 </div>
               )}
+
+            {/* {JSON.stringify(message.parts, null, 2)} */}
 
             {message.parts?.map((part, index) => {
               const { type } = part;
@@ -196,6 +201,8 @@ const PurePreviewMessage = ({
                     <div key={toolCallId}>
                       {toolName === "searxng" ? (
                         <Sources args={result} streaming={false} />
+                      ) : toolName === "optionsTool" ? (
+                        <Options options={result.options} append={append} />
                       ) : toolName === "createDocument" ? (
                         <DocumentPreview
                           isReadonly={isReadonly}
@@ -214,7 +221,10 @@ const PurePreviewMessage = ({
                           isReadonly={isReadonly}
                         />
                       ) : (
-                        <pre>{JSON.stringify(result, null, 2)}</pre>
+                        <pre>
+                          {toolName}
+                          {/* {JSON.stringify(result, null, 2)} */}
+                        </pre>
                       )}
                     </div>
                   );
