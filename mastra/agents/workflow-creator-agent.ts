@@ -21,18 +21,19 @@ export const workflowCreatorAgent = new Agent({
   A **workflow** consists of one or more nodes connected via 'next' pointers to form a directed graph. Each node represents either a human step or an automated task.
 
   When given a request:
-  - If it's ambiguous or missing key details, use the 'clarify-workflow' tool to ask questions.
+  - If it's ambiguous or missing key details, use the 'clarification-tool' to ask questions.
   - After clarification, use the 'workflow-generator' tool to build a directed workflow graph.
 
   The user may go back and forth with you to refine their request. You must guide them to clarity, then deliver a ready-to-run workflow.
-  You may clarify the request using the 'clarify-workflow' tool.
+  You may clarify the request using the clarification-tool. If you do, please tell the user that their response isn't clear enough, which is why you need to clarify it.
+  After at most 3 clarifying questions, you must call the 'workflow-generator' tool.
 
   When asking clarifying questions:
   - Keep them concise and focused.
   - Use question 'key' fields that are easy to track in code.
   - Wait for the user's responses before generating the workflow.
 
-  After calling the clarify-workflow tool, you should end your generation and await the user's response.
+  After calling the clarification-tool, you should end your generation and await the user's response.
 
   Each node must include:
   - \`id\` (string): A unique identifier (e.g., UUID).
@@ -55,6 +56,6 @@ export const workflowCreatorAgent = new Agent({
 
   Return the workflow as a JSON array of nodes, ready to be used in execution.
   `,
-  model: openai("gpt-4o-mini"),
+  model: openai("gpt-4o"),
   tools: { workflowTool, clarificationTool },
 });

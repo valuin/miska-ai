@@ -204,10 +204,10 @@ const PurePreviewMessage = ({
                         <Sources args={result} streaming={false} />
                       ) : toolName === "optionsTool" ? (
                         <Options options={result.options} append={append} />
-                      ) : toolName === "workflowGenerator" ? (
+                      ) : toolName === "workflowTool" ? (
                         <WorkflowGenerator result={result} />
                       ) : toolName === "clarificationTool" ? (
-                        <ClarificationTool result={result} />
+                        <ClarificationTool result={result} append={append} />
                       ) : toolName === "createDocument" ? (
                         <DocumentPreview
                           isReadonly={isReadonly}

@@ -68,10 +68,13 @@ export const workflowTool = createTool({
 });
 
 export const clarificationTool = createTool({
-  id: "clarify-workflow",
+  id: "clarification-tool",
   description: "Ask user clarifying questions before generating a workflow.",
   inputSchema: z.object({
-    questions: z.array(z.string().describe("The question to ask the user")),
+    questions: z
+      .array(z.string().describe("The question to ask the user"))
+      .min(1)
+      .max(3),
   }),
   outputSchema: z.object({ questions: z.array(z.string()) }),
   execute: async ({ context }) => {
