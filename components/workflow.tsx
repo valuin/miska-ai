@@ -53,7 +53,7 @@ export const WorkflowGenerator = ({
         {renderNode(node)}
         {node.next?.length ? (
           <>
-            <ArrowDownIcon className="w-4 h-4 text-muted-foreground" />
+            <ArrowDownIcon className="size-4 text-muted-foreground" />
             {node.next.map((nextId) => renderWorkflow(nextId, visited))}
           </>
         ) : null}
