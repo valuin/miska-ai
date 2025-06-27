@@ -2,7 +2,6 @@ import { auth } from "@/app/(auth)/auth";
 import { ChatSDKError } from "@/lib/errors";
 import { generateTitleFromUserMessage } from "../../actions";
 import { generateUUID } from "@/lib/utils";
-import { geolocation } from "@vercel/functions";
 import { getAttachmentText } from "@/lib/utils/text-extraction";
 import { getStreamContext } from "./streamUtils";
 import { postRequestBodySchema, type PostRequestBody } from "./schema";
@@ -51,23 +50,6 @@ async function processAttachments({
   );
 }
 
-interface MastraStreamParameters {
-  messages: Message[];
-  id: string;
-  dataStream: DataStreamWriter;
-}
-
-async function mastraStream({
-  messages,
-  id,
-  dataStream,
-}: MastraStreamParameters) {
-  const agentStream = await streamWithMastraAgent(messages, {
-    chatId: id,
-  });
-  agentStream.mergeIntoDataStream(dataStream);
-}
-
 interface HandleChatStreamingParams {
   dataStream: DataStreamWriter;
   messages: Message[];
@@ -83,7 +65,10 @@ async function handleChatStreaming({
 }: HandleChatStreamingParams) {
   const files = messages.at(-1)?.experimental_attachments;
   await processAttachments({ files, session });
-  await mastraStream({ messages, id, dataStream });
+  const agentStream = await streamWithMastraAgent(messages, {
+    chatId: id,
+  });
+  agentStream.mergeIntoDataStream(dataStream);
 }
 
 export async function handlePost(request: Request) {
@@ -96,8 +81,7 @@ export async function handlePost(request: Request) {
   }
 
   try {
-    const { id, message, selectedChatModel, selectedVisibilityType } =
-      requestBody;
+    const { id, message, selectedVisibilityType } = requestBody;
 
     const session = await auth();
 
@@ -130,8 +114,7 @@ export async function handlePost(request: Request) {
       createdAt: new Date(),
     };
     const messages: DBMessage[] = [...previousMessages, dbMessage];
-    const { longitude, latitude, city, country } = geolocation(request);
-    const requestHints = { longitude, latitude, city, country };
+
     await saveMessages({ messages: [dbMessage] });
     const streamId = generateUUID();
     await createStreamId({ streamId, chatId: id });

@@ -25,6 +25,7 @@
     "build:mastra": "mastra build --dir mastra"
   },
   "dependencies": {
+    "@agentic/calculator": "^7.6.9",
     "@agentic/mastra": "^7.6.9",
     "@agentic/searxng": "^7.6.9",
     "@ai-sdk/openai": "^1.3.22",

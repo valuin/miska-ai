@@ -1,4 +1,5 @@
 import { generateUUID } from "@/lib/utils";
+import { getAgentType } from "@/mastra/agents/agent-router";
 import { mastra } from "@/mastra";
 import { saveMessages } from "@/lib/db/queries";
 import type { Message } from "ai";
@@ -11,17 +12,8 @@ export async function streamWithMastraAgent(
     runtimeContext?: Record<string, any>;
   },
 ) {
-  const selectedAgent = selectAgentForMessages(messages);
-
-  if (!selectedAgent) {
-    throw new Error("No agent selected");
-  }
-
+  const selectedAgent = await getAgentType(messages);
   const agent = mastra.getAgent(selectedAgent);
-
-  if (!agent) {
-    throw new Error(`Agent ${String(selectedAgent)} not found`);
-  }
 
   // Set up a resourceId and threadId for Mastra memory if chatId is provided
   const resourceId = options?.chatId || generateUUID();
@@ -174,48 +166,6 @@ export async function streamWithStructuredOutput(
   return await agent.stream(messages, {
     output: outputSchema,
   });
-}
-
-/**
- * Route messages to appropriate agent based on content
- * smart routing as recommended in documentation
- */
-export function selectAgentForMessages(
-  messages: Message[],
-): keyof ReturnType<typeof mastra.getAgents> | null {
-  if (!messages || messages.length === 0) return null;
-
-  const lastMessage = messages[messages.length - 1]?.content || "";
-
-  // Check for document-related queries or if user has uploaded documents
-  const documentKeywords = [
-    "document",
-    "file",
-    "vault",
-    "uploaded",
-    "search my",
-    "find in",
-    "analyze",
-    "summarize",
-    "what does",
-    "explain",
-    "tell me about",
-  ];
-
-  const hasDocumentKeywords = documentKeywords.some((keyword) =>
-    lastMessage.toLowerCase().includes(keyword),
-  );
-
-  const hasAttachments = messages.some(
-    (msg) =>
-      msg.experimental_attachments && msg.experimental_attachments.length > 0,
-  );
-
-  if (hasDocumentKeywords || hasAttachments) {
-    return "ragChatAgent";
-  }
-
-  return null;
 }
 
 export function getAvailableAgents() {
