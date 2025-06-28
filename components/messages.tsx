@@ -52,9 +52,9 @@ function PureMessages({
 
       {messages.map((message, index) => (
         <>
-          {index === messages.length - 1 && (
+          {/* {index === messages.length - 1 && (
             <div key={`agent-${index}`}>{agent}</div>
-          )}
+          )} */}
           <PreviewMessage
             key={message.id}
             chatId={chatId}

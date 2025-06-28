@@ -51,27 +51,21 @@ async function processAttachments({
 }
 
 interface HandleChatStreamingParams {
-  dataStream: DataStreamWriter;
+  responsePipe: DataStreamWriter;
   messages: Message[];
   session: Session;
   id: string;
 }
 
 async function handleChatStreaming({
-  dataStream,
+  responsePipe,
   messages,
   session,
   id,
 }: HandleChatStreamingParams) {
   const files = messages.at(-1)?.experimental_attachments;
   await processAttachments({ files, session });
-  const agentStream = await streamWithMastraAgent(messages, {
-    chatId: id,
-    dataStream,
-  });
-  agentStream.mergeIntoDataStream(dataStream, {
-    experimental_sendFinish: false,
-  });
+  await streamWithMastraAgent(messages, { chatId: id, responsePipe });
 }
 
 export async function handlePost(request: Request) {
@@ -134,7 +128,7 @@ export async function handlePost(request: Request) {
     const stream = createDataStream({
       execute: (dataStream) =>
         handleChatStreaming({
-          dataStream,
+          responsePipe: dataStream,
           messages: uiMessages,
           session,
           id,
