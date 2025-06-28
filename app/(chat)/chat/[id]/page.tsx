@@ -41,7 +41,33 @@ export default async function Page(props: { params: Promise<{ id: string }> }) {
   function convertToUIMessages(messages: Array<DBMessage>): Array<UIMessage> {
     return messages.map((message) => ({
       id: message.id,
-      parts: message.parts as UIMessage['parts'],
+      parts: Array.isArray(message.parts)
+        ? message.parts.map((part) => {
+            if (part.type === "tool-call") {
+              return {
+                type: "tool-invocation",
+                toolInvocation: {
+                  toolCallId: part.toolCallId,
+                  toolName: part.toolName,
+                  args: part.args,
+                  state: "call",
+                },
+              };
+            }
+            if (part.type === "tool-result") {
+              return {
+                type: "tool-invocation",
+                toolInvocation: {
+                  toolCallId: part.toolCallId,
+                  toolName: part.toolName,
+                  result: part.result,
+                  state: "result",
+                },
+              };
+            }
+            return part;
+          })
+        : [],
       role: message.role as UIMessage['role'],
       // Note: content will soon be deprecated in @ai-sdk/react
       content: '',
