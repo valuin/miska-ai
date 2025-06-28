@@ -1,0 +1,1 @@
+ALTER TABLE "temp_documents" ALTER COLUMN "expires_at" SET DEFAULT '2025-06-28T08:58:30.803Z';
