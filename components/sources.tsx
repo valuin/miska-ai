@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { DropdownMenu, DropdownMenuTrigger } from "./ui/dropdown-menu";
 import { ChevronDownIcon } from "./icons";
 import { LightbulbIcon, SearchIcon } from "lucide-react";
-import Task from "./tasks";
+import Badge from "./badge";
 
 type SearchResult = {
   url: string;
@@ -43,12 +43,12 @@ export default function Sources({
   }, [streaming]);
 
   if (!results || results.length === 0) {
-    return <Task icon={SearchIcon} text="Searching..." />;
+    return <Badge icon={SearchIcon} text="Searching..." />;
   }
 
   return (
     <div className="flex flex-col gap-2">
-      <Task
+      <Badge
         icon={SearchIcon}
         text={
           <p className="whitespace-nowrap flex flex-row gap-1">

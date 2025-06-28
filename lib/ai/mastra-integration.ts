@@ -43,8 +43,19 @@ export async function streamWithMastraAgent(
   const selectedAgent = await getAgentType(messages);
   const agent = mastra.getAgent(selectedAgent);
 
-  // tell the frontend which agent is being used
-  responsePipe.writeData({ agent: selectedAgent });
+  if (selectedAgent !== "normalAgent") {
+    const agentMap = {
+      researchAgent: "Initiating Research Agent...",
+      ragChatAgent: "Initiating Vault Search Agent...",
+      workflowCreatorAgent: "Initiating Workflow Agent...",
+    };
+    const agentChoice = agentMap[selectedAgent];
+    if (!agentChoice) return;
+    responsePipe.writeMessageAnnotation({
+      type: "agent-choice",
+      agentChoice,
+    });
+  }
 
   // Set up a resourceId and threadId for Mastra memory if chatId is provided
   const resourceId = options?.chatId || generateUUID();

@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
 
-export default function Task({
+export default function Badge({
   icon: Icon,
   text,
 }: {

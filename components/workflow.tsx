@@ -1,7 +1,7 @@
 import { Button } from "./ui/button";
 import { ArrowDownIcon, CheckCircleIcon, InfoIcon } from "lucide-react";
 import { Input } from "./ui/input";
-import Task from "./tasks";
+import Badge from "./badge";
 import type { UseChatHelpers } from "@ai-sdk/react";
 import { useState } from "react";
 
@@ -67,7 +67,7 @@ export const WorkflowGenerator = ({
 
   return (
     <div className="flex flex-col gap-6">
-      <Task icon={CheckCircleIcon} text="Generating your workflow..." />
+      <Badge icon={CheckCircleIcon} text="Generating your workflow..." />
       <div className="flex flex-col gap-2 rounded-md border border-border p-4">
         {rootNode ? renderWorkflow(rootNode.id) : <p>No root node found.</p>}
       </div>
@@ -96,7 +96,7 @@ export const ClarificationTool = ({
 
   return (
     <div className="flex flex-col gap-2">
-      <Task icon={InfoIcon} text="Clarifying your workflow details" />
+      <Badge icon={InfoIcon} text="Clarifying your workflow details" />
       <div className="flex flex-col gap-2 rounded-md border border-border p-4">
         {result.questions.map((question) => (
           <div key={question} className="flex flex-col gap-2">

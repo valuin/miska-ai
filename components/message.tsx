@@ -1,26 +1,28 @@
 "use client";
 
-import type { UIMessage } from "ai";
-import cx from "classnames";
 import { AnimatePresence, motion } from "framer-motion";
-import { memo, useState } from "react";
-import type { Vote } from "@/lib/db/schema";
-import { DocumentToolCall, DocumentToolResult } from "./document";
-import { PencilEditIcon, SparklesIcon } from "./icons";
-import { Markdown } from "./markdown";
-import { MessageActions } from "./message-actions";
-import { PreviewAttachment } from "./preview-attachment";
-import equal from "fast-deep-equal";
-import { cn, sanitizeText } from "@/lib/utils";
 import { Button } from "./ui/button";
-import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
-import { MessageEditor } from "./message-editor";
+import { cn, sanitizeText } from "@/lib/utils";
 import { DocumentPreview } from "./document-preview";
+import { DocumentToolCall, DocumentToolResult } from "./document";
+import { Markdown } from "./markdown";
+import { memo, useState } from "react";
+import { MessageActions } from "./message-actions";
+import { MessageEditor } from "./message-editor";
 import { MessageReasoning } from "./message-reasoning";
-import type { UseChatHelpers } from "@ai-sdk/react";
-import Sources from "./sources";
-import Options from "./options";
+import { PencilEditIcon, SparklesIcon } from "./icons";
+import { PreviewAttachment } from "./preview-attachment";
+import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 import { WorkflowGenerator, ClarificationTool } from "./workflow";
+import Badge from "./badge";
+import cx from "classnames";
+import equal from "fast-deep-equal";
+import GradientText from "./GradientText/GradientText";
+import Options from "./options";
+import Sources from "./sources";
+import type { UIMessage } from "ai";
+import type { UseChatHelpers } from "@ai-sdk/react";
+import type { Vote } from "@/lib/db/schema";
 
 const PurePreviewMessage = ({
   chatId,
@@ -44,6 +46,7 @@ const PurePreviewMessage = ({
   append: UseChatHelpers["append"];
 }) => {
   const [mode, setMode] = useState<"view" | "edit">("view");
+  console.log(JSON.stringify(message, null, 2));
 
   return (
     <AnimatePresence>
@@ -76,6 +79,37 @@ const PurePreviewMessage = ({
               "min-h-96": message.role === "assistant" && requiresScrollPadding,
             })}
           >
+            {message.annotations &&
+              message.annotations.length > 0 &&
+              message.annotations.map(
+                (annotation: { type: string } & any, index: number) => {
+                  if (annotation.type === "agent-choice") {
+                    return (
+                      <Badge
+                        key={index}
+                        icon={SparklesIcon}
+                        text={
+                          <GradientText
+                            colors={[
+                              "#154fc2",
+                              "#9b61e8",
+                              "#4bdee2",
+                              "#9b61e8",
+                              "#154fc2",
+                            ]}
+                            animationSpeed={3}
+                            showBorder={false}
+                            className="text-xs"
+                          >
+                            {annotation.agentChoice}
+                          </GradientText>
+                        }
+                      />
+                    );
+                  }
+                },
+              )}
+
             {message.experimental_attachments &&
               message.experimental_attachments.length > 0 && (
                 <div
@@ -91,9 +125,7 @@ const PurePreviewMessage = ({
                   ))}
                 </div>
               )}
-
             {/* {JSON.stringify(message.parts, null, 2)} */}
-
             {message.parts?.map((part, index) => {
               const { type } = part;
               const key = `message-${message.id}-part-${index}`;
@@ -236,7 +268,6 @@ const PurePreviewMessage = ({
                 }
               }
             })}
-
             {!isReadonly && (
               <MessageActions
                 key={`action-${message.id}`}
