@@ -4,7 +4,6 @@ import { mastra } from "@/mastra";
 import { optionsAgent } from "@/mastra/tools/utility-tools";
 import { saveMessages } from "@/lib/db/queries";
 import type { DataStreamWriter, Message, StepResult } from "ai";
-import { documentAgent } from "@/mastra/agents/document-agent";
 
 type onFinishResult = Omit<StepResult<any>, "stepType" | "isContinued"> & {
   readonly steps: StepResult<any>[];

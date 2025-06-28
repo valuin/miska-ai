@@ -13,7 +13,9 @@ import { MessageReasoning } from "./message-reasoning";
 import { PencilEditIcon, SparklesIcon } from "./icons";
 import { PreviewAttachment } from "./preview-attachment";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
-import { WorkflowGenerator, ClarificationTool } from "./workflow";
+import { ClarificationTool } from "./workflow";
+import SchemaVisualizer from "./schema-builder";
+import { extractWorkflowGraph } from "./schema-graph-util";
 import Badge from "./badge";
 import cx from "classnames";
 import equal from "fast-deep-equal";
@@ -237,7 +239,15 @@ const PurePreviewMessage = ({
                       ) : toolName === "optionsTool" ? (
                         <Options options={result.options} append={append} />
                       ) : toolName === "workflowTool" ? (
-                        <WorkflowGenerator result={result} />
+                        <div className="w-full min-h-[400px] min-w-[320px]">
+                          {(() => {
+                            const { nodes, edges } = extractWorkflowGraph(result);
+                            if (nodes.length > 0) {
+                              return <SchemaVisualizer nodes={nodes} edges={edges} />;
+                            }
+                            return <div className="text-muted-foreground text-sm">No workflow data.</div>;
+                          })()}
+                        </div>
                       ) : toolName === "clarificationTool" ? (
                         <ClarificationTool result={result} append={append} />
                       ) : toolName === "createDocument" ? (
@@ -330,3 +340,4 @@ export const ThinkingMessage = () => {
     </motion.div>
   );
 };
+
