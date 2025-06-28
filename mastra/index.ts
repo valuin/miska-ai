@@ -4,9 +4,10 @@ import { PinoLogger } from "@mastra/loggers";
 import { ragChatAgent } from "./agents/rag-chat-agent";
 import { researchAgent } from "./agents/research-agent";
 import { workflowCreatorAgent } from "./agents/workflow-creator-agent";
+import { documentAgent } from "./agents/document-agent";
 
 export const mastra = new Mastra({
-  agents: { researchAgent, ragChatAgent, normalAgent, workflowCreatorAgent },
+  agents: { researchAgent, ragChatAgent, normalAgent, workflowCreatorAgent, documentAgent },
   logger: new PinoLogger({
     name: "Mastra",
     level: "info",

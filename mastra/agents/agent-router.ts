@@ -13,6 +13,7 @@ const agentTypeSchema = z.object({
     "ragChatAgent",
     "workflowCreatorAgent",
     "normalAgent",
+    "documentAgent",
   ] as const),
 });
 type AgentType = z.infer<typeof agentTypeSchema>["agentType"];
@@ -30,6 +31,8 @@ export const agentRouter = new Agent({
     - This agent is used to build workflows for the user; for example, building a workflow to draft an email.
   - normalAgent
     - This agent is used to respond to user queries that are very simple, and don't require any other agents.
+  - documentAgent
+    - This agent is used to create, update, and request suggestions for documents.
   `,
   model: openai("gpt-4o-mini"),
 });
