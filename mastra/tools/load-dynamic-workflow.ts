@@ -2,7 +2,12 @@ import { createWorkflow, createStep } from "@mastra/core/workflows";
 import { z } from "zod";
 import { mastra } from "..";
 
-const AGENT_TYPES = ["researchAgent", "ragChatAgent", "documentAgent"] as const;
+const AGENT_TYPES = [
+  "researchAgent",
+  "ragChatAgent",
+  "documentAgent",
+  "normalAgent",
+] as const;
 
 export type WorkflowNode = {
   id: string;
