@@ -51,26 +51,24 @@ function PureMessages({
       {messages.length === 0 && <Greeting />}
 
       {messages.map((message, index) => (
-        <>
-          <PreviewMessage
-            key={message.id}
-            chatId={chatId}
-            message={message}
-            isLoading={status === "streaming" && messages.length - 1 === index}
-            vote={
-              votes
-                ? votes.find((vote) => vote.messageId === message.id)
-                : undefined
-            }
-            setMessages={setMessages}
-            append={append}
-            reload={reload}
-            isReadonly={isReadonly}
-            requiresScrollPadding={
-              hasSentMessage && index === messages.length - 1
-            }
-          />
-        </>
+        <PreviewMessage
+          key={message.id}
+          chatId={chatId}
+          message={message}
+          isLoading={status === "streaming" && messages.length - 1 === index}
+          vote={
+            votes
+              ? votes.find((vote) => vote.messageId === message.id)
+              : undefined
+          }
+          setMessages={setMessages}
+          append={append}
+          reload={reload}
+          isReadonly={isReadonly}
+          requiresScrollPadding={
+            hasSentMessage && index === messages.length - 1
+          }
+        />
       ))}
 
       {status === "submitted" &&

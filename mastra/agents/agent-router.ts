@@ -55,7 +55,6 @@ export async function getAgentType(messages: Message[]): Promise<AgentType> {
       { experimental_output: agentTypeSchema },
     );
     const { agentType } = response.object;
-    console.log("agentType", agentType);
     return agentType;
   } catch (err) {
     return "normalAgent";
