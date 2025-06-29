@@ -27,12 +27,12 @@ export const agentRouter = new Agent({
     - This agent is used to research the user's query, and find the most relevant information.
   - ragChatAgent
     - This agent is used to respond to user queries that require retrieval into internal documents.
-  - workflowCreatorAgent
-    - This agent is used to build workflows for the user; for example, building a workflow to draft an email.
   - normalAgent
     - This agent is used to respond to user queries that are very simple, and don't require any other agents.
   - documentAgent
     - This agent is used to create, update, and request suggestions for documents.
+  - workflowCreatorAgent
+    - This agent is used to build workflows for the user; for example, building a workflow to draft an email.
   `,
   model: openai("gpt-4o-mini"),
 });
@@ -49,7 +49,6 @@ export async function getAgentType(messages: Message[]): Promise<AgentType> {
       { experimental_output: agentTypeSchema },
     );
     const { agentType } = response.object;
-    console.log("agentType", agentType);
     return agentType;
   } catch (err) {
     return "normalAgent";
