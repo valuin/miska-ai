@@ -6,31 +6,20 @@ import { useState } from "react";
 import SchemaVisualizer from "./schema-builder";
 import { extractWorkflowGraph } from "./schema-graph-util";
 import { Textarea } from "./ui/textarea";
+import type { CreatedWorkflow } from "@/mastra/tools/workflow-creator-tools";
 
-type WorkflowNode = {
-  id: string;
-  type: "human-input" | "agent-task";
-  description: string;
-  tool?: string;
-  next?: string[];
-};
-
-export const WorkflowMessage = ({
-  result,
-}: {
-  result: { workflow: WorkflowNode[] };
-}) => {
+export const WorkflowMessage = ({ result }: { result: CreatedWorkflow }) => {
+  const { name, description } = result;
+  const { nodes, edges } = extractWorkflowGraph(result.nodes);
   return (
     <div className="w-full min-h-[400px] min-w-[320px]">
-      {(() => {
-        const { nodes, edges } = extractWorkflowGraph(result);
-        if (nodes.length > 0) {
-          return <SchemaVisualizer nodes={nodes} edges={edges} />;
-        }
-        return (
-          <div className="text-muted-foreground text-sm">No workflow data.</div>
-        );
-      })()}
+      <h2 className="text-lg font-bold">{name}</h2>
+      <p className="text-sm text-muted-foreground">{description}</p>
+      {nodes.length > 0 ? (
+        <SchemaVisualizer nodes={nodes} edges={edges} />
+      ) : (
+        <div className="text-muted-foreground text-sm">No workflow data.</div>
+      )}
     </div>
   );
 };

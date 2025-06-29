@@ -1,5 +1,6 @@
 import { createTool } from "@mastra/core/tools";
 import { z } from "zod";
+import { createMastraWorkflowFromJson } from "./load-dynamic-workflow";
 
 const AGENT_TYPES = ["researchAgent", "ragChatAgent", "documentAgent"] as const;
 const agentEnum = z.enum(AGENT_TYPES);
@@ -10,6 +11,13 @@ export type WorkflowNode = {
   description: string;
   agent?: (typeof AGENT_TYPES)[number];
   next?: string[];
+};
+
+export type CreatedWorkflow = {
+  id: string;
+  name: string;
+  description: string;
+  nodes: WorkflowNode[];
 };
 
 export const workflowTool = createTool({
@@ -31,6 +39,7 @@ export const workflowTool = createTool({
   4. The last node should omit 'next' field
   `,
   inputSchema: z.object({
+    name: z.string().describe("Name of the workflow"),
     description: z.string().describe("High-level description of the workflow"),
     steps: z.array(
       z.object({
@@ -41,7 +50,10 @@ export const workflowTool = createTool({
     ),
   }),
   outputSchema: z.object({
-    workflow: z.array(
+    id: z.string(),
+    name: z.string(),
+    description: z.string(),
+    nodes: z.array(
       z.object({
         id: z.string(),
         type: z.enum(["human-input", "agent-task"]),
@@ -67,10 +79,27 @@ export const workflowTool = createTool({
         nodes[i].next = [nodes[i + 1].id];
       }
 
-      return { workflow: nodes };
+      const workflowId = crypto.randomUUID();
+      const workflow = createMastraWorkflowFromJson({
+        id: workflowId,
+        description: context.description,
+        nodes,
+      });
+
+      return {
+        id: workflowId,
+        name: context.name,
+        description: context.description,
+        nodes,
+      };
     } catch (e) {
       console.error("Workflow generation failed:", e);
-      return { workflow: [] };
+      return {
+        id: "",
+        name: "",
+        description: "",
+        nodes: [],
+      };
     }
   },
 });
