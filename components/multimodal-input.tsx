@@ -134,14 +134,12 @@ function PureMultimodalInput({
 
   const uploadFile = async (file: File): Promise<Attachment | undefined> => {
     try {
-      // Step 1: Upload file to blob storage
       const newBlob = await upload(file.name, file, {
         access: 'public',
         handleUploadUrl: '/api/files/upload-blob',
         multipart: true,
       });
 
-      // Step 2: Process document with RAG system
       console.log('Processing document:', file.name);
       console.log('Blob URL:', newBlob.url);
       const processResponse = await fetch('/api/files/process-document', {
@@ -162,7 +160,6 @@ function PureMultimodalInput({
 
       const processResult = await processResponse.json();
 
-      // Step 3: Show save to vault option
       if (processResult.success && processResult.document.canSaveToVault) {
         toast.success(
           `Document "${file.name}" processed successfully. You can save it to your vault for future reference.`,

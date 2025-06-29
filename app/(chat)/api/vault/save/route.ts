@@ -1,9 +1,34 @@
 import type { NextRequest } from 'next/server';
 import { auth } from '@/app/(auth)/auth';
 import { getTempDocument, deleteTempDocument, saveDocumentToVault } from '@/lib/db/queries/document-vault';
-import { vectorStore } from '@/lib/rag/vector-store';
+import { qdrantClient, COLLECTION_NAME, VECTOR_SIZE } from '@/lib/rag/vector-store';
 import { ChatSDKError } from '@/lib/errors';
 import { generateUUID } from '@/lib/utils';
+
+
+async function ensureCollection() {
+  const collections = await qdrantClient.getCollections();
+  const exists = collections.collections.some(
+    (c) => c.name === COLLECTION_NAME
+  );
+  if (!exists) {
+    await qdrantClient.createCollection(COLLECTION_NAME, {
+      vectors: {
+        size: VECTOR_SIZE,
+        distance: 'Cosine',
+      },
+    });
+  }
+
+  await qdrantClient.createPayloadIndex(COLLECTION_NAME, {
+    field_name: "filename",
+    field_schema: "keyword",
+  });
+  await qdrantClient.createPayloadIndex(COLLECTION_NAME, {
+    field_name: "user_id",
+    field_schema: "keyword",
+  });
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -38,42 +63,32 @@ export async function POST(request: NextRequest) {
       contentType: string;
     };
 
-    // Create vector index if it doesn't exist
-    try {
-      await vectorStore.createIndex({
-        indexName: 'document_vault',
-        dimension: 1536, // text-embedding-3-small dimensions
-        metric: 'cosine',
-      });
-    } catch (error) {
-      // Index might already exist, continue
-      console.log('Index creation result:', error);
-    }
-
-    // Save chunks to vector database with user metadata
-    const vectorIds: string[] = [];
-    for (let i = 0; i < data.chunks.length; i++) {
-      const chunk = data.chunks[i];
+    // Ensure Qdrant collection exists
+    await ensureCollection();
+    const points = data.chunks.map((chunk, i) => {
       const vectorId = generateUUID();
-      
-      await vectorStore.upsert({
-        indexName: 'document_vault',
-        vectors: [data.embeddings[i]],
-        metadata: [{
+      return {
+        id: vectorId,
+        vector: data.embeddings[i],
+        payload: {
           text: chunk.text,
           user_id: session.user.id,
-          document_id: tempDocumentId, // Will be replaced with actual doc ID
+          document_id: tempDocumentId,
           filename: tempDoc.filename,
           chunk_index: i,
           file_url: data.fileUrl,
           file_type: data.contentType,
           ...chunk.metadata,
-        }],
-        ids: [vectorId],
-      });
-      
-      vectorIds.push(vectorId);
-    }
+        },
+      };
+    });
+
+    await qdrantClient.upsert(COLLECTION_NAME, {
+      wait: true,
+      points,
+    });
+
+    const vectorIds = points.map((p) => p.id);
 
     // Save to database
     const documentId = await saveDocumentToVault({
@@ -88,27 +103,22 @@ export async function POST(request: NextRequest) {
       vectorIds,
     });
 
-    // Update vector metadata with actual document ID
     for (let i = 0; i < vectorIds.length; i++) {
-      await vectorStore.updateVector({
-        indexName: 'document_vault',
-        id: vectorIds[i],
-        update: {
-          metadata: {
-            text: data.chunks[i].text,
-            user_id: session.user.id,
-            document_id: documentId,
-            filename: tempDoc.filename,
-            chunk_index: i,
-            file_url: data.fileUrl,
-            file_type: data.contentType,
-            ...data.chunks[i].metadata,
-          },
+      await qdrantClient.setPayload(COLLECTION_NAME, {
+        points: [vectorIds[i]],
+        payload: {
+          text: data.chunks[i].text,
+          user_id: session.user.id,
+          document_id: documentId,
+          filename: tempDoc.filename,
+          chunk_index: i,
+          file_url: data.fileUrl,
+          file_type: data.contentType,
+          ...data.chunks[i].metadata,
         },
       });
     }
 
-    // Clean up temp document
     await deleteTempDocument(tempDocumentId);
 
     return Response.json({

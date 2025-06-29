@@ -1,9 +1,9 @@
 import { createTool } from "@mastra/core/tools";
 import { z } from "zod";
-import { vectorStore } from "@/lib/rag/vector-store";
 import { getUserVaultDocuments } from "@/lib/db/queries/document-vault";
 import { embed } from "ai";
 import { openai } from "@ai-sdk/openai";
+import { qdrantClient, COLLECTION_NAME } from "@/lib/rag/vector-store";
 
 export const saveDocumentToVaultTool = createTool({
   id: "save-document-to-vault",
@@ -18,12 +18,8 @@ export const saveDocumentToVaultTool = createTool({
     documentId: z.string().optional(),
     message: z.string(),
   }),
-  execute: async ({ context, mastra }) => {
+  execute: async () => {
     try {
-      const { tempDocumentId } = context;
-
-      // This would be called from the chat interface where session is available
-      // For now, return a helpful message
       return {
         success: false,
         message:
@@ -56,7 +52,7 @@ export const listVaultDocumentsTool = createTool({
     ),
     totalCount: z.number(),
   }),
-  execute: async ({ context, mastra, runtimeContext }) => {
+  execute: async ({ runtimeContext }) => {
     try {
       // Get user ID from runtime context (set by the chat handler)
       let userId: string | undefined;
@@ -120,7 +116,7 @@ export const queryVaultDocumentsTool = createTool({
     ),
     totalResults: z.number(),
   }),
-  execute: async ({ context, mastra, runtimeContext }) => {
+  execute: async ({ context, runtimeContext }) => {
     try {
       const { query, topK } = context;
 
@@ -146,21 +142,30 @@ export const queryVaultDocumentsTool = createTool({
         model: openai.embedding("text-embedding-3-small"),
       });
 
-      const results = await vectorStore.query({
-        indexName: "document_vault",
-        queryVector: embedding,
-        topK,
+      const searchResults = await qdrantClient.search(COLLECTION_NAME, {
+        vector: embedding,
+        limit: topK,
         filter: {
-          user_id: userId,
-        },
+          must: [
+            { key: "user_id", match: { value: userId } }
+          ]
+        }
       });
+
+      // console.log("Vault query debug:", {
+      //   query,
+      //   userId,
+      //   embedding,
+      //   searchResults,
+      // });
+      const results = searchResults;
 
       return {
         results: results.map((result) => ({
-          text: result.metadata?.text || "",
+          text: typeof result.payload?.text === "string" ? result.payload.text : "",
           score: result.score,
-          filename: result.metadata?.filename || "",
-          chunkIndex: result.metadata?.chunk_index || 0,
+          filename: typeof result.payload?.filename === "string" ? result.payload.filename : "",
+          chunkIndex: typeof result.payload?.chunk_index === "number" ? result.payload.chunk_index : 0,
         })),
         totalResults: results.length,
       };

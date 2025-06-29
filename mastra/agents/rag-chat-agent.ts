@@ -1,6 +1,5 @@
 import { openai } from '@ai-sdk/openai';
 import { Agent } from '@mastra/core/agent';
-import { QDRANT_PROMPT } from '@/lib/rag/vector-store';
 import { 
   saveDocumentToVaultTool, 
   listVaultDocumentsTool, 
@@ -29,8 +28,6 @@ Document Management:
 - Users can ask to see their vault contents using list-vault-documents
 - Always filter results by the current user's ID for privacy
 - Provide helpful summaries of document contents
-
-${QDRANT_PROMPT}
 
 Keep responses helpful, accurate, and well-cited when using document context.
 Always respect user privacy by filtering searches to their documents only.
