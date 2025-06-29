@@ -232,3 +232,16 @@
   color: transparent;
   animation: gradient linear infinite;
 }
+
+.grow-wrap::after {
+  content: attr(data-replicated-value) ' ';
+  white-space: pre-wrap;
+  visibility: hidden;
+}
+
+.grow-wrap,
+.grow-wrap > textarea,
+.grow-wrap::after {
+  grid-area: 1 / 1 / 2 / 2;
+  font: inherit;
+}
