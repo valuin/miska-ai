@@ -1,48 +1,56 @@
 import { createTool } from "@mastra/core/tools";
 import { z } from "zod";
 
-// Define the WorkflowNode type
+const AGENT_TYPES = ["researchAgent", "ragChatAgent", "documentAgent"] as const;
+const agentEnum = z.enum(AGENT_TYPES);
+
 export type WorkflowNode = {
   id: string;
   type: "human-input" | "agent-task";
   description: string;
-  tool?: string;
+  agent?: (typeof AGENT_TYPES)[number];
   next?: string[];
 };
 
-// Tool input schema
-const workflowInputSchema = z.object({
-  description: z.string().describe("High-level description of the workflow"),
-  steps: z
-    .array(
+export const workflowTool = createTool({
+  id: "workflow-generator",
+  description: `
+  Generates a directed workflow graph from a description and list of steps.
+  
+  Required node structure:
+  - id: string (unique identifier, typically UUID)
+  - type: "human-input" | "agent-task"
+  - description: string (clear step description)
+  - agent: string (required for agent-task nodes)
+  - next: string[] (optional array of next node IDs)
+  
+  Rules:
+  1. All nodes must be connected via 'next' fields
+  2. Human-input nodes cannot have agents
+  3. Agent-task nodes must specify an agent
+  4. The last node should omit 'next' field
+  `,
+  inputSchema: z.object({
+    description: z.string().describe("High-level description of the workflow"),
+    steps: z.array(
       z.object({
         type: z.enum(["human-input", "agent-task"]),
         description: z.string(),
-        tool: z.string().optional(),
+        agent: agentEnum.optional(),
       }),
-    )
-    .describe("Ordered list of steps to convert into a workflow"),
-});
-
-// Tool output schema
-const workflowOutputSchema = z.object({
-  workflow: z.array(
-    z.object({
-      id: z.string(),
-      type: z.enum(["human-input", "agent-task"]),
-      description: z.string(),
-      tool: z.string().optional(),
-      next: z.array(z.string()).optional(),
-    }),
-  ),
-});
-
-export const workflowTool = createTool({
-  id: "workflow-generator",
-  description:
-    "Generate a directed workflow graph from a description and list of steps.",
-  inputSchema: workflowInputSchema,
-  outputSchema: workflowOutputSchema,
+    ),
+  }),
+  outputSchema: z.object({
+    workflow: z.array(
+      z.object({
+        id: z.string(),
+        type: z.enum(["human-input", "agent-task"]),
+        description: z.string(),
+        agent: agentEnum.optional(),
+        next: z.array(z.string()).optional(),
+      }),
+    ),
+  }),
   execute: async ({ context }) => {
     try {
       const { steps } = context;
@@ -69,12 +77,17 @@ export const workflowTool = createTool({
 
 export const clarificationTool = createTool({
   id: "clarification-tool",
-  description: "Ask user clarifying questions before generating a workflow.",
+  description: `
+  Asks user clarifying questions before workflow generation.
+  
+  Rules:
+  - Must ask 1-3 specific questions
+  - Questions should target missing information
+  - Should explain why each question is needed
+  - Must be used when request is ambiguous
+  `,
   inputSchema: z.object({
-    questions: z
-      .array(z.string().describe("The question to ask the user"))
-      .min(1)
-      .max(3),
+    questions: z.array(z.string()).min(1).max(3),
   }),
   outputSchema: z.object({ questions: z.array(z.string()) }),
   execute: async ({ context }) => {
