@@ -26,13 +26,14 @@ export const agentRouter = new Agent({
   - Any query about the "vault", saving, searching, or asking about preexisting documents (including retrieval, lookup, or questions about stored documents) must ALWAYS be routed to ragChatAgent.
   - Only requests to create, update, or get suggestions for new documents (not vault-related) should be routed to documentAgent.
   - Do NOT route vault-related queries to documentAgent.
+  - if the user asks about information that requires searching the internet, use researchAgent.
   - If the user asks about both creating and searching documents, prioritize ragChatAgent for vault/search/retrieval intent.
 
   You have the following agents available:
   - researchAgent
     - This agent is used to research the user's query, and find the most relevant information.
   - ragChatAgent
-    - This agent is used to respond to user queries that require retrieval into internal documents or the vault.
+    - This agent is used to respond to user queries that require retrieval into internal documents or the vault, DOES NOT INCLUDE INFORMATION THAT NEEDS TO BE SEARCHED ON THE INTERNET.
   - workflowCreatorAgent
     - This agent is used to build workflows for the user; for example, building a workflow to draft an email.
   - normalAgent

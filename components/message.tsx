@@ -11,6 +11,8 @@ import { MessageActions } from "./message-actions";
 import { MessageEditor } from "./message-editor";
 import { MessageReasoning } from "./message-reasoning";
 import { PencilEditIcon, SparklesIcon } from "./icons";
+import { SearchIcon } from "lucide-react";
+import ToolCallBadge from "./tool-call-badge";
 import { PreviewAttachment } from "./preview-attachment";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 import { ClarificationTool } from "./workflow";
@@ -198,6 +200,10 @@ const PurePreviewMessage = ({
                 const { toolInvocation } = part;
                 const { toolName, toolCallId, state } = toolInvocation;
 
+                const isVaultTool =
+                  toolName === "queryVaultDocumentsTool" ||
+                  toolName === "listVaultDocumentsTool"
+
                 if (state === "call") {
                   const { args } = toolInvocation;
 
@@ -208,7 +214,9 @@ const PurePreviewMessage = ({
                         skeleton: ["searxng"].includes(toolName),
                       })}
                     >
-                      {toolName === "searxng" ? (
+                      {isVaultTool && args?.query ? (
+                        <ToolCallBadge icon={SearchIcon} query={args.query} />
+                      ) : toolName === "searxng" ? (
                         <Sources args={args} streaming={true} />
                       ) : toolName === "createDocument" ? (
                         <DocumentPreview isReadonly={isReadonly} args={args} />
@@ -269,8 +277,6 @@ const PurePreviewMessage = ({
                         />
                       ) : (
                         <pre>
-                          {toolName}
-                          {/* {JSON.stringify(result, null, 2)} */}
                         </pre>
                       )}
                     </div>
