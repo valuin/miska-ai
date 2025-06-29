@@ -196,6 +196,7 @@ const PurePreviewMessage = ({
               if (type === 'tool-invocation') {
                 const { toolInvocation } = part;
                 const { toolName, toolCallId, state } = toolInvocation;
+                console.log('toolName is:', toolName);
 
                 const isVaultTool =
                   toolName === 'queryVaultDocumentsTool' ||
@@ -203,21 +204,20 @@ const PurePreviewMessage = ({
 
                 if (state === 'call') {
                   const { args } = toolInvocation;
+                  console.log('args are:', args);
 
                   return (
                     <div
                       key={toolCallId}
                       className={cx({
-                        skeleton: ['searxng'].includes(toolName),
+                        skeleton: ['searxngTool'].includes(toolName),
                       })}
                     >
-                      {isVaultTool && args?.query ? (
+                      {isVaultTool ||
+                      (toolName === 'crawlerTool' && args?.query) ? (
                         <ToolCallBadge icon={SearchIcon} query={args.query} />
                       ) : toolName === 'searxngTool' ? (
-                        <ToolCallBadge
-                          icon={SearchIcon}
-                          query={args.query || ''}
-                        />
+                        <Sources args={args} streaming={true} />
                       ) : toolName === 'createDocument' ? (
                         <DocumentPreview isReadonly={isReadonly} args={args} />
                       ) : toolName === 'updateDocument' ? (
@@ -239,11 +239,15 @@ const PurePreviewMessage = ({
 
                 if (state === 'result') {
                   const { result } = toolInvocation;
-
                   return (
                     <div key={toolCallId}>
                       {toolName === 'searxngTool' ? (
                         <Sources args={result} streaming={false} />
+                      ) : toolName === 'crawlerTool' ? (
+                        <ToolCallBadge
+                          icon={SearchIcon}
+                          query={result[0].url}
+                        />
                       ) : toolName === 'optionsTool' ? (
                         <Options options={result.options} append={append} />
                       ) : toolName === 'workflowTool' ? (

@@ -77,13 +77,12 @@ export const crawlerTool = createTool({
               ? {
                   url: r.url ?? '',
                   markdown:
-                    typeof r.markdown_with_citations === 'string'
-                      ? r.markdown_with_citations
+                    typeof r?.markdown === 'object' && typeof r.markdown.markdown_with_citations === 'string'
+                      ? r.markdown.markdown_with_citations
                           .replace(/(\r?\n)+/g, ' ')
                           .replace(/\s+/g, ' ')
                           .trim()
                       : '',
-                  html: r.html ?? '',
                   status: r.status ?? '',
                   success: r.success ?? false,
                   error_message: r.error_message ?? '',
@@ -109,7 +108,6 @@ export const crawlerTool = createTool({
             metadata: {},
           })),
     };
-    console.log('CrawlerTool returning:', JSON.stringify(result, null, 2));
-    return result;
+    return result.crawled;
   },
 });

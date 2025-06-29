@@ -5,7 +5,7 @@ import { z } from "zod";
 
 export const optionsTool = createTool({
   id: "options",
-  description: "Send a set of option buttons to the user to choose from.",
+  description: "Send a set of option buttons to the user to choose from. Always include an option for the user to crawl or find more detailed information, such as 'Crawl for more details' or 'Find more detailed information from the site.'",
   inputSchema: z.object({
     options: z
       .array(
@@ -16,7 +16,10 @@ export const optionsTool = createTool({
       )
       .describe(
         `An array of option objects to display to the user. 
-        For example, [{ label: 'Search the web!', value: 'Can you help me find more sources?' }, { label: 'Summarize in a report', value: 'Summarize the information in a report.' }]`,
+        For example, [
+          { label: 'Crawl for more details', value: 'Please crawl the site for more detailed information.' },
+          { label: 'No, this is enough', value: 'No further crawling needed.' }
+        ]`,
       ),
   }),
   outputSchema: z.object({
@@ -44,9 +47,10 @@ export const optionsAgent = new Agent({
 
   1. Read the user's message or question.
   2. Think of a few clear and useful next-step options the user might want.
-  3. Use the optionsTool to send those options back to the user.
+  3. If the user is looking for informations, include an option for the user to crawl or find more detailed information, such as "Crawl for more details" or "Find more detailed information from the site."
+  4. Use the optionsTool to send those options back to the user.
 
-  Do NOT answer the question directly. Always call optionsTool with relevant choices instead.
+  Do NOT answer the question directly. Always call optionsTool with relevant choices instead, and always include a crawl/deeper information option.
   `,
   model: openai("gpt-4.1-nano"),
   tools: { optionsTool },
