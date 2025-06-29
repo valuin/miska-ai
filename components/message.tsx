@@ -2,6 +2,7 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import { Button } from "./ui/button";
+import { ClarificationMessage, WorkflowMessage } from "./workflow";
 import { cn, sanitizeText } from "@/lib/utils";
 import { DocumentPreview } from "./document-preview";
 import { DocumentToolCall, DocumentToolResult } from "./document";
@@ -15,9 +16,6 @@ import { SearchIcon } from "lucide-react";
 import ToolCallBadge from "./tool-call-badge";
 import { PreviewAttachment } from "./preview-attachment";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
-import { ClarificationTool } from "./workflow";
-import SchemaVisualizer from "./schema-builder";
-import { extractWorkflowGraph } from "./schema-graph-util";
 import Badge from "./badge";
 import cx from "classnames";
 import equal from "fast-deep-equal";
@@ -247,17 +245,9 @@ const PurePreviewMessage = ({
                       ) : toolName === "optionsTool" ? (
                         <Options options={result.options} append={append} />
                       ) : toolName === "workflowTool" ? (
-                        <div className="w-full min-h-[400px] min-w-[320px]">
-                          {(() => {
-                            const { nodes, edges } = extractWorkflowGraph(result);
-                            if (nodes.length > 0) {
-                              return <SchemaVisualizer nodes={nodes} edges={edges} />;
-                            }
-                            return <div className="text-muted-foreground text-sm">No workflow data.</div>;
-                          })()}
-                        </div>
+                        <WorkflowMessage result={result} />
                       ) : toolName === "clarificationTool" ? (
-                        <ClarificationTool result={result} append={append} />
+                        <ClarificationMessage result={result} append={append} />
                       ) : toolName === "createDocument" ? (
                         <DocumentPreview
                           isReadonly={isReadonly}
@@ -346,4 +336,3 @@ export const ThinkingMessage = () => {
     </motion.div>
   );
 };
-
