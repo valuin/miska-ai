@@ -48,17 +48,6 @@ export default function Sources({
 
   return (
     <div className="flex flex-col gap-2">
-      <Badge
-        icon={SearchIcon}
-        text={
-          <p className="whitespace-nowrap flex flex-row gap-1">
-            Searched{" "}
-            <code className="text-muted-foreground/80 font-semibold">
-              {query}
-            </code>
-          </p>
-        }
-      />
       <DropdownMenu open={open} onOpenChange={setOpen}>
         <DropdownMenuTrigger asChild>
           <button

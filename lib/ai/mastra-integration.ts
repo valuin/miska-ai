@@ -58,9 +58,8 @@ export async function streamWithMastraAgent(
     });
   }
 
-  // Set up a resourceId and threadId for Mastra memory if chatId is provided
   const resourceId = options?.chatId || generateUUID();
-  const threadId = generateUUID(); // Generate a new thread for each conversation
+  const threadId = generateUUID();
 
   const saveMessage = async (result: any[]) => {
     try {
