@@ -28,7 +28,6 @@ export const createDocument = createTool({
       runtimeContext as unknown as MastraRuntimeContext;
 
     const id = generateUUID();
-
     dataStream.writeData({ type: "kind", content: kind });
     dataStream.writeData({ type: "id", content: id });
     dataStream.writeData({ type: "title", content: title });

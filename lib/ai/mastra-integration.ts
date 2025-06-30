@@ -31,9 +31,9 @@ type ToolResult = {
 type Step = StepText | ToolCall | ToolResult;
 
 export async function streamWithMastraAgent(
+  chatId: string,
   messages: Message[],
   options: {
-    chatId: string;
     onToolCall?: (toolCall: any) => Promise<void>;
     runtimeContext?: MastraRuntimeContext;
     responsePipe: DataStreamWriter;
@@ -58,7 +58,7 @@ export async function streamWithMastraAgent(
     });
   }
 
-  const resourceId = options?.chatId || generateUUID();
+  const resourceId = chatId || generateUUID();
   const threadId = generateUUID();
 
   const saveMessage = async (result: any[]) => {
@@ -99,7 +99,13 @@ export async function streamWithMastraAgent(
         }
         return true;
       });
-      await saveMastraMessage(options.chatId, "assistant", filteredSteps);
+
+      await saveMastraMessage(
+        selectedAgent,
+        chatId,
+        "assistant",
+        filteredSteps,
+      );
     } catch (error) {
       console.error("Failed to save Mastra agent message:", error);
     }
@@ -137,6 +143,7 @@ export async function streamWithMastraAgent(
  * Save a message to the database from a Mastra agent
  */
 export async function saveMastraMessage(
+  agentName: string,
   chatId: string,
   role: "user" | "assistant",
   parts: Step[],
@@ -151,6 +158,7 @@ export async function saveMastraMessage(
   const dbMessage = {
     id: messageId,
     chatId,
+    agentName,
     role,
     parts,
     attachments: [],

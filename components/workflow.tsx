@@ -1,12 +1,12 @@
 import { Button } from "./ui/button";
-import { InfoIcon } from "lucide-react";
-import Badge from "./badge";
-import type { UseChatHelpers } from "@ai-sdk/react";
-import { useState } from "react";
-import SchemaVisualizer from "./schema-builder";
 import { extractWorkflowGraph } from "./schema-graph-util";
+import { InfoIcon } from "lucide-react";
 import { Textarea } from "./ui/textarea";
+import { useState } from "react";
+import Badge from "./badge";
+import SchemaVisualizer from "./schema-builder";
 import type { CreatedWorkflow } from "@/mastra/tools/workflow-creator-tools";
+import type { UseChatHelpers } from "@ai-sdk/react";
 
 export const WorkflowMessage = ({ result }: { result: CreatedWorkflow }) => {
   const { name, description } = result;
@@ -50,7 +50,7 @@ export const ClarificationMessage = ({
           <div key={question} className="flex flex-col gap-2">
             <p>{question}</p>
             <Textarea
-              className="min-h-fit"
+              className="min-h-0"
               onChange={(e) =>
                 setAnswers({ ...answers, [question]: e.target.value })
               }

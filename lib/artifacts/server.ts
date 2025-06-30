@@ -51,10 +51,10 @@ export function createDocumentHandler<T extends ArtifactKind>(config: {
         session: args.session,
       });
 
-      console.log(args.session);
-
       if (args.session?.user?.id) {
+        console.log("saving document");
         await saveDocument({
+          id: args.id,
           title: args.title,
           content: draftContent,
           kind: config.kind,
@@ -74,6 +74,7 @@ export function createDocumentHandler<T extends ArtifactKind>(config: {
 
       if (args.session?.user?.id) {
         await saveDocument({
+          id: args.document.id,
           title: args.document.title,
           content: draftContent,
           kind: config.kind,

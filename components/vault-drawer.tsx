@@ -57,7 +57,7 @@ export function VaultDrawer() {
       onOpenChange={setIsOpen}
     >
       <DrawerTrigger asChild>
-        <Button variant="outline" className="flex items-center gap-2">
+        <Button variant="outline" className="flex items-center gap-2 h-[34px]">
           <FileIcon className="size-4" />
           Open Vault
         </Button>

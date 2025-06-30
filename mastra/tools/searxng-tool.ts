@@ -18,7 +18,7 @@ export const searxngTool = createTool({
         title: z.string(),
         url: z.string(),
         snippet: z.string().optional(),
-      })
+      }),
     ),
   }),
   execute: async (context) => {
@@ -27,7 +27,7 @@ export const searxngTool = createTool({
       (context as any).input?.query ??
       (context as any).context?.query ??
       "";
-    console.log("SearxngTool context:", context);
+    // console.log("SearxngTool context:", context);
     if (typeof query !== "string") {
       console.error("SearxngTool: query is not a string", query);
       throw new Error("Query must be a string");

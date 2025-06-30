@@ -65,8 +65,7 @@ async function handleChatStreaming({
 }: HandleChatStreamingParams) {
   const files = messages.at(-1)?.experimental_attachments;
   await processAttachments({ files, session });
-  await streamWithMastraAgent(messages, {
-    chatId: id,
+  await streamWithMastraAgent(id, messages, {
     responsePipe,
     runtimeContext: { session, dataStream: responsePipe },
   });
@@ -109,6 +108,7 @@ export async function handlePost(request: Request) {
     const dbMessage = {
       chatId: id,
       id: message.id,
+      agentName: null,
       role: "user",
       parts: message.parts,
       attachments: message.experimental_attachments ?? [],
