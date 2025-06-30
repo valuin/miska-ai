@@ -1,9 +1,7 @@
 import { openai } from "@ai-sdk/openai";
 import { Agent } from "@mastra/core/agent";
-import {
-  clarificationTool,
-  workflowTool,
-} from "../tools/workflow-creator-tools";
+import { clarificationTool } from "../tools/chain-tools";
+import { workflowTool } from "../tools/workflow-creator-tools";
 
 export type WorkflowNode = {
   id: string;

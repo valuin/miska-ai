@@ -5,7 +5,7 @@ import { Agent } from "@mastra/core/agent";
 import { createDocument } from "../tools/create-document";
 import { updateDocument } from "../tools/update-document";
 import { requestSuggestions } from "../tools/request-suggestions";
-import { clarificationTool } from "../tools/workflow-creator-tools";
+import { clarificationTool } from "../tools/chain-tools";
 
 /**
  * This agent handles document creation, updating, and suggestion requests.

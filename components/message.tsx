@@ -242,7 +242,11 @@ const PurePreviewMessage = ({
                           args={args}
                           isReadonly={isReadonly}
                         />
-                      ) : null}
+                      ) : (
+                        <div>
+                          {toolName} {JSON.stringify(args, null, 2)}
+                        </div>
+                      )}
                     </div>
                   );
                 }
@@ -282,7 +286,9 @@ const PurePreviewMessage = ({
                           isReadonly={isReadonly}
                         />
                       ) : (
-                        <pre>handle tool result</pre>
+                        <div>
+                          {toolName} {JSON.stringify(result, null, 2)}
+                        </div>
                       )}
                     </div>
                   );

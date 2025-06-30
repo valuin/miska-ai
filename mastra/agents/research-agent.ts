@@ -3,7 +3,7 @@ import { openai } from "@ai-sdk/openai";
 import { optionsTool } from "../tools/utility-tools";
 import { searxngTool } from "../tools/searxng-tool";
 import { crawlerTool } from "../tools/crawler-tool";
-import { clarificationTool } from "../tools/workflow-creator-tools";
+import { clarificationTool, thinkingTool } from "../tools/chain-tools";
 
 export const researchAgent = new Agent({
   name: "research",
@@ -36,6 +36,12 @@ export const researchAgent = new Agent({
     Only use searxngTool once for the initial search, and then optionally use crawlerTool to extract content from the most relevant links found in the search result
   `,
   model: openai("gpt-4o-mini"),
-  tools: { searxngTool, crawlerTool, optionsTool, clarificationTool },
+  tools: {
+    searxngTool,
+    crawlerTool,
+    optionsTool,
+    thinkingTool,
+    clarificationTool,
+  },
   defaultGenerateOptions: { maxSteps: 4 },
 });

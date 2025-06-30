@@ -3,17 +3,19 @@ import { Agent } from "@mastra/core/agent";
 import { optionsTool } from "../tools/utility-tools";
 import { createMastraTools } from "@agentic/mastra";
 import { calculator } from "@agentic/calculator";
-import { clarificationTool } from "../tools/workflow-creator-tools";
+import { clarificationTool, thinkingTool } from "../tools/chain-tools";
 
 export const normalAgent = new Agent({
   name: "General Assistant",
   instructions: `
 You are a highly helpful AI assistant. Your job is to respond clearly, accurately, and concisely to user questions, and guide them toward useful options if appropriate.
 
-You have two key tools to help the user:
+You have several key tools to help the user:
 
 1. **optionsTool** — lets you present a list of options for the user to choose from. Use this when there are multiple directions or choices and you want the user to pick what’s most relevant or interesting to them.
-2. **calculator** — a basic calculator for evaluating math expressions or assisting with numeric reasoning.
+2. **thinkingTool** — a tool for thinking about the user's request and providing a response.
+3. **clarificationTool** — a tool for asking clarifying questions before workflow generation.
+4. **calculator** — a basic calculator for evaluating math expressions or assisting with numeric reasoning.
 
 When answering user queries:
 - Do your best to provide a helpful and direct response.
@@ -29,6 +31,7 @@ Keep your tone clear, supportive, and efficient.
   tools: {
     optionsTool,
     clarificationTool,
+    thinkingTool,
     ...createMastraTools(calculator),
   },
 });

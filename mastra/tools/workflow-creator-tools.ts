@@ -103,29 +103,3 @@ export const workflowTool = createTool({
     }
   },
 });
-
-export const clarificationTool = createTool({
-  id: "clarification-tool",
-  description: `
-  Asks user clarifying questions before workflow generation.
-  
-  Rules:
-  - Must ask 1-3 specific questions
-  - Questions should target missing information
-  - Should explain why each question is needed
-  - Must be used when request is ambiguous
-  `,
-  inputSchema: z.object({
-    questions: z.array(z.string()).min(1).max(3),
-  }),
-  outputSchema: z.object({ questions: z.array(z.string()) }),
-  execute: async ({ context }) => {
-    try {
-      const { questions } = context;
-      return { questions };
-    } catch (error) {
-      console.error("Clarification tool error:", error);
-      return { questions: [] };
-    }
-  },
-});

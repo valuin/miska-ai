@@ -2,19 +2,19 @@
 
 interface CodeBlockProps {
   node: any;
-  inline: boolean;
+  block: boolean;
   className: string;
   children: any;
 }
 
 export function CodeBlock({
   node,
-  inline,
+  block,
   className,
   children,
   ...props
 }: CodeBlockProps) {
-  if (!inline) {
+  if (block || (typeof children === "string" && children.length > 30)) {
     return (
       <span className="not-prose flex flex-col p-4">
         <span
@@ -25,14 +25,14 @@ export function CodeBlock({
         </span>
       </span>
     );
-  } else {
-    return (
-      <code
-        className={`${className} text-sm bg-zinc-100 dark:bg-zinc-800 py-0.5 px-1 rounded-md`}
-        {...props}
-      >
-        {children}
-      </code>
-    );
   }
+
+  return (
+    <code
+      className={`${className} text-sm bg-zinc-100 dark:bg-zinc-800 py-0.5 px-1 rounded-md`}
+      {...props}
+    >
+      {children}
+    </code>
+  );
 }

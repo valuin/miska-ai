@@ -5,7 +5,9 @@ import { z } from "zod";
 
 export const optionsTool = createTool({
   id: "options",
-  description: "Send a set of option buttons to the user to choose from. Always include an option for the user to crawl or find more detailed information, such as 'Crawl for more details' or 'Find more detailed information from the site.'",
+  description: `Send a set of option buttons to the user to choose from.
+    Always include an option for the user to crawl or find more detailed information, such as 'Find more detailed information from the site', or 'Write me a detailed report'.
+    Other options could include 'Find me similar services.' or 'Would you like me to draft you an email?', based on the context of the conversation.`,
   inputSchema: z.object({
     options: z
       .array(
@@ -16,9 +18,9 @@ export const optionsTool = createTool({
       )
       .describe(
         `An array of option objects to display to the user. 
-        For example, [
+        For example in the case for a research agent, [
           { label: 'Crawl for more details', value: 'Please crawl the site for more detailed information.' },
-          { label: 'No, this is enough', value: 'No further crawling needed.' }
+          { label: 'Write me a detailed report', value: 'Please write me a detailed report about the topic.' }
         ]`,
       ),
   }),
@@ -47,7 +49,7 @@ export const optionsAgent = new Agent({
 
   1. Read the user's message or question.
   2. Think of a few clear and useful next-step options the user might want.
-  3. If the user is looking for informations, include an option for the user to crawl or find more detailed information, such as "Crawl for more details" or "Find more detailed information from the site."
+  3. If the user is looking for informations, include an option for the user to crawl or find more detailed information.
   4. Use the optionsTool to send those options back to the user.
 
   Do NOT answer the question directly. Always call optionsTool with relevant choices instead, and always include a crawl/deeper information option.

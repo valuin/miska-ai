@@ -120,17 +120,14 @@ export async function streamWithMastraAgent(
     },
     runtimeContext: options?.runtimeContext,
     onFinish: async (result: onFinishResult) => {
-      // if (selectedAgent === "researchAgent") {
-      // send user options
-      // const optionsStream = await optionsAgent.stream(messages, {
-      //   onFinish: async (_result: onFinishResult) => {
-      //     await saveMessage([...result.steps, ..._result.steps]);
-      //   },
-      // });
-      // optionsStream.mergeIntoDataStream(responsePipe);
-      // } else {
-      // }
-      await saveMessage(result.steps);
+      const optionsStream = await optionsAgent.stream(messages, {
+        onFinish: async (_result: onFinishResult) => {
+          await saveMessage([...result.steps, ..._result.steps]);
+        },
+      });
+      optionsStream.mergeIntoDataStream(responsePipe);
+
+      // await saveMessage(result.steps);
     },
   };
 

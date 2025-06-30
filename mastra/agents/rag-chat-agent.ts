@@ -1,13 +1,14 @@
-import { openai } from '@ai-sdk/openai';
-import { Agent } from '@mastra/core/agent';
-import { 
-  saveDocumentToVaultTool, 
-  listVaultDocumentsTool, 
-  queryVaultDocumentsTool 
-} from '../tools/document-vault-tools';
+import { Agent } from "@mastra/core/agent";
+import { openai } from "@ai-sdk/openai";
+import { thinkingTool, clarificationTool } from "../tools/chain-tools";
+import {
+  saveDocumentToVaultTool,
+  listVaultDocumentsTool,
+  queryVaultDocumentsTool,
+} from "../tools/document-vault-tools";
 
 export const ragChatAgent = new Agent({
-  name: 'RAG Chat Agent',
+  name: "RAG Chat Agent",
   instructions: `
 You are an AI assistant with access to user-uploaded documents through a document vault system.
 
@@ -32,10 +33,12 @@ Document Management:
 Keep responses helpful, accurate, and well-cited when using document context.
 Always respect user privacy by filtering searches to their documents only.
   `,
-  model: openai('gpt-4o-mini'),
-  tools: { 
+  model: openai("gpt-4o-mini"),
+  tools: {
     saveDocumentToVaultTool,
     listVaultDocumentsTool,
     queryVaultDocumentsTool,
+    thinkingTool,
+    clarificationTool,
   },
 });
