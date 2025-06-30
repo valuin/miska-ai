@@ -3,6 +3,7 @@ import { Agent } from "@mastra/core/agent";
 import { optionsTool } from "../tools/utility-tools";
 import { createMastraTools } from "@agentic/mastra";
 import { calculator } from "@agentic/calculator";
+import { clarificationTool } from "../tools/workflow-creator-tools";
 
 export const normalAgent = new Agent({
   name: "General Assistant",
@@ -27,6 +28,7 @@ Keep your tone clear, supportive, and efficient.
   model: openai("gpt-4o-mini"),
   tools: {
     optionsTool,
+    clarificationTool,
     ...createMastraTools(calculator),
   },
 });

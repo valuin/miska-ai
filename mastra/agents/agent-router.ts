@@ -30,14 +30,15 @@ export const agentRouter = new Agent({
   - If the user asks about both creating and searching documents, prioritize ragChatAgent for vault/search/retrieval intent.
 
   You have the following agents available:
+  - normalAgent
+    - This is the default agent, and is very versatile. It should be used to respond to user queries that are very simple, and don't require any other agents.
+    - However, it should also be used to clarify the user's request if it is ambiguous, such as asking follow up questions, or including options for the user to choose from.
   - researchAgent
-    - This agent is used to research the user's query, and find the most relevant information.
+    - This agent is used to research the user's query, from sources online and internal documents, and find the most relevant information.
   - ragChatAgent
     - This agent is used to respond to user queries that require retrieval into internal documents or the vault, DOES NOT INCLUDE INFORMATION THAT NEEDS TO BE SEARCHED ON THE INTERNET.
   - workflowCreatorAgent
     - This agent is used to build workflows for the user; for example, building a workflow to draft an email.
-  - normalAgent
-    - This agent is used to respond to user queries that are very simple, and don't require any other agents.
   - documentAgent
     - This agent is used to create, update, and request suggestions for new documents (not vault-related).
   `,

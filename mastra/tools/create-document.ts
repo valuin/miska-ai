@@ -1,9 +1,11 @@
 import { createTool } from "@mastra/core/tools";
-import { z } from "zod";
 import { generateUUID } from "@/lib/utils";
-import { artifactKinds, documentHandlersByArtifactKind } from "@/lib/artifacts/server";
-import type { DataStreamWriter } from "ai";
-import type { Session } from "next-auth";
+import { z } from "zod";
+import type { MastraRuntimeContext } from "..";
+import {
+  artifactKinds,
+  documentHandlersByArtifactKind,
+} from "@/lib/artifacts/server";
 
 // @hinson i still cant figure out how to send the session and dataStream to the tool
 export const createDocument = createTool({
@@ -13,8 +15,6 @@ export const createDocument = createTool({
   inputSchema: z.object({
     title: z.string(),
     kind: z.enum(artifactKinds),
-    session: z.any().optional(),
-    dataStream: z.any().optional(),
   }),
   outputSchema: z.object({
     id: z.string(),
@@ -22,32 +22,25 @@ export const createDocument = createTool({
     kind: z.string(),
     content: z.string(),
   }),
-  execute: async ({ context }) => {
-    console.log("createDocument context", context);
-    const { title, kind, session, dataStream } = context as {
-      title: string;
-      kind: string;
-      session?: Session;
-      dataStream?: DataStreamWriter;
-    };
+  execute: async ({ context, runtimeContext }) => {
+    const { title, kind } = context as { title: string; kind: string };
+    const { dataStream, session } =
+      runtimeContext as unknown as MastraRuntimeContext;
 
     const id = generateUUID();
 
-    dataStream?.writeData({ type: "kind", content: kind });
-    dataStream?.writeData({ type: "id", content: id });
-    dataStream?.writeData({ type: "title", content: title });
-    dataStream?.writeData({ type: "clear", content: "" });
+    dataStream.writeData({ type: "kind", content: kind });
+    dataStream.writeData({ type: "id", content: id });
+    dataStream.writeData({ type: "title", content: title });
+    dataStream.writeData({ type: "clear", content: "" });
 
     const documentHandler = documentHandlersByArtifactKind.find(
-      (documentHandlerByArtifactKind) => documentHandlerByArtifactKind.kind === kind,
+      (documentHandlerByArtifactKind) =>
+        documentHandlerByArtifactKind.kind === kind,
     );
 
     if (!documentHandler) {
       throw new Error(`No document handler found for kind: ${kind}`);
-    }
-
-    if (!dataStream || !session) {
-      throw new Error("Both dataStream and session are required for document creation.");
     }
 
     await documentHandler.onCreateDocument({
@@ -57,7 +50,7 @@ export const createDocument = createTool({
       session,
     });
 
-    dataStream?.writeData({ type: "finish", content: "" });
+    dataStream.writeData({ type: "finish", content: "" });
 
     return {
       id,

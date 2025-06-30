@@ -50,10 +50,10 @@ export const ClarificationMessage = ({
           <div key={question} className="flex flex-col gap-2">
             <p>{question}</p>
             <Textarea
-              className="min-h-[100px]"
-              onChange={(e) => {
-                setAnswers({ ...answers, [question]: e.target.value });
-              }}
+              className="min-h-fit"
+              onChange={(e) =>
+                setAnswers({ ...answers, [question]: e.target.value })
+              }
             />
           </div>
         ))}

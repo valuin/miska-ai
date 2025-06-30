@@ -23,6 +23,7 @@ export async function GET(request: Request) {
   if (!session?.user) {
     return new ChatSDKError("unauthorized:document").toResponse();
   }
+  console.log("id is:", id);
 
   const documents = await getDocumentsById({ id });
 

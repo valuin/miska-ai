@@ -1,6 +1,6 @@
 import { generateUUID } from "@/lib/utils";
 import { getAgentType } from "@/mastra/agents/agent-router";
-import { mastra } from "@/mastra";
+import { mastra, type MastraRuntimeContext } from "@/mastra";
 import { optionsAgent } from "@/mastra/tools/utility-tools";
 import { saveMessages } from "@/lib/db/queries";
 import type { DataStreamWriter, Message, StepResult } from "ai";
@@ -35,7 +35,7 @@ export async function streamWithMastraAgent(
   options: {
     chatId: string;
     onToolCall?: (toolCall: any) => Promise<void>;
-    runtimeContext?: Record<string, any>;
+    runtimeContext?: MastraRuntimeContext;
     responsePipe: DataStreamWriter;
   },
 ) {
@@ -87,7 +87,19 @@ export async function streamWithMastraAgent(
           }
         }
       }
-      await saveMastraMessage(options.chatId, "assistant", steps);
+
+      const filteredSteps = steps.filter((step) => {
+        if (step.type !== "tool-call") return true;
+        if (
+          steps.find(
+            (s) => s.type === "tool-result" && s.toolCallId === step.toolCallId,
+          )
+        ) {
+          return false;
+        }
+        return true;
+      });
+      await saveMastraMessage(options.chatId, "assistant", filteredSteps);
     } catch (error) {
       console.error("Failed to save Mastra agent message:", error);
     }

@@ -1,9 +1,10 @@
 import { createTool } from "@mastra/core/tools";
-import { z } from "zod";
-import { getUserVaultDocuments } from "@/lib/db/queries/document-vault";
 import { embed } from "ai";
+import { getUserVaultDocuments } from "@/lib/db/queries/document-vault";
 import { openai } from "@ai-sdk/openai";
 import { qdrantClient, COLLECTION_NAME } from "@/lib/rag/vector-store";
+import { z } from "zod";
+import type { MastraRuntimeContext } from "..";
 
 export const saveDocumentToVaultTool = createTool({
   id: "save-document-to-vault",
@@ -54,23 +55,10 @@ export const listVaultDocumentsTool = createTool({
   }),
   execute: async ({ runtimeContext }) => {
     try {
+      const { session } = runtimeContext as unknown as MastraRuntimeContext;
       // Get user ID from runtime context (set by the chat handler)
-      let userId: string | undefined;
-      if (typeof runtimeContext?.get === "function") {
-        userId = runtimeContext.get("userId");
-      } else if (
-        runtimeContext &&
-        typeof runtimeContext === "object" &&
-        "userId" in runtimeContext
-      ) {
-        userId = (runtimeContext as any).userId;
-      }
-      if (!userId) {
-        return {
-          documents: [],
-          totalCount: 0,
-        };
-      }
+      const userId = session?.user?.id;
+      if (!userId) return { documents: [], totalCount: 0 };
 
       const documents = await getUserVaultDocuments(userId);
       return {
@@ -94,6 +82,14 @@ export const listVaultDocumentsTool = createTool({
   },
 });
 
+// Extract the Zod result schema for reuse
+const VaultDocumentResultSchema = z.object({
+  text: z.string(),
+  score: z.number(),
+  filename: z.string(),
+  chunkIndex: z.number(),
+});
+
 export const queryVaultDocumentsTool = createTool({
   id: "query-vault-documents",
   description: "Search through user vault documents using semantic similarity",
@@ -106,36 +102,24 @@ export const queryVaultDocumentsTool = createTool({
       .describe("Number of results to return"),
   }),
   outputSchema: z.object({
-    results: z.array(
-      z.object({
-        text: z.string(),
-        score: z.number(),
-        filename: z.string(),
-        chunkIndex: z.number(),
-      }),
-    ),
+    results: z.array(VaultDocumentResultSchema),
     totalResults: z.number(),
   }),
-  execute: async ({ context, runtimeContext }) => {
+  execute: async ({
+    context,
+    runtimeContext,
+  }: {
+    context: any;
+    runtimeContext: any;
+  }): Promise<{
+    results: Array<z.infer<typeof VaultDocumentResultSchema>>;
+    totalResults: number;
+  }> => {
     try {
       const { query, topK } = context;
+      const { session } = runtimeContext as unknown as MastraRuntimeContext;
 
-      let userId: string | undefined;
-      if (typeof runtimeContext?.get === "function") {
-        userId = runtimeContext.get("userId");
-      } else if (
-        runtimeContext &&
-        typeof runtimeContext === "object" &&
-        "userId" in runtimeContext
-      ) {
-        userId = (runtimeContext as any).userId;
-      }
-      if (!userId) {
-        return {
-          results: [],
-          totalResults: 0,
-        };
-      }
+      if (!session?.user?.id) return { results: [], totalResults: 0 };
 
       const { embedding } = await embed({
         value: query,
@@ -146,10 +130,8 @@ export const queryVaultDocumentsTool = createTool({
         vector: embedding,
         limit: topK,
         filter: {
-          must: [
-            { key: "user_id", match: { value: userId } }
-          ]
-        }
+          must: [{ key: "user_id", match: { value: session.user.id } }],
+        },
       });
 
       // console.log("Vault query debug:", {
@@ -158,15 +140,22 @@ export const queryVaultDocumentsTool = createTool({
       //   embedding,
       //   searchResults,
       // });
+
       const results = searchResults;
 
       return {
-        results: results.map((result) => ({
-          text: typeof result.payload?.text === "string" ? result.payload.text : "",
-          score: result.score,
-          filename: typeof result.payload?.filename === "string" ? result.payload.filename : "",
-          chunkIndex: typeof result.payload?.chunk_index === "number" ? result.payload.chunk_index : 0,
-        })),
+        results: results.map((result: any) => {
+          const parsed = VaultDocumentResultSchema.safeParse(
+            result.payload ?? {},
+          );
+          if (parsed.success) return parsed.data;
+          return {
+            text: "",
+            score: 0,
+            filename: "",
+            chunkIndex: 0,
+          };
+        }),
         totalResults: results.length,
       };
     } catch (error) {

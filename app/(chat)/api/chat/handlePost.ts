@@ -1,13 +1,13 @@
-import { auth } from '@/app/(auth)/auth';
-import { ChatSDKError } from '@/lib/errors';
-import { generateTitleFromUserMessage } from '../../actions';
-import { generateUUID } from '@/lib/utils';
-import { getAttachmentText } from '@/lib/utils/text-extraction';
-import { getStreamContext } from './streamUtils';
-import { postRequestBodySchema, type PostRequestBody } from './schema';
-import { streamWithMastraAgent } from '@/lib/ai/mastra-integration';
-import type { DBMessage } from '@/lib/db/schema';
-import type { Session } from 'next-auth';
+import { auth } from "@/app/(auth)/auth";
+import { ChatSDKError } from "@/lib/errors";
+import { generateTitleFromUserMessage } from "../../actions";
+import { generateUUID } from "@/lib/utils";
+import { getAttachmentText } from "@/lib/utils/text-extraction";
+import { getStreamContext } from "./streamUtils";
+import { postRequestBodySchema, type PostRequestBody } from "./schema";
+import { streamWithMastraAgent } from "@/lib/ai/mastra-integration";
+import type { DBMessage } from "@/lib/db/schema";
+import type { Session } from "next-auth";
 import {
   createStreamId,
   getChatById,
@@ -15,13 +15,13 @@ import {
   saveChat,
   saveMessages,
   uploadFile,
-} from '@/lib/db/queries';
+} from "@/lib/db/queries";
 import {
   createDataStream,
   type DataStreamWriter,
   type Message,
   type Attachment,
-} from 'ai';
+} from "ai";
 
 interface ProcessAttachmentsParams {
   files: Attachment[] | undefined;
@@ -38,8 +38,8 @@ async function processAttachments({
       try {
         await uploadFile({
           name: file.name || `attachment-${Date.now()}-${index}`,
-          url: file.url || '',
-          text: text || '',
+          url: file.url || "",
+          text: text || "",
           userId: session.user.id,
         });
       } catch (error) {
@@ -68,7 +68,7 @@ async function handleChatStreaming({
   await streamWithMastraAgent(messages, {
     chatId: id,
     responsePipe,
-    runtimeContext: { userId: session.user.id },
+    runtimeContext: { session, dataStream: responsePipe },
   });
 }
 
@@ -78,7 +78,7 @@ export async function handlePost(request: Request) {
     const json = await request.json();
     requestBody = postRequestBodySchema.parse(json);
   } catch (_) {
-    return new ChatSDKError('bad_request:api').toResponse();
+    return new ChatSDKError("bad_request:api").toResponse();
   }
 
   try {
@@ -87,7 +87,7 @@ export async function handlePost(request: Request) {
     const session = await auth();
 
     if (!session?.user)
-      return new ChatSDKError('unauthorized:chat').toResponse();
+      return new ChatSDKError("unauthorized:chat").toResponse();
 
     const chat = await getChatById({ id });
 
@@ -101,7 +101,7 @@ export async function handlePost(request: Request) {
       });
     } else {
       if (chat.userId !== session.user.id) {
-        return new ChatSDKError('forbidden:chat').toResponse();
+        return new ChatSDKError("forbidden:chat").toResponse();
       }
     }
 
@@ -109,7 +109,7 @@ export async function handlePost(request: Request) {
     const dbMessage = {
       chatId: id,
       id: message.id,
-      role: 'user',
+      role: "user",
       parts: message.parts,
       attachments: message.experimental_attachments ?? [],
       createdAt: new Date(),
@@ -122,10 +122,10 @@ export async function handlePost(request: Request) {
 
     const uiMessages: Message[] = messages.map((message) => ({
       id: message.id,
-      role: message.role as Message['role'],
+      role: message.role as Message["role"],
       content: Array.isArray(message.parts)
-        ? message.parts.map((part) => part?.text ?? '').join('')
-        : '',
+        ? message.parts.map((part) => part?.text ?? "").join("")
+        : "",
       createdAt: message.createdAt,
     }));
 
@@ -137,7 +137,7 @@ export async function handlePost(request: Request) {
           session,
           id,
         }),
-      onError: () => 'Oops, an error occurred!',
+      onError: () => "Oops, an error occurred!",
     });
     const streamContext = getStreamContext();
     if (streamContext) {
