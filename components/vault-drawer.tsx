@@ -12,9 +12,11 @@ import {
   DrawerFooter,
 } from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
-import { FileIcon } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
+import { cn } from "@/lib/utils";
+import { FileIcon, PlusIcon } from "lucide-react";
+import { FileUploadSection } from "./multimodal-input";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface UserUpload {
   id: string;
@@ -57,7 +59,10 @@ export function VaultDrawer() {
       onOpenChange={setIsOpen}
     >
       <DrawerTrigger asChild>
-        <Button variant="outline" className="flex items-center gap-2 h-[34px]">
+        <Button
+          variant="outline"
+          className="flex items-center gap-2 h-[34px] px-2"
+        >
           <FileIcon className="size-4" />
           Open Vault
         </Button>
@@ -75,9 +80,6 @@ export function VaultDrawer() {
         </DrawerHeader>
         <div className="p-4 flex flex-col gap-4 flex-1 overflow-y-auto">
           <div className="flex flex-col gap-3">
-            <span className="text-sm font-medium text-muted-foreground mb-1">
-              Select files to add
-            </span>
             <div className="flex flex-col gap-2">
               {isLoading ? (
                 Array.from({ length: 3 }).map((_, index) => (
@@ -100,6 +102,20 @@ export function VaultDrawer() {
                   No files uploaded yet
                 </div>
               )}
+            </div>
+
+            <div className="w-full">
+              <FileUploadSection triggerClassName="w-full">
+                <div
+                  className={cn(
+                    "relative w-full rounded-lg border border-dashed border-muted-foreground/20",
+                    "flex flex-row items-center cursor-pointer justify-center h-24",
+                  )}
+                >
+                  <PlusIcon className="size-4" />
+                  <span className="text-sm">Add Files</span>
+                </div>
+              </FileUploadSection>
             </div>
           </div>
         </div>

@@ -1,11 +1,12 @@
-import { Agent } from '@mastra/core/agent';
-import { openai } from '@ai-sdk/openai';
-import { optionsTool } from '../tools/utility-tools';
-import { searxngTool } from '../tools/searxng-tool';
-import { crawlerTool } from '../tools/crawler-tool';
+import { Agent } from "@mastra/core/agent";
+import { openai } from "@ai-sdk/openai";
+import { optionsTool } from "../tools/utility-tools";
+import { searxngTool } from "../tools/searxng-tool";
+import { crawlerTool } from "../tools/crawler-tool";
+import { clarificationTool } from "../tools/workflow-creator-tools";
 
 export const researchAgent = new Agent({
-  name: 'research',
+  name: "research",
   instructions: `
     You are a helpful web assistant that can search the web and extract information using two tools: searxngTool (for searching) and crawlerTool (for crawling links).
 
@@ -14,6 +15,8 @@ export const researchAgent = new Agent({
     - Retrieve and summarize information from search results
     - Use crawlerTool to extract deeper content from links found in search results
     - Guide the user to provide more specific queries if needed
+
+    If the user's initial request wasn't specific enough, use **clarificationTool** to ask for more specific information.
 
     When responding:
     - Ask for a specific query if none is provided
@@ -32,7 +35,7 @@ export const researchAgent = new Agent({
     Use searxngTool to perform web searches and crawlerTool to extract content from links. Include citations as links throughout your response.
     Only use searxngTool once for the initial search, and then optionally use crawlerTool to extract content from the most relevant links found in the search result
   `,
-  model: openai('gpt-4o-mini'),
-  tools: { searxngTool, crawlerTool, optionsTool },
+  model: openai("gpt-4o-mini"),
+  tools: { searxngTool, crawlerTool, optionsTool, clarificationTool },
   defaultGenerateOptions: { maxSteps: 4 },
 });
