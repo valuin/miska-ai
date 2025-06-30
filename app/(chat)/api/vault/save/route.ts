@@ -1,21 +1,28 @@
-import type { NextRequest } from 'next/server';
-import { auth } from '@/app/(auth)/auth';
-import { getTempDocument, deleteTempDocument, saveDocumentToVault } from '@/lib/db/queries/document-vault';
-import { qdrantClient, COLLECTION_NAME, VECTOR_SIZE } from '@/lib/rag/vector-store';
-import { ChatSDKError } from '@/lib/errors';
-import { generateUUID } from '@/lib/utils';
-
+import type { NextRequest } from "next/server";
+import { auth } from "@/app/(auth)/auth";
+import {
+  getTempDocument,
+  deleteTempDocument,
+  saveDocumentToVault,
+} from "@/lib/db/queries/document-vault";
+import {
+  qdrantClient,
+  COLLECTION_NAME,
+  VECTOR_SIZE,
+} from "@/lib/rag/vector-store";
+import { ChatSDKError } from "@/lib/errors";
+import { generateUUID } from "@/lib/utils";
 
 async function ensureCollection() {
   const collections = await qdrantClient.getCollections();
   const exists = collections.collections.some(
-    (c) => c.name === COLLECTION_NAME
+    (c) => c.name === COLLECTION_NAME,
   );
   if (!exists) {
     await qdrantClient.createCollection(COLLECTION_NAME, {
       vectors: {
         size: VECTOR_SIZE,
-        distance: 'Cosine',
+        distance: "Cosine",
       },
     });
   }
@@ -34,25 +41,28 @@ export async function POST(request: NextRequest) {
   try {
     const session = await auth();
     if (!session?.user) {
-      return new ChatSDKError('unauthorized:document').toResponse();
+      return new ChatSDKError("unauthorized:document").toResponse();
     }
 
     const { tempDocumentId } = await request.json();
-    
+
     if (!tempDocumentId) {
-      return new ChatSDKError('bad_request:document').toResponse();
+      return new ChatSDKError("bad_request:document").toResponse();
     }
 
     // Get temp document data
     const tempDoc = await getTempDocument(tempDocumentId, session.user.id);
     if (!tempDoc) {
-      return Response.json({
-        error: 'Temporary document not found or expired',
-      }, { status: 404 });
+      return Response.json(
+        {
+          error: "Temporary document not found or expired",
+        },
+        { status: 404 },
+      );
     }
 
     const { processedData } = tempDoc;
-    
+
     // Type assertion for processedData
     const data = processedData as {
       content: string;
@@ -82,6 +92,10 @@ export async function POST(request: NextRequest) {
         },
       };
     });
+
+    if (points.length === 0) {
+      return Response.json({ error: "No points to save" }, { status: 400 });
+    }
 
     await qdrantClient.upsert(COLLECTION_NAME, {
       wait: true,
@@ -127,9 +141,12 @@ export async function POST(request: NextRequest) {
       message: `Document "${tempDoc.filename}" saved to vault successfully`,
     });
   } catch (error) {
-    console.error('Error saving document to vault:', error);
-    return Response.json({
-      error: 'Failed to save document to vault',
-    }, { status: 500 });
+    console.error("Error saving document to vault:", error);
+    return Response.json(
+      {
+        error: "Failed to save document to vault",
+      },
+      { status: 500 },
+    );
   }
 }

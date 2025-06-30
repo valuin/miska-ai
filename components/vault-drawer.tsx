@@ -80,7 +80,8 @@ export function VaultDrawer() {
         </DrawerHeader>
         <div className="p-4 flex flex-col gap-4 flex-1 overflow-y-auto">
           <div className="flex flex-col gap-3">
-            <div className="flex flex-col gap-2">
+            {/* Files */}
+            <div className="flex flex-col gap-2 rounded-lg border border-muted-foreground/20 p-2 min-h-24">
               {isLoading ? (
                 Array.from({ length: 3 }).map((_, index) => (
                   <div key={index} className="flex items-center gap-2">
@@ -98,12 +99,13 @@ export function VaultDrawer() {
                   </div>
                 ))
               ) : (
-                <div className="text-sm text-muted-foreground text-center py-4">
+                <div className="text-sm text-muted-foreground text-center py-4 h-full grid place-items-center">
                   No files uploaded yet
                 </div>
               )}
             </div>
 
+            {/* Add Files */}
             <div className="w-full">
               <FileUploadSection triggerClassName="w-full">
                 <div
