@@ -222,30 +222,32 @@ function MessageInputSection({
   submitForm: () => void;
 }) {
   return (
-    <Textarea
-      data-testid="multimodal-input"
-      ref={textareaRef}
-      placeholder="Send a message..."
-      value={input}
-      onChange={handleInput}
-      className={className}
-      rows={2}
-      autoFocus
-      onKeyDown={(event) => {
-        if (
-          event.key === "Enter" &&
-          !event.shiftKey &&
-          !event.nativeEvent.isComposing
-        ) {
-          event.preventDefault();
-          if (status !== "ready") {
-            toast.error("Please wait for the model to finish its response!");
-          } else {
-            submitForm();
+    <div className="w-full">
+      <Textarea
+        data-testid="multimodal-input"
+        ref={textareaRef}
+        placeholder="Send a message..."
+        value={input}
+        onChange={handleInput}
+        className={className}
+        rows={2}
+        autoFocus
+        onKeyDown={(event) => {
+          if (
+            event.key === "Enter" &&
+            !event.shiftKey &&
+            !event.nativeEvent.isComposing
+          ) {
+            event.preventDefault();
+            if (status !== "ready") {
+              toast.error("Please wait for the model to finish its response!");
+            } else {
+              submitForm();
+            }
           }
-        }
-      }}
-    />
+        }}
+      />
+    </div>
   );
 }
 
