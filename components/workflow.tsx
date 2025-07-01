@@ -11,6 +11,7 @@ import type { UseChatHelpers } from "@ai-sdk/react";
 export const WorkflowMessage = ({ result }: { result: CreatedWorkflow }) => {
   const { name, description } = result;
   const { nodes, edges } = extractWorkflowGraph(result.nodes);
+
   return (
     <div className="w-full min-h-[400px] min-w-[320px]">
       <h2 className="text-lg font-bold">{name}</h2>
