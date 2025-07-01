@@ -1,6 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import {
+  useState,
+  useEffect,
+  useRef,
+  type ChangeEvent,
+  useCallback,
+} from "react";
 import {
   Drawer,
   DrawerTrigger,
@@ -14,15 +20,157 @@ import {
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
-import { FileIcon, PlusIcon } from "lucide-react";
-import { FileUploadSection } from "./multimodal-input";
+import { FileIcon, LoaderIcon, PlusIcon } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from "sonner";
+import { upload } from "@vercel/blob/client";
+import type { Attachment } from "ai";
 
 interface UserUpload {
   id: string;
   filename: string;
   url: string;
   createdAt: string;
+}
+
+function FileUpload() {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [attachments, setAttachments] = useState<Array<Attachment>>([]);
+  const [uploadQueue, setUploadQueue] = useState<Array<string>>([]);
+
+  const uploadFile = async (file: File): Promise<Attachment | undefined> => {
+    try {
+      const newBlob = await upload(file.name, file, {
+        access: "public",
+        handleUploadUrl: "/api/files/upload-blob",
+        multipart: true,
+      });
+
+      const processResponse = await fetch("/api/files/process-document", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          fileUrl: newBlob.url,
+          filename: file.name,
+          contentType: file.type,
+        }),
+      });
+
+      if (!processResponse.ok) {
+        throw new Error("Failed to process document");
+      }
+
+      const processResult = await processResponse.json();
+
+      const saveResponse = await fetch("/api/vault/save", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          tempDocumentId: processResult.document.id,
+        }),
+      });
+
+      if (saveResponse.ok) {
+        toast.success("Document saved to vault successfully!");
+      } else {
+        toast.error("Failed to save document to vault");
+      }
+
+      return {
+        url: newBlob.url,
+        name: file.name,
+        contentType: file.type,
+      };
+    } catch (error) {
+      console.error("File upload error:", error);
+      toast.error("Failed to process file, please try again!");
+    }
+  };
+
+  const handleFileChange = useCallback(
+    async (event: ChangeEvent<HTMLInputElement>) => {
+      const files = Array.from(event.target.files || []);
+
+      setUploadQueue(files.map((file) => file.name));
+
+      try {
+        const uploadPromises = files.map((file) => uploadFile(file));
+
+        // clear the input
+        event.target.value = "";
+        event.target.files = null;
+
+        const uploadedAttachments = await Promise.all(uploadPromises);
+        const successfullyUploadedAttachments = uploadedAttachments.filter(
+          (attachment) => attachment !== undefined,
+        );
+
+        setAttachments((currentAttachments) => [
+          ...currentAttachments,
+          ...successfullyUploadedAttachments,
+        ]);
+      } catch (error) {
+        console.error("Error uploading files!", error);
+      } finally {
+        setUploadQueue([]);
+      }
+    },
+    [],
+  );
+
+  const Attachment = ({ filename }: { filename: string }) => {
+    return (
+      <div
+        key={filename}
+        data-testid="input-attachment-preview"
+        className="flex flex-col gap-2 relative w-full"
+      >
+        <div className="w-full bg-muted-foreground/10 rounded-md relative flex flex-row items-center gap-2 p-2">
+          <LoaderIcon className="animate-spin text-zinc-500" />
+          <span className="text-xs text-zinc-500 max-w-full truncate">
+            {filename}
+          </span>
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <div className="w-full">
+      <input
+        type="file"
+        className="fixed -top-4 -left-4 size-0.5 opacity-0 pointer-events-none"
+        ref={fileInputRef}
+        multiple
+        onChange={handleFileChange}
+        tabIndex={-1}
+      />
+      {(attachments.length > 0 || uploadQueue.length > 0) && (
+        <div
+          data-testid="attachments-preview"
+          className="flex flex-row gap-2 overflow-x-scroll items-end"
+        >
+          {uploadQueue.map((filename) => (
+            <Attachment key={filename} filename={filename} />
+          ))}
+        </div>
+      )}
+      <div
+        className={cn(
+          "relative w-full rounded-lg border border-dashed border-muted-foreground/20",
+          "flex flex-row items-center cursor-pointer justify-center h-24",
+        )}
+        onClick={() => fileInputRef.current?.click()}
+      >
+        <PlusIcon className="size-4" />
+        <span className="text-sm">Add Files</span>
+      </div>
+    </div>
+  );
 }
 
 export function VaultDrawer() {
@@ -52,6 +200,7 @@ export function VaultDrawer() {
       fetchUserUploads();
     }
   }, [isOpen]);
+
   return (
     <Drawer
       direction="right"
@@ -86,7 +235,7 @@ export function VaultDrawer() {
                 Array.from({ length: 3 }).map((_, index) => (
                   <div key={index} className="flex items-center gap-2">
                     <Skeleton className="size-4 rounded" />
-                    <Skeleton className="h-4 w-24" />
+                    <Skeleton className="h-4 w-full" />
                   </div>
                 ))
               ) : uploads.length > 0 ? (
@@ -106,19 +255,7 @@ export function VaultDrawer() {
             </div>
 
             {/* Add Files */}
-            <div className="w-full">
-              <FileUploadSection triggerClassName="w-full">
-                <div
-                  className={cn(
-                    "relative w-full rounded-lg border border-dashed border-muted-foreground/20",
-                    "flex flex-row items-center cursor-pointer justify-center h-24",
-                  )}
-                >
-                  <PlusIcon className="size-4" />
-                  <span className="text-sm">Add Files</span>
-                </div>
-              </FileUploadSection>
-            </div>
+            <FileUpload />
           </div>
         </div>
         <DrawerFooter>

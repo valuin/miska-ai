@@ -33,13 +33,9 @@ import { cn } from "@/lib/utils";
 export function FileUploadSection({
   onAttachmentsChange,
   disabled,
-  triggerClassName,
-  children,
 }: {
   onAttachmentsChange?: (attachments: Array<Attachment>) => void;
   disabled?: boolean;
-  triggerClassName?: string;
-  children?: React.ReactNode;
 }) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [attachments, setAttachments] = useState<Array<Attachment>>([]);
@@ -191,15 +187,8 @@ export function FileUploadSection({
           ))}
         </div>
       )}
-      <div
-        className={cn(
-          triggerClassName ??
-            "absolute bottom-0 p-2 w-fit flex flex-row justify-start",
-        )}
-      >
-        <AttachmentsButton fileInputRef={fileInputRef} disabled={disabled}>
-          {children}
-        </AttachmentsButton>
+      <div className="absolute bottom-0 p-2 w-fit flex flex-row justify-start">
+        <AttachmentsButton fileInputRef={fileInputRef} disabled={disabled} />
       </div>
     </>
   );
@@ -443,11 +432,9 @@ export const MultimodalInput = memo(
 function PureAttachmentsButton({
   fileInputRef,
   disabled,
-  children,
 }: {
   fileInputRef: React.MutableRefObject<HTMLInputElement | null>;
   disabled?: boolean;
-  children?: React.ReactNode;
 }) {
   return (
     <Button
@@ -460,11 +447,9 @@ function PureAttachmentsButton({
       disabled={disabled}
       variant="ghost"
     >
-      {children ?? (
-        <div className="p-[7px]">
-          <PaperclipIcon size={14} />
-        </div>
-      )}
+      <div className="p-[7px]">
+        <PaperclipIcon size={14} />
+      </div>
     </Button>
   );
 }
