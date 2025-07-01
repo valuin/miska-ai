@@ -21,13 +21,6 @@ import { toast } from "sonner";
 import { upload } from "@vercel/blob/client";
 import type { Attachment } from "ai";
 
-interface UserUpload {
-  id: string;
-  filename: string;
-  url: string;
-  createdAt: string;
-}
-
 function VaultUploadingList({ uploads }: { uploads: Attachment[] }) {
   return (
     <div className="flex flex-row gap-2 overflow-x-scroll items-end mb-2">
@@ -50,18 +43,27 @@ function VaultUploadingList({ uploads }: { uploads: Attachment[] }) {
   );
 }
 
+export interface UserUpload {
+  id: string;
+  filename: string;
+  url: string;
+  createdAt: string;
+}
+
 export function VaultList({
   uploads,
   setUploads,
   isLoading,
   isDeletable,
   isSelectable,
+  onSendToAgent,
 }: {
   uploads: UserUpload[];
   setUploads?: Dispatch<SetStateAction<UserUpload[]>>;
   isLoading: boolean;
   isDeletable?: boolean;
   isSelectable?: boolean;
+  onSendToAgent?: (uploads: UserUpload[]) => void;
 }) {
   const [selectedUploads, setSelectedUploads] = useState<UserUpload[]>([]);
 
@@ -91,6 +93,10 @@ export function VaultList({
     } else {
       setSelectedUploads(selectedUploads.filter((u) => u.id !== upload.id));
     }
+  };
+
+  const handleSendToAgent = () => {
+    onSendToAgent?.(selectedUploads);
   };
 
   return (
@@ -135,15 +141,21 @@ export function VaultList({
               </div>
             ))}
           </div>
-
-          <div className="flex flex-row gap-2">
-            <Button variant="outline" size="sm" className="ml-auto w-full">
-              Send documents to Agent
-              <span className="text-xs text-muted-foreground">
-                {selectedUploads.length} files selected
-              </span>
-            </Button>
-          </div>
+          {onSendToAgent && (
+            <div className="flex flex-row gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                className="ml-auto w-full"
+                onClick={() => handleSendToAgent()}
+              >
+                Send documents to Agent
+                <span className="text-xs text-muted-foreground mt-px">
+                  {selectedUploads.length} files selected
+                </span>
+              </Button>
+            </div>
+          )}
         </div>
       ) : (
         <div className="text-sm text-muted-foreground text-center py-4 h-full grid place-items-center">

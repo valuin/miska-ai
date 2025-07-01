@@ -120,7 +120,13 @@ export async function streamWithMastraAgent(
     },
     runtimeContext: options?.runtimeContext,
     onFinish: async (result: onFinishResult) => {
-      const optionsStream = await optionsAgent.stream(messages, {
+      const lastMessage = {
+        id: "LAST GENERATED AGENT RESPONSE",
+        role: "assistant" as const,
+        content: JSON.stringify(result.response.messages),
+      };
+      const content = [...messages, lastMessage];
+      const optionsStream = await optionsAgent.stream(content, {
         onFinish: async (_result: onFinishResult) => {
           await saveMessage([...result.steps, ..._result.steps]);
         },

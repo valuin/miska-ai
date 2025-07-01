@@ -12,20 +12,20 @@ import { MessageActions } from "./message-actions";
 import { MessageEditor } from "./message-editor";
 import { MessageReasoning } from "./message-reasoning";
 import { PencilEditIcon, SparklesIcon } from "./icons";
-import { SearchIcon } from "lucide-react";
-import ToolCallBadge from "./tool-call-badge";
 import { PreviewAttachment } from "./preview-attachment";
+import { SearchIcon } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
+import { VaultList, type UserUpload } from "./vault-drawer";
 import Badge from "./badge";
 import cx from "classnames";
 import equal from "fast-deep-equal";
 import GradientText from "./GradientText/GradientText";
 import Options from "./options";
 import Sources from "./sources";
+import ToolCallBadge from "./tool-call-badge";
 import type { UIMessage } from "ai";
 import type { UseChatHelpers } from "@ai-sdk/react";
 import type { Vote } from "@/lib/db/schema";
-import { VaultList } from "./vault-drawer";
 
 const PurePreviewMessage = ({
   chatId,
@@ -61,6 +61,14 @@ const PurePreviewMessage = ({
           : 0;
       return score(a) - score(b);
     });
+
+  const handleSendUploads = (uploads: UserUpload[]) => {
+    append({
+      role: "user",
+      content: `${uploads.length === 1 ? "This is the document" : "These are the documents"} that I want to process!.`,
+      experimental_attachments: uploads,
+    });
+  };
 
   return (
     <AnimatePresence>
@@ -130,9 +138,9 @@ const PurePreviewMessage = ({
                   data-testid={`message-attachments`}
                   className="flex flex-row justify-end gap-2"
                 >
-                  {message.experimental_attachments.map((attachment) => (
+                  {message.experimental_attachments.map((attachment, index) => (
                     <PreviewAttachment
-                      key={attachment.url}
+                      key={`${attachment.name}-${index}`}
                       attachment={attachment}
                       readOnly={isReadonly}
                     />
@@ -243,6 +251,19 @@ const PurePreviewMessage = ({
                           args={args}
                           isReadonly={isReadonly}
                         />
+                      ) : toolName === "listVaultDocumentsTool" ? (
+                        <VaultList
+                          uploads={args.documents.map((document: any) => ({
+                            id: document.id,
+                            filename: document.filename,
+                            url: document.url,
+                            createdAt: document.createdAt,
+                          }))}
+                          isLoading={isLoading}
+                          isDeletable={true}
+                          isSelectable={true}
+                          onSendToAgent={handleSendUploads}
+                        />
                       ) : (
                         <div>
                           {toolName} {JSON.stringify(args, null, 2)}
@@ -285,6 +306,7 @@ const PurePreviewMessage = ({
                           isLoading={isLoading}
                           isDeletable={true}
                           isSelectable={true}
+                          onSendToAgent={handleSendUploads}
                         />
                       ) : toolName === "updateDocument" ? (
                         <DocumentToolResult

@@ -27,7 +27,6 @@ import { ArrowDown } from "lucide-react";
 import { useScrollToBottom } from "@/hooks/use-scroll-to-bottom";
 import type { VisibilityType } from "./visibility-selector";
 import { upload } from "@vercel/blob/client";
-import { cn } from "@/lib/utils";
 
 // FileUploadSection: fully self-contained file upload logic
 export function FileUploadSection({
