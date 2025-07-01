@@ -25,6 +25,7 @@ import Sources from "./sources";
 import type { UIMessage } from "ai";
 import type { UseChatHelpers } from "@ai-sdk/react";
 import type { Vote } from "@/lib/db/schema";
+import { VaultList } from "./vault-drawer";
 
 const PurePreviewMessage = ({
   chatId,
@@ -272,6 +273,18 @@ const PurePreviewMessage = ({
                         <DocumentPreview
                           isReadonly={isReadonly}
                           result={result}
+                        />
+                      ) : toolName === "listVaultDocumentsTool" ? (
+                        <VaultList
+                          uploads={result.documents.map((document: any) => ({
+                            id: document.id,
+                            filename: document.filename,
+                            url: document.url,
+                            createdAt: document.createdAt,
+                          }))}
+                          isLoading={isLoading}
+                          isDeletable={true}
+                          isSelectable={true}
                         />
                       ) : toolName === "updateDocument" ? (
                         <DocumentToolResult

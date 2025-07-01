@@ -1,12 +1,7 @@
 "use client";
 
-import {
-  useState,
-  useEffect,
-  useRef,
-  type ChangeEvent,
-  useCallback,
-} from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
+import type { ChangeEvent, Dispatch, SetStateAction } from "react";
 import {
   Drawer,
   DrawerTrigger,
@@ -20,7 +15,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
-import { FileIcon, LoaderIcon, PlusIcon } from "lucide-react";
+import { FileIcon, LoaderIcon, PlusIcon, TrashIcon } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { upload } from "@vercel/blob/client";
@@ -33,7 +28,133 @@ interface UserUpload {
   createdAt: string;
 }
 
-function FileUpload() {
+function VaultUploadingList({ uploads }: { uploads: Attachment[] }) {
+  return (
+    <div className="flex flex-row gap-2 overflow-x-scroll items-end mb-2">
+      {uploads.map((upload, index) => (
+        <div
+          key={`${upload.name}-${index}`}
+          data-testid="input-attachment-preview"
+          className="flex flex-col gap-2 relative w-full"
+        >
+          <div className="w-full bg-muted-foreground/10 rounded-md relative flex flex-row items-center gap-2 p-2">
+            <FileIcon className="size-4" />
+            <LoaderIcon className="animate-spin text-zinc-500" />
+            <span className="text-xs text-zinc-500 max-w-full truncate">
+              {upload.name}
+            </span>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+export function VaultList({
+  uploads,
+  setUploads,
+  isLoading,
+  isDeletable,
+  isSelectable,
+}: {
+  uploads: UserUpload[];
+  setUploads?: Dispatch<SetStateAction<UserUpload[]>>;
+  isLoading: boolean;
+  isDeletable?: boolean;
+  isSelectable?: boolean;
+}) {
+  const [selectedUploads, setSelectedUploads] = useState<UserUpload[]>([]);
+
+  const handleDelete = async (id: string) => {
+    if (!isDeletable || !setUploads) return;
+    const response = await fetch("/api/vault/documents", {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ documentId: id }),
+    });
+
+    if (response.ok) {
+      toast.success("Document deleted from vault");
+      setUploads((currentUploads) =>
+        currentUploads.filter((upload) => upload.id !== id),
+      );
+    } else {
+      toast.error("Failed to delete document from vault");
+    }
+  };
+
+  const handleSelect = (upload: UserUpload, checked: boolean) => {
+    if (checked) {
+      setSelectedUploads([...selectedUploads, upload]);
+    } else {
+      setSelectedUploads(selectedUploads.filter((u) => u.id !== upload.id));
+    }
+  };
+
+  return (
+    <div className="flex flex-col gap-2 rounded-lg border border-muted-foreground/20 p-4 max-h-48">
+      {isLoading ? (
+        Array.from({ length: 6 }).map((_, index) => (
+          <div key={index} className="flex items-center gap-2">
+            <Skeleton className="size-4 rounded" />
+            <Skeleton className="h-4 w-full" />
+          </div>
+        ))
+      ) : uploads.length > 0 ? (
+        <div className="flex flex-col gap-4 flex-1">
+          <div className="flex flex-col gap-2 flex-1">
+            {uploads.map((upload) => (
+              <div key={upload.id} className="flex items-center gap-2">
+                {isSelectable && (
+                  <Checkbox
+                    id={upload.id}
+                    checked={selectedUploads.includes(upload)}
+                    onCheckedChange={(checked) =>
+                      handleSelect(upload, checked as boolean)
+                    }
+                  />
+                )}
+                <label
+                  htmlFor={upload.id}
+                  className="text-sm select-none truncate break-all"
+                >
+                  {upload.filename}
+                </label>
+                {isDeletable && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="ml-auto p-2 size-6"
+                    onClick={() => handleDelete(upload.id)}
+                  >
+                    <TrashIcon className="size-4 text-red-500" />
+                  </Button>
+                )}
+              </div>
+            ))}
+          </div>
+
+          <div className="flex flex-row gap-2">
+            <Button variant="outline" size="sm" className="ml-auto w-full">
+              Send documents to Agent
+              <span className="text-xs text-muted-foreground">
+                {selectedUploads.length} files selected
+              </span>
+            </Button>
+          </div>
+        </div>
+      ) : (
+        <div className="text-sm text-muted-foreground text-center py-4 h-full grid place-items-center">
+          No files uploaded yet
+        </div>
+      )}
+    </div>
+  );
+}
+
+function FileUpload({ fetchUserUploads }: { fetchUserUploads: () => void }) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [attachments, setAttachments] = useState<Array<Attachment>>([]);
   const [uploadQueue, setUploadQueue] = useState<Array<string>>([]);
@@ -76,6 +197,7 @@ function FileUpload() {
 
       if (saveResponse.ok) {
         toast.success("Document saved to vault successfully!");
+        fetchUserUploads();
       } else {
         toast.error("Failed to save document to vault");
       }
@@ -119,25 +241,9 @@ function FileUpload() {
         setUploadQueue([]);
       }
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [],
   );
-
-  const Attachment = ({ filename }: { filename: string }) => {
-    return (
-      <div
-        key={filename}
-        data-testid="input-attachment-preview"
-        className="flex flex-col gap-2 relative w-full"
-      >
-        <div className="w-full bg-muted-foreground/10 rounded-md relative flex flex-row items-center gap-2 p-2">
-          <LoaderIcon className="animate-spin text-zinc-500" />
-          <span className="text-xs text-zinc-500 max-w-full truncate">
-            {filename}
-          </span>
-        </div>
-      </div>
-    );
-  };
 
   return (
     <div className="w-full">
@@ -150,24 +256,17 @@ function FileUpload() {
         tabIndex={-1}
       />
       {(attachments.length > 0 || uploadQueue.length > 0) && (
-        <div
-          data-testid="attachments-preview"
-          className="flex flex-row gap-2 overflow-x-scroll items-end"
-        >
-          {uploadQueue.map((filename) => (
-            <Attachment key={filename} filename={filename} />
-          ))}
-        </div>
+        <VaultUploadingList uploads={attachments} />
       )}
       <div
         className={cn(
           "relative w-full rounded-lg border border-dashed border-muted-foreground/20",
-          "flex flex-row items-center cursor-pointer justify-center h-24",
+          "flex flex-row gap-2 items-center cursor-pointer justify-center h-24",
         )}
         onClick={() => fileInputRef.current?.click()}
       >
         <PlusIcon className="size-4" />
-        <span className="text-sm">Add Files</span>
+        <span className="text-sm">Upload files to your vault</span>
       </div>
     </div>
   );
@@ -224,38 +323,22 @@ export function VaultDrawer() {
         <DrawerHeader>
           <DrawerTitle>Document Vault</DrawerTitle>
           <DrawerDescription>
-            Select files to add to your vault.
+            These files will be accessible to your agents.
           </DrawerDescription>
         </DrawerHeader>
         <div className="p-4 flex flex-col gap-4 flex-1 overflow-y-auto">
-          <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-2">
             {/* Files */}
-            <div className="flex flex-col gap-2 rounded-lg border border-muted-foreground/20 p-2 min-h-24">
-              {isLoading ? (
-                Array.from({ length: 3 }).map((_, index) => (
-                  <div key={index} className="flex items-center gap-2">
-                    <Skeleton className="size-4 rounded" />
-                    <Skeleton className="h-4 w-full" />
-                  </div>
-                ))
-              ) : uploads.length > 0 ? (
-                uploads.map((upload) => (
-                  <div key={upload.id} className="flex items-center gap-2">
-                    <Checkbox id={upload.id} />
-                    <label htmlFor={upload.id} className="text-sm select-none">
-                      {upload.filename}
-                    </label>
-                  </div>
-                ))
-              ) : (
-                <div className="text-sm text-muted-foreground text-center py-4 h-full grid place-items-center">
-                  No files uploaded yet
-                </div>
-              )}
-            </div>
+            <VaultList
+              uploads={uploads}
+              setUploads={setUploads}
+              isLoading={isLoading}
+              isSelectable={false}
+              isDeletable={true}
+            />
 
             {/* Add Files */}
-            <FileUpload />
+            <FileUpload fetchUserUploads={fetchUserUploads} />
           </div>
         </div>
         <DrawerFooter>

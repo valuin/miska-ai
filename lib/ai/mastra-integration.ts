@@ -126,8 +126,6 @@ export async function streamWithMastraAgent(
         },
       });
       optionsStream.mergeIntoDataStream(responsePipe);
-
-      // await saveMessage(result.steps);
     },
   };
 

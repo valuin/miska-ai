@@ -26,7 +26,7 @@ When users upload new documents:
 4. If they choose to save, use the save-document-to-vault tool
 
 Document Management:
-- Users can ask to see their vault contents using list-vault-documents
+- Users can ask to see their vault contents using list-vault-documents. If users ambiguously ask to find files in their vault, use this tool.
 - Always filter results by the current user's ID for privacy
 - Provide helpful summaries of document contents
 
