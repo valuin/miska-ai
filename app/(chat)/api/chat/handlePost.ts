@@ -22,6 +22,8 @@ import {
   type Message,
   type Attachment,
 } from "ai";
+import { RuntimeContext } from "@mastra/core/di";
+import type { MastraRuntimeContext } from "@/mastra";
 
 interface ProcessAttachmentsParams {
   files: Attachment[] | undefined;
@@ -55,6 +57,7 @@ interface HandleChatStreamingParams {
   messages: Message[];
   session: Session;
   id: string;
+  selectedVaultFileNames?: string[];
 }
 
 async function handleChatStreaming({
@@ -62,12 +65,19 @@ async function handleChatStreaming({
   messages,
   session,
   id,
+  selectedVaultFileNames, // Extract from parameters
 }: HandleChatStreamingParams) {
   const files = messages.at(-1)?.experimental_attachments;
   await processAttachments({ files, session });
+
+  const mastraRuntimeContext = new RuntimeContext<MastraRuntimeContext>();
+  mastraRuntimeContext.set("session", session);
+  mastraRuntimeContext.set("dataStream", responsePipe);
+  mastraRuntimeContext.set("selectedVaultFileNames", selectedVaultFileNames ?? []); // Use nullish coalescing for clarity
+
   await streamWithMastraAgent(id, messages, {
     responsePipe,
-    runtimeContext: { session, dataStream: responsePipe },
+    runtimeContext: mastraRuntimeContext,
   });
 }
 
@@ -76,12 +86,17 @@ export async function handlePost(request: Request) {
   try {
     const json = await request.json();
     requestBody = postRequestBodySchema.parse(json);
-  } catch (_) {
+  } catch (error) {
+    console.error("Zod validation error:", error);
+    if (error instanceof Error) {
+      console.error("Error details:", error.message);
+    }
     return new ChatSDKError("bad_request:api").toResponse();
   }
 
   try {
     const { id, message, selectedVisibilityType } = requestBody;
+    const selectedVaultFileNames = message.selectedVaultFileNames ?? [];
 
     const session = await auth();
 
@@ -105,7 +120,7 @@ export async function handlePost(request: Request) {
     }
 
     const previousMessages: DBMessage[] = await getMessagesByChatId({ id });
-    const dbMessage = {
+    const dbMessage: DBMessage = { // Add type annotation here
       chatId: id,
       id: message.id,
       agentName: null,
@@ -120,13 +135,13 @@ export async function handlePost(request: Request) {
     const streamId = generateUUID();
     await createStreamId({ streamId, chatId: id });
 
-    const uiMessages: Message[] = messages.map((message) => ({
-      id: message.id,
-      role: message.role as Message["role"],
-      content: Array.isArray(message.parts)
-        ? message.parts.map((part) => part?.text ?? "").join("")
+    const uiMessages: Message[] = messages.map((msg) => ({ // Renamed arg to msg to avoid conflict
+      id: msg.id,
+      role: msg.role as Message["role"],
+      content: Array.isArray(msg.parts)
+        ? msg.parts.map((part) => part?.text ?? "").join("")
         : "",
-      createdAt: message.createdAt,
+      createdAt: msg.createdAt,
     }));
 
     const stream = createDataStream({
@@ -136,6 +151,7 @@ export async function handlePost(request: Request) {
           messages: uiMessages,
           session,
           id,
+          selectedVaultFileNames, // Pass the extracted value
         }),
       onError: () => "Oops, an error occurred!",
     });

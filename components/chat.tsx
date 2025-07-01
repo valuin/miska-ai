@@ -20,6 +20,7 @@ import { useSearchParams } from "next/navigation";
 import { useChatVisibility } from "@/hooks/use-chat-visibility";
 import { useAutoResume } from "@/hooks/use-auto-resume";
 import { ChatSDKError } from "@/lib/errors";
+import { useVaultFilesStore } from "@/lib/store/vault-files-store";
 
 export function Chat({
   id,
@@ -60,16 +61,21 @@ export function Chat({
   } = useChat({
     id,
     initialMessages,
-    experimental_throttle: 100,
     sendExtraMessageFields: true,
     generateId: generateUUID,
     fetch: fetchWithErrorHandlers,
-    experimental_prepareRequestBody: (body) => ({
-      id,
-      message: body.messages.at(-1),
-      selectedChatModel: initialChatModel,
-      selectedVisibilityType: visibilityType,
-    }),
+    experimental_prepareRequestBody: (body) => {
+      const { selectedVaultFileNames } = useVaultFilesStore.getState();
+      return {
+        id,
+        message: {
+          ...body.messages.at(-1),
+          selectedVaultFileNames: selectedVaultFileNames,
+        },
+        selectedChatModel: initialChatModel,
+        selectedVisibilityType: visibilityType,
+      };
+    },
     onFinish: () => {
       mutate(unstable_serialize(getChatHistoryPaginationKey));
     },

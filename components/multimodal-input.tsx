@@ -23,12 +23,14 @@ import { SuggestedActions } from "./suggested-actions";
 import equal from "fast-deep-equal";
 import type { UseChatHelpers } from "@ai-sdk/react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowDown, File } from "lucide-react";
+import { ArrowDown } from "lucide-react";
 import { useScrollToBottom } from "@/hooks/use-scroll-to-bottom";
 import type { VisibilityType } from "./visibility-selector";
 import { upload } from "@vercel/blob/client";
+import { MultiSelect } from "./multi-select";
+import type { UserUpload } from "./vault-drawer";
+import { useVaultFilesStore } from "@/lib/store/vault-files-store";
 
-// FileUploadSection: fully self-contained file upload logic
 export function FileUploadSection({
   onAttachmentsChange,
   disabled,
@@ -101,7 +103,7 @@ export function FileUploadSection({
                 }
               },
             },
-          },
+          }
         );
       }
 
@@ -128,7 +130,7 @@ export function FileUploadSection({
         const uploadPromises = files.map((file) => uploadFile(file));
         const uploadedAttachments = await Promise.all(uploadPromises);
         const successfullyUploadedAttachments = uploadedAttachments.filter(
-          (attachment) => attachment !== undefined,
+          (attachment) => attachment !== undefined
         );
 
         setAttachments((currentAttachments) => [
@@ -141,12 +143,12 @@ export function FileUploadSection({
         setUploadQueue([]);
       }
     },
-    [],
+    []
   );
 
   const unattachFile = (name: string) => {
     setAttachments((currentAttachments) =>
-      currentAttachments.filter((a) => a.name !== name),
+      currentAttachments.filter((a) => a.name !== name)
     );
   };
 
@@ -293,7 +295,7 @@ function PureMultimodalInput({
 
   const [localStorageInput, setLocalStorageInput] = useLocalStorage(
     "input",
-    "",
+    ""
   );
 
   useEffect(() => {
@@ -317,13 +319,10 @@ function PureMultimodalInput({
     adjustHeight();
   };
 
-  // Attachments state is now managed by FileUploadSection
-
   const submitForm = useCallback(() => {
     window.history.replaceState({}, "", `/chat/${chatId}`);
-
     handleSubmit(undefined, {
-      experimental_attachments: attachments,
+      experimental_attachments: attachments.filter((att) => !!att.url),
     });
 
     setAttachments([]);
@@ -352,21 +351,6 @@ function PureMultimodalInput({
 
   return (
     <div className="relative w-full flex flex-col gap-4">
-      <div className="flex flex-row gap-2 items-center rounded-full py-2 px-3 shadow-[inset_0_0px_6px_rgba(100,100,100,0.6)] w-fit">
-        <div className="text-white text-sm font-semibold">
-          Files from Vault:
-        </div>
-        {["document1.pdf", "document2.pdf", "document3.pdf"].map((file) => (
-          <div
-            key={file}
-            className="text-white text-xs flex flex-row gap-1 rounded-full bg-gray-500 py-1 px-2 items-center"
-          >
-            <File size={12} />
-            {file}
-          </div>
-        ))}
-      </div>
-
       <AnimatePresence>
         {!isAtBottom && (
           <motion.div
@@ -398,6 +382,10 @@ function PureMultimodalInput({
           selectedVisibilityType={selectedVisibilityType}
         />
       )}
+      <VaultFilesSection
+        onAttachmentsChange={setAttachments}
+        disabled={status !== "ready"}
+      />
       {/* File upload section (self-contained) */}
       <FileUploadSection
         onAttachmentsChange={setAttachments}
@@ -411,7 +399,7 @@ function PureMultimodalInput({
         handleInput={handleInput}
         className={cx(
           "min-h-[24px] max-h-[calc(75dvh)] overflow-hidden resize-none rounded-2xl !text-base bg-muted dark:border-zinc-700 p-4",
-          className,
+          className
         )}
         submitForm={submitForm}
       />
@@ -426,6 +414,74 @@ function PureMultimodalInput({
   );
 }
 
+function VaultFilesSection({
+  onAttachmentsChange,
+  disabled,
+}: {
+  onAttachmentsChange?: (attachments: Array<Attachment>) => void;
+  disabled?: boolean;
+}) {
+  const [vaultFiles, setVaultFiles] = useState<UserUpload[]>([]);
+  const { selectedVaultFileNames, setSelectedVaultFileNames } = useVaultFilesStore();
+  const [selectedVaultFiles, setSelectedVaultFiles] = useState<string[]>(selectedVaultFileNames);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const fetchUserUploads = async () => {
+    setIsLoading(true);
+    try {
+      const response = await fetch("/api/vault/documents");
+      if (!response.ok) {
+        throw new Error("Failed to fetch vault documents");
+      }
+      const data = await response.json();
+      // Filter out duplicates based on name
+      const uniqueDocuments = Array.from(
+        new Map((data.documents as UserUpload[]).map((doc) => [doc.filename, doc])).values(),
+      );
+      setVaultFiles(uniqueDocuments || []);
+    } catch (error) {
+      console.error("Error fetching vault documents:", error);
+      setVaultFiles([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchUserUploads();
+  }, []);
+
+  useEffect(() => {
+    onAttachmentsChange?.(
+      selectedVaultFiles.map((fileId) => {
+        const file = vaultFiles.find((f) => f.id === fileId);
+        return {
+          url: file?.url || "",
+          name: file?.filename || "",
+          contentType: "",
+        };
+      })
+    );
+    setSelectedVaultFileNames(selectedVaultFiles);
+  }, [selectedVaultFiles, vaultFiles, onAttachmentsChange, setSelectedVaultFileNames]);
+
+  return (
+    <div className="w-full">
+      <MultiSelect
+        options={vaultFiles.map((file) => ({
+          label: file.filename,
+          value: file.filename,
+        }))}
+        onValueChange={setSelectedVaultFiles}
+        defaultValue={selectedVaultFiles}
+        placeholder="Select files from vault"
+        className="w-full"
+        disabled={disabled || isLoading}
+      />
+    </div>
+  );
+}
+
 export const MultimodalInput = memo(
   PureMultimodalInput,
   (prevProps, nextProps) => {
@@ -436,7 +492,7 @@ export const MultimodalInput = memo(
       return false;
 
     return true;
-  },
+  }
 );
 
 function PureAttachmentsButton({

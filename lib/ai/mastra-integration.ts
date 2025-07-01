@@ -4,6 +4,7 @@ import { mastra, type MastraRuntimeContext } from "@/mastra";
 import { optionsAgent } from "@/mastra/tools/utility-tools";
 import { saveMessages } from "@/lib/db/queries";
 import type { DataStreamWriter, Message, StepResult } from "ai";
+import type { RuntimeContext } from "@mastra/core/di";
 
 type onFinishResult = Omit<StepResult<any>, "stepType" | "isContinued"> & {
   readonly steps: StepResult<any>[];
@@ -35,11 +36,11 @@ export async function streamWithMastraAgent(
   messages: Message[],
   options: {
     onToolCall?: (toolCall: any) => Promise<void>;
-    runtimeContext?: MastraRuntimeContext;
+    runtimeContext?: RuntimeContext<MastraRuntimeContext>;
     responsePipe: DataStreamWriter;
   },
-) {
-  const { responsePipe } = options;
+): Promise<void> {
+  const { responsePipe } = options; 
   const selectedAgent = await getAgentType(messages);
   const agent = mastra.getAgent(selectedAgent);
 
@@ -111,8 +112,6 @@ export async function streamWithMastraAgent(
     }
   };
 
-  // Configure stream options with message saving and runtime context
-
   const streamOptions: any = {
     memory: {
       resource: resourceId,
@@ -137,7 +136,6 @@ export async function streamWithMastraAgent(
 
   const stream = await agent.stream(messages, streamOptions);
   stream.mergeIntoDataStream(responsePipe, { experimental_sendFinish: false });
-  return stream;
 }
 
 /**
@@ -210,3 +208,4 @@ export async function createMastraAgentAPIRoute(
     return stream.toDataStreamResponse();
   };
 }
+

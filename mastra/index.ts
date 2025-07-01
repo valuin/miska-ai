@@ -8,10 +8,10 @@ import { workflowCreatorAgent } from "./agents/workflow-creator-agent";
 import type { DataStreamWriter } from "ai";
 import type { Session } from "next-auth";
 
-// Define the shape of your runtime context
 export type MastraRuntimeContext = {
   session: Session;
   dataStream: DataStreamWriter;
+  selectedVaultFileNames: string[];
 };
 
 export const mastra = new Mastra({

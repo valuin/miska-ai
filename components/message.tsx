@@ -266,7 +266,7 @@ const PurePreviewMessage = ({
                         />
                       ) : (
                         <div>
-                          {toolName} {JSON.stringify(args, null, 2)}
+                          {toolName}
                         </div>
                       )}
                     </div>

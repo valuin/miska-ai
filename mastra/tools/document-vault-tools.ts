@@ -1,18 +1,19 @@
-import { createTool } from "@mastra/core/tools";
-import { embed } from "ai";
-import { getUserVaultDocuments } from "@/lib/db/queries/document-vault";
-import { openai } from "@ai-sdk/openai";
-import { qdrantClient, COLLECTION_NAME } from "@/lib/rag/vector-store";
-import { z } from "zod";
-import type { MastraRuntimeContext } from "..";
+import { createTool } from '@mastra/core/tools';
+import { embed } from 'ai';
+import { getUserVaultDocuments } from '@/lib/db/queries/document-vault';
+import { openai } from '@ai-sdk/openai';
+import { qdrantClient, COLLECTION_NAME } from '@/lib/rag/vector-store';
+import { z } from 'zod';
+import type { MastraRuntimeContext } from '..';
+import type { RuntimeContext } from '@mastra/core/di';
 
 export const saveDocumentToVaultTool = createTool({
-  id: "save-document-to-vault",
+  id: 'save-document-to-vault',
   description:
-    "Save a processed document to the user vault for future retrieval",
+    'Save a processed document to the user vault for future retrieval',
   inputSchema: z.object({
-    tempDocumentId: z.string().describe("Temporary document ID to save"),
-    userId: z.string().describe("User ID who owns the document"),
+    tempDocumentId: z.string().describe('Temporary document ID to save'),
+    userId: z.string().describe('User ID who owns the document'),
   }),
   outputSchema: z.object({
     success: z.boolean(),
@@ -24,21 +25,21 @@ export const saveDocumentToVaultTool = createTool({
       return {
         success: false,
         message:
-          "Please use the chat interface to save documents to vault. This tool requires user authentication.",
+          'Please use the chat interface to save documents to vault. This tool requires user authentication.',
       };
     } catch (error) {
-      console.error("Error saving document to vault:", error);
+      console.error('Error saving document to vault:', error);
       return {
         success: false,
-        message: "Failed to save document to vault",
+        message: 'Failed to save document to vault',
       };
     }
   },
 });
 
 export const listVaultDocumentsTool = createTool({
-  id: "list-vault-documents",
-  description: "List all documents in user vault",
+  id: 'list-vault-documents',
+  description: 'List all documents in user vault',
   inputSchema: z.object({}),
   outputSchema: z.object({
     documents: z.array(
@@ -56,26 +57,32 @@ export const listVaultDocumentsTool = createTool({
   }),
   execute: async ({ runtimeContext }) => {
     try {
-      const { session } = runtimeContext as unknown as MastraRuntimeContext;
-      // Get user ID from runtime context (set by the chat handler)
+      const concreteRuntimeContext =
+        runtimeContext as RuntimeContext<MastraRuntimeContext>;
+      const session = concreteRuntimeContext.get('session');
       const userId = session?.user?.id;
-      if (!userId) return { documents: [], totalCount: 0 };
+      if (!userId) {
+        return { documents: [], totalCount: 0 };
+      }
 
       const documents = await getUserVaultDocuments(userId);
       return {
         documents: documents.map((doc) => ({
           id: doc.id,
           filename: doc.filename,
-          fileType: doc.fileType || "",
+          fileType: doc.fileType || '',
           url: doc.fileUrl,
-          createdAt: doc.createdAt?.toISOString() || "",
+          createdAt: doc.createdAt?.toISOString() || '',
           chunkCount: doc.chunkCount || 0,
-          contentPreview: doc.contentPreview || "",
+          contentPreview: doc.contentPreview || '',
         })),
         totalCount: documents.length,
       };
     } catch (error) {
-      console.error("Error listing vault documents:", error);
+      console.error(
+        '[listVaultDocumentsTool] Error listing vault documents:',
+        error,
+      );
       return {
         documents: [],
         totalCount: 0,
@@ -84,7 +91,6 @@ export const listVaultDocumentsTool = createTool({
   },
 });
 
-// Extract the Zod result schema for reuse
 const VaultDocumentResultSchema = z.object({
   text: z.string(),
   score: z.number(),
@@ -93,15 +99,19 @@ const VaultDocumentResultSchema = z.object({
 });
 
 export const queryVaultDocumentsTool = createTool({
-  id: "query-vault-documents",
-  description: "Search through user vault documents using semantic similarity",
+  id: 'query-vault-documents',
+  description: 'Search through user vault documents using semantic similarity',
   inputSchema: z.object({
-    query: z.string().describe("Search query to find relevant documents"),
+    query: z.string().describe('Search query to find relevant documents'),
     topK: z
       .number()
       .optional()
       .default(5)
-      .describe("Number of results to return"),
+      .describe('Number of results to return'),
+    filenames: z
+      .array(z.string())
+      .optional()
+      .describe('Optional list of filenames to filter the search results'),
   }),
   outputSchema: z.object({
     results: z.array(VaultDocumentResultSchema),
@@ -112,33 +122,43 @@ export const queryVaultDocumentsTool = createTool({
     runtimeContext,
   }: {
     context: any;
-    runtimeContext: any;
+    runtimeContext: RuntimeContext<MastraRuntimeContext>;
   }): Promise<{
     results: Array<z.infer<typeof VaultDocumentResultSchema>>;
     totalResults: number;
   }> => {
     try {
       const { query, topK } = context;
-      const { session } = runtimeContext as unknown as MastraRuntimeContext;
+      const session = runtimeContext.get('session');
+      const selectedVaultFileNames = runtimeContext.get(
+        'selectedVaultFileNames',
+      );
 
-      if (!session?.user?.id) return { results: [], totalResults: 0 };
+      if (!session?.user?.id) {
+        return { results: [], totalResults: 0 };
+      }
 
       const { embedding } = await embed({
         value: query,
-        model: openai.embedding("text-embedding-3-small"),
+        model: openai.embedding('text-embedding-3-small'),
       });
 
       const searchResults = await qdrantClient.search(COLLECTION_NAME, {
         vector: embedding,
         limit: topK,
         filter: {
-          must: [{ key: "user_id", match: { value: session.user.id } }],
+          must: [
+            { key: 'user_id', match: { value: session.user.id } },
+            ...(selectedVaultFileNames && selectedVaultFileNames.length > 0
+              ? [{ key: 'filename', match: { any: selectedVaultFileNames } }]
+              : []),
+          ],
         },
       });
 
-      // console.log("Vault query debug:", {
+      // console.log('Vault query debug:', {
       //   query,
-      //   userId,
+      //   userId: session.user.id,
       //   embedding,
       //   searchResults,
       // });
@@ -146,22 +166,23 @@ export const queryVaultDocumentsTool = createTool({
       const results = searchResults;
 
       return {
-        results: results.map((result: any) => {
-          const parsed = VaultDocumentResultSchema.safeParse(
-            result.payload ?? {},
-          );
-          if (parsed.success) return parsed.data;
-          return {
-            text: "",
-            score: 0,
-            filename: "",
-            chunkIndex: 0,
-          };
-        }),
+        results: results.map((result) => ({
+          text:
+            typeof result.payload?.text === 'string' ? result.payload.text : '',
+          score: result.score,
+          filename:
+            typeof result.payload?.filename === 'string'
+              ? result.payload.filename
+              : '',
+          chunkIndex:
+            typeof result.payload?.chunk_index === 'number'
+              ? result.payload.chunk_index
+              : 0,
+        })),
         totalResults: results.length,
       };
     } catch (error) {
-      console.error("Error querying vault documents:", error);
+      console.error('Error querying vault documents:', error);
       return {
         results: [],
         totalResults: 0,
