@@ -23,7 +23,7 @@ import { SuggestedActions } from "./suggested-actions";
 import equal from "fast-deep-equal";
 import type { UseChatHelpers } from "@ai-sdk/react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowDown } from "lucide-react";
+import { ArrowDown, File } from "lucide-react";
 import { useScrollToBottom } from "@/hooks/use-scroll-to-bottom";
 import type { VisibilityType } from "./visibility-selector";
 import { upload } from "@vercel/blob/client";
@@ -352,6 +352,21 @@ function PureMultimodalInput({
 
   return (
     <div className="relative w-full flex flex-col gap-4">
+      <div className="flex flex-row gap-2 items-center rounded-full py-2 px-3 shadow-[inset_0_0px_6px_rgba(100,100,100,0.6)] w-fit">
+        <div className="text-white text-sm font-semibold">
+          Files from Vault:
+        </div>
+        {["document1.pdf", "document2.pdf", "document3.pdf"].map((file) => (
+          <div
+            key={file}
+            className="text-white text-xs flex flex-row gap-1 rounded-full bg-gray-500 py-1 px-2 items-center"
+          >
+            <File size={12} />
+            {file}
+          </div>
+        ))}
+      </div>
+
       <AnimatePresence>
         {!isAtBottom && (
           <motion.div
@@ -376,7 +391,6 @@ function PureMultimodalInput({
           </motion.div>
         )}
       </AnimatePresence>
-
       {messages.length === 0 && (
         <SuggestedActions
           append={append}
@@ -384,13 +398,11 @@ function PureMultimodalInput({
           selectedVisibilityType={selectedVisibilityType}
         />
       )}
-
       {/* File upload section (self-contained) */}
       <FileUploadSection
         onAttachmentsChange={setAttachments}
         disabled={status !== "ready"}
       />
-
       {/* Message input section */}
       <MessageInputSection
         input={input}
@@ -403,7 +415,6 @@ function PureMultimodalInput({
         )}
         submitForm={submitForm}
       />
-
       <div className="absolute bottom-0 right-0 p-2 w-fit flex flex-row justify-end">
         {status === "submitted" ? (
           <StopButton stop={stop} setMessages={setMessages} />
