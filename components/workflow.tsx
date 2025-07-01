@@ -17,8 +17,6 @@ export const WorkflowMessage = ({ result }: { result: CreatedWorkflow }) => {
       <h2 className="text-lg font-bold">{name}</h2>
       <p className="text-sm text-muted-foreground">{description}</p>
 
-      <div>DEBUG: {JSON.stringify(result, null, 2)}</div>
-
       {nodes.length > 0 ? (
         <SchemaVisualizer nodes={nodes} edges={edges} />
       ) : (

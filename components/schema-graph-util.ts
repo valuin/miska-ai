@@ -1,21 +1,16 @@
 import type { Edge, Node } from "@xyflow/react";
 
-// Arrange nodes in columns: 2 per column, then next column
-function getColumnLayoutPositions(
+function getVerticalLayoutPositions(
   count: number,
   xStart = 200,
   yStart = 100,
-  xGap = 300,
-  yGap = 180,
-  perCol = 2,
+  yGap = 160,
 ) {
   const positions: { x: number; y: number }[] = [];
   for (let i = 0; i < count; i++) {
-    const col = Math.floor(i / perCol);
-    const row = i % perCol;
     positions.push({
-      x: xStart + col * xGap,
-      y: yStart + row * yGap,
+      x: xStart,
+      y: yStart + i * yGap,
     });
   }
   return positions;
@@ -29,7 +24,7 @@ export function extractWorkflowGraph(workflowArr: any[]): {
     return { nodes: [], edges: [] };
   }
 
-  const positions = getColumnLayoutPositions(workflowArr.length);
+  const positions = getVerticalLayoutPositions(workflowArr.length);
 
   const nodes: Node[] = workflowArr.map((node, idx) => ({
     id: String(node.id ?? idx + 1),
