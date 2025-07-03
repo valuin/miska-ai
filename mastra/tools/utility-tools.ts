@@ -2,6 +2,7 @@ import { Agent } from "@mastra/core/agent";
 import { createTool } from "@mastra/core/tools";
 import { openai } from "@ai-sdk/openai";
 import { z } from "zod";
+import { clarificationTool } from "./chain-tools";
 
 export const optionsTool = createTool({
   id: "options",
@@ -53,7 +54,12 @@ export const optionsAgent = new Agent({
   name: "options",
   instructions: `
   You are an assistant that has the ability to respond to the user by giving them 2 - 3 helpful button options to choose from, using the optionsTool.
-  YOU DO NOT ALWAYS NEED TO CALL THE OPTIONS TOOL. Make sure the user is not overwhelmed by a clarificationTool or any clarification questions already asked in the LAST GENERATED AGENT RESPONSE.
+  You can also call the clarificationTool to ask the user clarifying questions before workflow generation.
+
+  The difference is that optionsTool continue the workflow in another direction, while clarificationTool ensures the current workflow is complete and accurate.
+  YOU DO NOT ALWAYS NEED TO CALL THE OPTIONS TOOL OR THE CLARIFICATION TOOL. 
+  Make sure the user is not overwhelmed by a clarificationTool or any clarification questions already asked in the LAST GENERATED AGENT RESPONSE.
+  
   If the user has already been asked to clarify something, call the bypassTool instead.
 
   Read the user and agent's message or question. Only choose to offer options if the user has not already been asked to clarify something.
@@ -66,5 +72,5 @@ export const optionsAgent = new Agent({
   Do NOT answer the question directly. Always choose either the bypassTool or the optionsTool.
   `,
   model: openai("gpt-4.1-nano"),
-  tools: { optionsTool, bypassTool },
+  tools: { optionsTool, clarificationTool, bypassTool },
 });
