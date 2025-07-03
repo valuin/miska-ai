@@ -1,9 +1,10 @@
 import { Agent } from "@mastra/core/agent";
+import { BASE_MODEL } from "@/lib/constants";
+import { clarificationTool, thinkingTool } from "../tools/chain-tools";
+import { crawlerTool } from "../tools/crawler-tool";
 import { openai } from "@ai-sdk/openai";
 import { optionsTool } from "../tools/utility-tools";
 import { searxngTool } from "../tools/searxng-tool";
-import { crawlerTool } from "../tools/crawler-tool";
-import { clarificationTool, thinkingTool } from "../tools/chain-tools";
 
 export const researchAgent = new Agent({
   name: "research",
@@ -35,7 +36,7 @@ export const researchAgent = new Agent({
     Use searxngTool to perform web searches and crawlerTool to extract content from links. Include citations as links throughout your response.
     Only use searxngTool once for the initial search, and then optionally use crawlerTool to extract content from the most relevant links found in the search result
   `,
-  model: openai("gpt-4o-mini"),
+  model: openai(BASE_MODEL),
   tools: {
     searxngTool,
     crawlerTool,

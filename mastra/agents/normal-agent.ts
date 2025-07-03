@@ -1,9 +1,10 @@
-import { openai } from "@ai-sdk/openai";
 import { Agent } from "@mastra/core/agent";
-import { optionsTool } from "../tools/utility-tools";
-import { createMastraTools } from "@agentic/mastra";
+import { BASE_MODEL } from "@/lib/constants";
 import { calculator } from "@agentic/calculator";
 import { clarificationTool, thinkingTool } from "../tools/chain-tools";
+import { createMastraTools } from "@agentic/mastra";
+import { openai } from "@ai-sdk/openai";
+import { optionsTool } from "../tools/utility-tools";
 
 export const normalAgent = new Agent({
   name: "General Assistant",
@@ -27,7 +28,7 @@ When answering user queries:
 Do **not** hallucinate access to tools or data you don't actually have.
 Keep your tone clear, supportive, and efficient.
   `,
-  model: openai("gpt-4o-mini"),
+  model: openai(BASE_MODEL),
   tools: {
     optionsTool,
     clarificationTool,

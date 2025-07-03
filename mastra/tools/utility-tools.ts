@@ -1,8 +1,9 @@
 import { Agent } from "@mastra/core/agent";
+import { clarificationTool } from "./chain-tools";
 import { createTool } from "@mastra/core/tools";
 import { openai } from "@ai-sdk/openai";
+import { TINY_MODEL } from "@/lib/constants";
 import { z } from "zod";
-import { clarificationTool } from "./chain-tools";
 
 export const optionsTool = createTool({
   id: "options",
@@ -50,27 +51,28 @@ const bypassTool = createTool({
   outputSchema: z.object({}),
 });
 
-export const optionsAgent = new Agent({
-  name: "options",
+export const workflowModifierAgent = new Agent({
+  name: "workflow-modifier",
   instructions: `
-  You are an assistant that has the ability to respond to the user by giving them 2 - 3 helpful button options to choose from, using the optionsTool.
-  You can also call the clarificationTool to ask the user clarifying questions before workflow generation.
+  You are an assistant that has the ability to modify and manipulate the workflow in conversation.
+  You have access to the following tools:
+
+  - optionsTool: Send a set of option buttons to the user to choose from.
+  - clarificationTool: Ask the user clarifying questions before workflow generation.
+  - bypassTool: Bypass the options tool as the user has already been asked to clarify something.
 
   The difference is that optionsTool continue the workflow in another direction, while clarificationTool ensures the current workflow is complete and accurate.
   YOU DO NOT ALWAYS NEED TO CALL THE OPTIONS TOOL OR THE CLARIFICATION TOOL. 
   Make sure the user is not overwhelmed by a clarificationTool or any clarification questions already asked in the LAST GENERATED AGENT RESPONSE.
-  
+
   If the user has already been asked to clarify something, call the bypassTool instead.
 
-  Read the user and agent's message or question. Only choose to offer options if the user has not already been asked to clarify something.
-  If the agent's response includes a complete result (such as found documents, a research report, or a draft email), you must offer options to HELP the user choose the next steps.
-
-  1. Think of a few clear and useful next-step options the user might want.
-  2. If the user is looking for information (such as after calling a researchAgent), include an option for the user to crawl or find more detailed information.
-  3. Use the optionsTool to send those options back to the user.
-
-  Do NOT answer the question directly. Always choose either the bypassTool or the optionsTool.
+  Read the user and agent's message or question.
+  
+  If the agent's response includes a complete result (such as found documents, a research report, or a draft email), you must use optionsTool to HELP the user choose the next steps.
+  If the user's response is ambiguous, or the agent's response requests clarification WITHOUT an existing clarificationTool call, you must call the clarificationTool.
+  If the user's response is not ambiguous, and the agent's response is not requesting clarification, you must call the bypassTool.
   `,
-  model: openai("gpt-4.1-nano"),
+  model: openai(TINY_MODEL),
   tools: { optionsTool, clarificationTool, bypassTool },
 });

@@ -1,4 +1,5 @@
 import { Agent } from "@mastra/core/agent";
+import { BASE_MODEL } from "@/lib/constants";
 import { openai } from "@ai-sdk/openai";
 import { thinkingTool, clarificationTool } from "../tools/chain-tools";
 import {
@@ -33,7 +34,7 @@ Document Management:
 Keep responses helpful, accurate, and well-cited when using document context.
 Always respect user privacy by filtering searches to their documents only.
   `,
-  model: openai("gpt-4o-mini"),
+  model: openai(BASE_MODEL),
   tools: {
     saveDocumentToVaultTool,
     listVaultDocumentsTool,

@@ -1,7 +1,7 @@
 import { generateUUID } from "@/lib/utils";
 import { getAgentType } from "@/mastra/agents/agent-router";
 import { mastra, type MastraRuntimeContext } from "@/mastra";
-import { optionsAgent } from "@/mastra/tools/utility-tools";
+import { workflowModifierAgent } from "@/mastra/tools/utility-tools";
 import { saveMessages } from "@/lib/db/queries";
 import type { DataStreamWriter, Message, StepResult } from "ai";
 import type { RuntimeContext } from "@mastra/core/di";
@@ -40,7 +40,7 @@ export async function streamWithMastraAgent(
     responsePipe: DataStreamWriter;
   },
 ): Promise<void> {
-  const { responsePipe } = options; 
+  const { responsePipe } = options;
   const selectedAgent = await getAgentType(messages);
   const agent = mastra.getAgent(selectedAgent);
 
@@ -125,12 +125,12 @@ export async function streamWithMastraAgent(
         content: JSON.stringify(result.response.messages),
       };
       const content = [...messages, lastMessage];
-      const optionsStream = await optionsAgent.stream(content, {
+      const wm = await workflowModifierAgent.stream(content, {
         onFinish: async (_result: onFinishResult) => {
           await saveMessage([...result.steps, ..._result.steps]);
         },
       });
-      optionsStream.mergeIntoDataStream(responsePipe);
+      wm.mergeIntoDataStream(responsePipe);
     },
   };
 
@@ -208,4 +208,3 @@ export async function createMastraAgentAPIRoute(
     return stream.toDataStreamResponse();
   };
 }
-

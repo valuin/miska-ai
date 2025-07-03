@@ -1,7 +1,8 @@
-import { openai } from "@ai-sdk/openai";
 import { Agent } from "@mastra/core";
-import type { Message } from "ai";
+import { BASE_MODEL } from "@/lib/constants";
+import { openai } from "@ai-sdk/openai";
 import { z } from "zod";
+import type { Message } from "ai";
 
 const agentTypeSchema = z.object({
   reasoning: z
@@ -42,7 +43,7 @@ export const agentRouter = new Agent({
   - documentAgent
     - This agent is used to create, update, and request suggestions for new documents (not vault-related).
   `,
-  model: openai("gpt-4o-mini"),
+  model: openai(BASE_MODEL),
 });
 
 export async function getAgentType(messages: Message[]): Promise<AgentType> {

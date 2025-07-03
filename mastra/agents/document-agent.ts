@@ -6,6 +6,7 @@ import { createDocument } from "../tools/create-document";
 import { updateDocument } from "../tools/update-document";
 import { requestSuggestions } from "../tools/request-suggestions";
 import { clarificationTool } from "../tools/chain-tools";
+import { LARGE_MODEL } from "@/lib/constants";
 
 /**
  * This agent handles document creation, updating, and suggestion requests.
@@ -31,7 +32,7 @@ You are a Document CRUD Agent. Your job is to help users create, update, and req
 
 Always call the appropriate tool for the user's intent. Respond clearly and concisely.
   `,
-  model: openai("gpt-4o"),
+  model: openai(LARGE_MODEL),
   tools: {
     createDocument,
     updateDocument,

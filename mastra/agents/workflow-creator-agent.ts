@@ -2,6 +2,7 @@ import { openai } from "@ai-sdk/openai";
 import { Agent } from "@mastra/core/agent";
 import { clarificationTool } from "../tools/chain-tools";
 import { workflowTool } from "../tools/workflow-creator-tools";
+import { LARGE_MODEL } from "@/lib/constants";
 
 export type WorkflowNode = {
   id: string;
@@ -38,6 +39,6 @@ export const workflowCreatorAgent = new Agent({
   2. Agent-task: Summarize article
   3. Human-input: Ask user to choose next action
   `,
-  model: openai("gpt-4o"),
+  model: openai(LARGE_MODEL),
   tools: { workflowTool, clarificationTool },
 });
