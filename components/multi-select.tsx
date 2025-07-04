@@ -111,6 +111,11 @@ interface MultiSelectProps
    * Optional, can be used to add custom styles.
    */
   className?: string;
+  /**
+   * Callback function triggered when the popover opens.
+   * Optional, can be used to trigger data fetching or other actions.
+   */
+  onOpen?: () => void;
 }
 
 export const MultiSelect = React.forwardRef<
@@ -129,6 +134,7 @@ export const MultiSelect = React.forwardRef<
       modalPopover = false,
       asChild = false,
       className,
+      onOpen,
       ...props
     },
     ref
@@ -137,6 +143,34 @@ export const MultiSelect = React.forwardRef<
       React.useState<string[]>(defaultValue);
     const [isPopoverOpen, setIsPopoverOpen] = React.useState(false);
     const [isAnimating, setIsAnimating] = React.useState(false);
+    const [autoSelected, setAutoSelected] = React.useState<string[]>([]);
+
+    // Listen for vault-autoselect event
+    React.useEffect(() => {
+      const handler = (e: Event) => {
+        const detail = (e as CustomEvent<string[]>).detail;
+        if (Array.isArray(detail) && detail.length > 0) {
+          setSelectedValues((prev) => {
+            const next = Array.from(new Set([...prev, ...detail]));
+            setAutoSelected(detail);
+            setTimeout(() => setAutoSelected([]), 2000);
+            onValueChange(next);
+            return next;
+          });
+        }
+      };
+      window.addEventListener("vault-autoselect", handler);
+      return () => window.removeEventListener("vault-autoselect", handler);
+    }, [onValueChange]);
+
+    // Only call onOpen when popover transitions from closed to open
+    const prevPopoverOpen = React.useRef(false);
+    React.useEffect(() => {
+      if (isPopoverOpen && !prevPopoverOpen.current && onOpen) {
+        onOpen();
+      }
+      prevPopoverOpen.current = isPopoverOpen;
+    }, [isPopoverOpen, onOpen]);
 
     const handleInputKeyDown = (
       event: React.KeyboardEvent<HTMLInputElement>

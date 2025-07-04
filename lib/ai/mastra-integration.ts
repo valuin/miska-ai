@@ -40,9 +40,32 @@ export async function streamWithMastraAgent(
     responsePipe: DataStreamWriter;
   },
 ): Promise<void> {
-  const { responsePipe } = options;
-  const selectedAgent = await getAgentType(messages);
+  const { responsePipe, runtimeContext } = options;
+  // Check for selectedVaultFileNames in runtimeContext
+  let vaultFiles: string[] | undefined = undefined;
+  if (runtimeContext) {
+    vaultFiles = runtimeContext.get("selectedVaultFileNames");
+  }
+
+  let selectedAgent = await getAgentType(messages);
+  if (vaultFiles && Array.isArray(vaultFiles) && vaultFiles.length > 0) {
+    selectedAgent = "ragChatAgent";
+  }
   const agent = mastra.getAgent(selectedAgent);
+
+  // Inject vault context as a system message for all agents if present
+  let finalMessages = messages;
+  if (vaultFiles && vaultFiles.length > 0) {
+    finalMessages = [
+      {
+        id: "system-vault-context",
+        role: "system",
+        content: `Vault Files Selected: ${vaultFiles.join(", ")}`,
+        createdAt: new Date(),
+      },
+      ...messages,
+    ];
+  }
 
   if (selectedAgent !== "normalAgent") {
     const agentMap = {
@@ -134,7 +157,7 @@ export async function streamWithMastraAgent(
     },
   };
 
-  const stream = await agent.stream(messages, streamOptions);
+  const stream = await agent.stream(finalMessages, streamOptions);
   stream.mergeIntoDataStream(responsePipe, { experimental_sendFinish: false });
 }
 

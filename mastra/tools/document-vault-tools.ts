@@ -143,6 +143,13 @@ export const queryVaultDocumentsTool = createTool({
         model: openai.embedding('text-embedding-3-small'),
       });
 
+      console.log('Vault query debug:', {
+        query,
+        userId: session.user.id,
+        embedding,
+        selectedVaultFileNames,
+      });
+
       const searchResults = await qdrantClient.search(COLLECTION_NAME, {
         vector: embedding,
         limit: topK,

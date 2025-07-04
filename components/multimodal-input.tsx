@@ -2,8 +2,7 @@
 
 import type { Attachment, UIMessage } from "ai";
 import cx from "classnames";
-import type React from "react";
-import {
+import React, {
   useRef,
   useEffect,
   useState,
@@ -48,6 +47,8 @@ export function FileUploadSection({
   }, [attachments, onAttachmentsChange]);
 
   const uploadFile = async (file: File): Promise<Attachment | undefined> => {
+    // Show uploading toast
+    const toastId = toast.loading(`Uploading "${file.name}"...`);
     try {
       const newBlob = await upload(file.name, file, {
         access: "public",
@@ -76,35 +77,34 @@ export function FileUploadSection({
       const processResult = await processResponse.json();
 
       if (processResult.success && processResult.document.canSaveToVault) {
-        toast.success(
-          `Document "${file.name}" processed successfully. You can save it to your vault for future reference.`,
-          {
-            action: {
-              label: "Save to Vault",
-              onClick: async () => {
-                try {
-                  const saveResponse = await fetch("/api/vault/save", {
-                    method: "POST",
-                    headers: {
-                      "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({
-                      tempDocumentId: processResult.document.id,
-                    }),
-                  });
-
-                  if (saveResponse.ok) {
-                    toast.success("Document saved to vault successfully!");
-                  } else {
-                    toast.error("Failed to save document to vault");
-                  }
-                } catch (error) {
-                  toast.error("Failed to save document to vault");
-                }
-              },
+        // Immediately save to vault
+        try {
+          const saveResponse = await fetch("/api/vault/save", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
             },
+            body: JSON.stringify({
+              tempDocumentId: processResult.document.id,
+            }),
+          });
+
+          if (saveResponse.ok) {
+            toast.success(
+              `Document "${file.name}" uploaded and saved to vault.`
+            );
+          } else {
+            toast.error(
+              `Document "${file.name}" uploaded, but failed to save to vault.`
+            );
           }
-        );
+        } catch (error) {
+          toast.error(
+            `Document "${file.name}" uploaded, but failed to save to vault.`
+          );
+        }
+      } else if (processResult.success) {
+        toast.success(`Document "${file.name}" uploaded successfully.`);
       }
 
       return {
@@ -115,6 +115,8 @@ export function FileUploadSection({
     } catch (error) {
       console.error("File upload error:", error);
       toast.error("Failed to upload and process file, please try again!");
+    } finally {
+      toast.dismiss(toastId);
     }
   };
 
@@ -137,6 +139,18 @@ export function FileUploadSection({
           ...currentAttachments,
           ...successfullyUploadedAttachments,
         ]);
+
+        // Auto-select uploaded files in the vault
+        if (successfullyUploadedAttachments.length > 0) {
+          // Use the vault store to add filenames
+          const uploadedNames = successfullyUploadedAttachments
+            .map((att) => att.name)
+            .filter(Boolean);
+          // Use window.dispatchEvent to notify VaultFilesSection
+          window.dispatchEvent(
+            new CustomEvent("vault-autoselect", { detail: uploadedNames })
+          );
+        }
       } catch (error) {
         console.error("Error uploading files!", error);
       } finally {
@@ -319,11 +333,34 @@ function PureMultimodalInput({
     adjustHeight();
   };
 
+  const { selectedVaultFileNames } = useVaultFilesStore();
+
   const submitForm = useCallback(() => {
     window.history.replaceState({}, "", `/chat/${chatId}`);
+
+    let userPrompt = input;
+    let restoreInput = false;
+    if (selectedVaultFileNames && selectedVaultFileNames.length > 0) {
+      userPrompt = `[Vault Files Selected: ${selectedVaultFileNames.join(", ")}]\n${input}`;
+      setInput(userPrompt);
+      restoreInput = true;
+    }
+
+    console.log("Submitting form with input:", userPrompt);
+
+    let systemPrompt: string | undefined = undefined;
+    if (selectedVaultFileNames && selectedVaultFileNames.length > 0) {
+      systemPrompt = `Vault Files Selected: ${selectedVaultFileNames.join(", ")}`;
+    }
+
     handleSubmit(undefined, {
       experimental_attachments: attachments.filter((att) => !!att.url),
+      body: systemPrompt ? { systemPrompt } : undefined,
     });
+
+    if (restoreInput) {
+      setTimeout(() => setInput(""), 0);
+    }
 
     setAttachments([]);
     setLocalStorageInput("");
@@ -339,6 +376,9 @@ function PureMultimodalInput({
     setLocalStorageInput,
     width,
     chatId,
+    input,
+    selectedVaultFileNames,
+    setInput,
   ]);
 
   const { isAtBottom, scrollToBottom } = useScrollToBottom();
@@ -422,8 +462,23 @@ function VaultFilesSection({
   disabled?: boolean;
 }) {
   const [vaultFiles, setVaultFiles] = useState<UserUpload[]>([]);
-  const { selectedVaultFileNames, setSelectedVaultFileNames } = useVaultFilesStore();
-  const [selectedVaultFiles, setSelectedVaultFiles] = useState<string[]>(selectedVaultFileNames);
+  const { selectedVaultFileNames, setSelectedVaultFileNames } =
+    useVaultFilesStore();
+  const [selectedVaultFiles, setSelectedVaultFiles] = useState<string[]>(
+    selectedVaultFileNames
+  );
+
+  // Listen for auto-select events from FileUploadSection
+  React.useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent<string[]>).detail;
+      if (Array.isArray(detail) && detail.length > 0) {
+        setSelectedVaultFiles((prev) => Array.from(new Set([...prev, ...detail])));
+      }
+    };
+    window.addEventListener("vault-autoselect", handler);
+    return () => window.removeEventListener("vault-autoselect", handler);
+  }, []);
   const [isLoading, setIsLoading] = useState(false);
 
   const fetchUserUploads = async () => {
@@ -436,7 +491,9 @@ function VaultFilesSection({
       const data = await response.json();
       // Filter out duplicates based on name
       const uniqueDocuments = Array.from(
-        new Map((data.documents as UserUpload[]).map((doc) => [doc.filename, doc])).values(),
+        new Map(
+          (data.documents as UserUpload[]).map((doc) => [doc.filename, doc])
+        ).values()
       );
       setVaultFiles(uniqueDocuments || []);
     } catch (error) {
@@ -446,10 +503,6 @@ function VaultFilesSection({
       setIsLoading(false);
     }
   };
-
-  useEffect(() => {
-    fetchUserUploads();
-  }, []);
 
   useEffect(() => {
     onAttachmentsChange?.(
@@ -463,7 +516,12 @@ function VaultFilesSection({
       })
     );
     setSelectedVaultFileNames(selectedVaultFiles);
-  }, [selectedVaultFiles, vaultFiles, onAttachmentsChange, setSelectedVaultFileNames]);
+  }, [
+    selectedVaultFiles,
+    vaultFiles,
+    onAttachmentsChange,
+    setSelectedVaultFileNames,
+  ]);
 
   return (
     <div className="w-full">
@@ -477,6 +535,7 @@ function VaultFilesSection({
         placeholder="Select files from vault"
         className="w-full"
         disabled={disabled || isLoading}
+        onOpen={fetchUserUploads}
       />
     </div>
   );

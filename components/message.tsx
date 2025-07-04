@@ -275,6 +275,32 @@ const PurePreviewMessage = ({
 
                 if (state === "result") {
                   const { result } = toolInvocation;
+                  // Custom: Show ToolCallBadge with file(s) for queryVaultDocumentsTool
+                  if (toolName === "queryVaultDocumentsTool") {
+                    // Try to extract filenames from result
+                    let filenames: string[] = [];
+                    if (Array.isArray(result?.results)) {
+                      filenames = Array.from(
+                        new Set(
+                          result.results
+                            .map((r: any) => String(r.filename))
+                            .filter(Boolean)
+                        )
+                      ) as string[];
+                    }
+                    return (
+                      <div key={toolCallId} className="flex flex-col gap-2">
+                        <ToolCallBadge
+                          icon={SearchIcon}
+                          query={
+                            filenames.length > 0
+                              ? `${filenames.join(", ")}`
+                              : "No results found"
+                          }
+                        />
+                      </div>
+                    );
+                  }
                   return (
                     <div key={toolCallId}>
                       {toolName === "searxngTool" ? (
