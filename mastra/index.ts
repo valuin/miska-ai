@@ -7,12 +7,20 @@ import { researchAgent } from "./agents/research-agent";
 import { workflowCreatorAgent } from "./agents/workflow-creator-agent";
 import type { DataStreamWriter } from "ai";
 import type { Session } from "next-auth";
+import { Memory } from "@mastra/memory";
+import { PostgresStore } from "@mastra/pg";
 
 export type MastraRuntimeContext = {
   session: Session;
   dataStream: DataStreamWriter;
   selectedVaultFileNames: string[];
 };
+
+const memory = new Memory({
+  storage: new PostgresStore({
+    connectionString: process.env.POSTGRES_URL || "",
+  }),
+});
 
 export const mastra = new Mastra({
   agents: {
