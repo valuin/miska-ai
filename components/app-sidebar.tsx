@@ -3,7 +3,7 @@
 import type { User } from 'next-auth';
 import { useRouter } from 'next/navigation';
 
-import { LineChart, PlusIcon } from 'lucide-react';
+import { LineChart, PlusIcon, RepeatIcon } from 'lucide-react';
 import { SidebarHistory } from '@/components/sidebar-history';
 import { SidebarUserNav } from '@/components/sidebar-user-nav';
 import { Button } from '@/components/ui/button';
@@ -56,7 +56,7 @@ export function AppSidebar({ user }: { user: User | undefined }) {
               <TooltipContent align="end">New Chat</TooltipContent>
             </Tooltip>
           </div>
-          <div className="flex flex-row ml-2 justify-between items-center">
+          <div className="flex flex-col ml-2 justify-start items-start">
             <Link
               href="/analytics"
               onClick={() => {
@@ -69,6 +69,16 @@ export function AppSidebar({ user }: { user: User | undefined }) {
                 Analytics
               </span>
             </Link>
+          <Link
+            href="/workflows"
+            onClick={() => { setOpenMobile(false); }}
+            className="flex flex-row items-center"
+          >
+            <RepeatIcon className="h-4 w-4" />
+            <span className="text-lg font-semibold px-2 hover:bg-muted rounded-md cursor-pointer">
+              Workflows
+            </span>
+          </Link>
           </div>
         </SidebarMenu>
       </SidebarHeader>

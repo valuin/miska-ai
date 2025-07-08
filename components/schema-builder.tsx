@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useRef } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import {
   ReactFlow,
   ReactFlowProvider,
@@ -12,11 +12,24 @@ import {
   BackgroundVariant,
 } from '@xyflow/react';
 import '@xyflow/react/dist/base.css';
-import { ZoomIn, ZoomOut, Maximize2 } from 'lucide-react';
+import { ZoomIn, ZoomOut, Maximize2, Save } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import WorkflowNode from './workflow-node';
 import SchemaEdge from './schema-edge';
 import { initialNodes, initialEdges } from '@/lib/schema-data';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { v4 as uuidv4 } from 'uuid';
+import { toast } from '@/components/toast';
 
 
 const nodeTypes = {
@@ -36,7 +49,79 @@ function SchemaVisualizerInner({ nodes: propNodes, edges: propEdges }: SchemaVis
   const [nodes, setNodes, onNodesChange] = useNodesState(propNodes ?? initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(propEdges ?? initialEdges);
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
-  const { fitView, zoomIn, zoomOut } = useReactFlow();
+  const { fitView, zoomIn, zoomOut, getNodes, getEdges } = useReactFlow();
+  const [isSaving, setIsSaving] = useState(false);
+  const [workflowName, setWorkflowName] = useState('');
+  const [workflowDescription, setWorkflowDescription] = useState('');
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const handleSaveWorkflow = async () => {
+    setIsSaving(true);
+    try {
+      const currentNodes = getNodes();
+      const currentEdges = getEdges();
+
+      if (!workflowName) {
+        toast({
+          type: 'error',
+          description: 'Workflow name cannot be empty.',
+        });
+        setIsSaving(false);
+        return;
+      }
+
+      const workflowData = {
+        id: uuidv4(),
+        name: workflowName,
+        description: workflowDescription,
+        nodes: currentNodes.map(node => ({
+          id: node.id,
+          type: node.type,
+          data: node.data,
+          position: node.position,
+        })),
+        edges: currentEdges.map(edge => ({
+          id: edge.id,
+          source: edge.source,
+          target: edge.target,
+          type: edge.type,
+          data: edge.data,
+        })),
+      };
+
+      const response = await fetch('/api/workflows', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ schema: workflowData }),
+      });
+
+      if (response.ok) {
+        toast({
+          type: 'success',
+          description: 'Workflow saved successfully!',
+        });
+        setWorkflowName('');
+        setWorkflowDescription('');
+        setIsModalOpen(false);
+      } else {
+        const errorData = await response.json();
+        toast({
+          type: 'error',
+          description: `Failed to save workflow: ${errorData.error || response.statusText}`,
+        });
+      }
+    } catch (error) {
+      console.error('Error saving workflow:', error);
+      toast({
+        type: 'error',
+        description: 'An unexpected error occurred while saving the workflow.',
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   const onFitView = useCallback(() => {
     fitView({ padding: 0.2 });
@@ -104,11 +189,60 @@ function SchemaVisualizerInner({ nodes: propNodes, edges: propEdges }: SchemaVis
            >
              <Maximize2 className="size-5" aria-hidden="true" />
            </Button>
+           <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+             <DialogTrigger asChild>
+               <Button
+                 variant="outline"
+                 size="icon"
+                 className="text-muted-foreground/80 hover:text-muted-foreground rounded-none shadow-none first:rounded-s-lg last:rounded-e-lg size-10 focus-visible:z-10 bg-card"
+                 aria-label="Save Workflow"
+               >
+                 <Save className="size-5" aria-hidden="true" />
+               </Button>
+             </DialogTrigger>
+             <DialogContent className="sm:max-w-[425px]">
+               <DialogHeader>
+                 <DialogTitle>Save Workflow</DialogTitle>
+                 <DialogDescription>
+                   Enter a name and description for your workflow.
+                 </DialogDescription>
+               </DialogHeader>
+               <div className="grid gap-4 py-4">
+                 <div className="grid grid-cols-4 items-center gap-4">
+                   <Label htmlFor="name" className="text-right">
+                     Name
+                   </Label>
+                   <Input
+                     id="name"
+                     value={workflowName}
+                     onChange={(e) => setWorkflowName(e.target.value)}
+                     className="col-span-3"
+                   />
+                 </div>
+                 <div className="grid grid-cols-4 items-center gap-4">
+                   <Label htmlFor="description" className="text-right">
+                     Description
+                   </Label>
+                   <Input
+                     id="description"
+                     value={workflowDescription}
+                     onChange={(e) => setWorkflowDescription(e.target.value)}
+                     className="col-span-3"
+                   />
+                 </div>
+               </div>
+               <DialogFooter>
+                 <Button onClick={handleSaveWorkflow} disabled={isSaving}>
+                   {isSaving ? 'Saving...' : 'Save Workflow'}
+                 </Button>
+               </DialogFooter>
+             </DialogContent>
+           </Dialog>
          </Panel>
        </ReactFlow>
      </div>
    </main>
-  );
+ );
 }
 
 export default function SchemaVisualizer(props: SchemaVisualizerProps) {
