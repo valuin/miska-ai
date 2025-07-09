@@ -45,6 +45,7 @@ export async function streamWithMastraAgent(
   let vaultFiles: string[] | undefined = undefined;
   if (runtimeContext) {
     vaultFiles = runtimeContext.get("selectedVaultFileNames");
+    runtimeContext.set("mastra", mastra);
   }
 
   let selectedAgent = await getAgentType(messages);

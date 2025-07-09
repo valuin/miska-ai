@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 interface WorkflowNodeData extends Record<string, unknown> {
   type: "human-input" | "agent-task";
   description: string;
+  agent?: string;
   tool?: string;
   selected?: boolean;
 }
@@ -31,6 +32,13 @@ function WorkflowNode({ data, selected }: NodeProps<WorkflowNodeType>) {
       </div>
       <div className="text-base font-medium text-center">
         {data.description}
+      </div>
+      <div>
+        {data.agent && (
+          <span className="text-xs text-muted-foreground mt-1">
+            Agent: {data.agent}
+          </span>
+        )}
       </div>
       {data.tool && (
         <div className="text-xs text-muted-foreground mt-1 italic">

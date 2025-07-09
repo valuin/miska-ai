@@ -1,6 +1,7 @@
 import { createWorkflow, createStep } from "@mastra/core/workflows";
 import { z } from "zod";
-import { mastra } from "..";
+import type { RuntimeContext } from "@mastra/core/di";
+import type { MastraRuntimeContext } from "@/mastra";
 
 const AGENT_TYPES = [
   "researchAgent",
@@ -21,6 +22,7 @@ interface MastraWorkflowConfig {
   id: string;
   description: string;
   nodes: WorkflowNode[];
+  runtimeContext: RuntimeContext<MastraRuntimeContext>;
 }
 
 /**
@@ -36,6 +38,7 @@ export function createMastraWorkflowFromJson({
   id,
   description,
   nodes,
+  runtimeContext,
 }: MastraWorkflowConfig) {
   if (!nodes || nodes.length === 0) {
     throw new Error("Cannot create a workflow from an empty list of nodes.");
@@ -49,6 +52,7 @@ export function createMastraWorkflowFromJson({
 
     switch (node.type) {
       case "agent-task": {
+        const mastra = runtimeContext.get("mastra");
         if (!node.agent || !mastra.getAgent(node.agent)) {
           throw new Error(
             `Agent "${node.agent}" not found in registry for node ID "${node.id}".`,

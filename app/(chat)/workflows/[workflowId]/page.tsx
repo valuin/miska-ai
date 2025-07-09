@@ -6,7 +6,9 @@ import SchemaVisualizer from '@/components/schema-builder';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
-import { Play } from 'lucide-react';
+import { Play, ChevronDown } from 'lucide-react';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Spinner } from '@/components/ui/spinner';
 
 interface WorkflowData {
   id: string;
@@ -28,6 +30,8 @@ export default function WorkflowDetailPage() {
   const [workflow, setWorkflow] = useState<WorkflowData | null>(null);
   const [loading, setLoading] = useState(true);
   const [inputQuery, setInputQuery] = useState('');
+  const [nodeResults, setNodeResults] = useState<any[]>([]);
+  const [isExecuting, setIsExecuting] = useState(false);
 
   useEffect(() => {
     if (workflowId) {
@@ -52,9 +56,47 @@ export default function WorkflowDetailPage() {
     }
   }, [workflowId]);
 
-  const handleRunWorkflow = () => {
-    toast.info(`Running workflow: ${workflow?.name || 'Unknown Workflow'} with query: "${inputQuery}"`);
-    // TODO: Implement actual workflow execution logic here
+  const handleRunWorkflow = async () => {
+    if (!workflow) {
+      toast.error('Workflow not loaded.');
+      return;
+    }
+
+    setIsExecuting(true);
+    setNodeResults([]);
+    const runningToast = toast.info(`Running workflow: ${workflow.name}`, {
+      description: 'Please wait, this may take a moment...',
+      duration: Number.POSITIVE_INFINITY,
+    });
+
+    try {
+      const response = await fetch('/api/workflows/run', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          workflowId: workflow.id,
+          workflowSchema: workflow.schema,
+          inputQuery,
+        }),
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        setNodeResults(result.output);
+        toast.success('Workflow execution completed!', { id: runningToast });
+      } else {
+        const errorData = await response.json();
+        toast.error(`Workflow execution failed: ${errorData.error || response.statusText}`, { id: runningToast });
+      }
+    } catch (error) {
+      console.error('Error running workflow:', error);
+      toast.error('An unexpected error occurred during workflow execution.', { id: runningToast });
+    } finally {
+      setIsExecuting(false);
+      toast.dismiss(runningToast);
+    }
   };
 
   if (loading) {
@@ -92,9 +134,53 @@ export default function WorkflowDetailPage() {
             onChange={(e) => setInputQuery(e.target.value)}
             className="mb-4"
           />
-          <Button onClick={handleRunWorkflow} className="w-full">
-            <Play className="mr-2 size-4" /> Run Workflow
-          </Button>
+            <Button
+            onClick={handleRunWorkflow}
+            className={`w-full ${isExecuting ? 'bg-transparent text-white' : ''}`}
+            disabled={isExecuting}
+            >
+            {isExecuting ? (
+              <>
+              <Spinner size="lg" className="mr-2" />
+              Running Workflow
+              </>
+            ) : (
+              <>
+              <Play className="mr-2 size-4" />
+              Run Workflow
+              </>
+            )}
+            </Button>
+
+          {nodeResults.map((result, index) => (
+            <Collapsible key={result.nodeId} className="w-full mt-4">
+              <CollapsibleTrigger asChild>
+                <Button variant="outline" className="w-full justify-between">
+                  Node #{index + 1} Output <ChevronDown className="h-4 w-4" />
+                </Button>
+              </CollapsibleTrigger>
+              <CollapsibleContent className="mt-2 p-2 border border-border rounded-lg bg-gray-50 dark:bg-gray-900 overflow-auto max-h-60">
+                <pre className="text-sm whitespace-pre-wrap break-all">
+                  {JSON.stringify(result.output, null, 2)}
+                </pre>
+              </CollapsibleContent>
+            </Collapsible>
+          ))}
+
+          {nodeResults.length > 0 && workflow?.schema.nodes.length === nodeResults.length && (
+            <Collapsible className="w-full mt-4">
+              <CollapsibleTrigger asChild>
+                <Button variant="outline" className="w-full justify-between">
+                  Final Workflow Output <ChevronDown className="h-4 w-4" />
+                </Button>
+              </CollapsibleTrigger>
+              <CollapsibleContent className="mt-2 p-2 border border-border rounded-lg bg-gray-50 dark:bg-gray-900 overflow-auto max-h-60">
+                <pre className="text-sm whitespace-pre-wrap break-all">
+                  {JSON.stringify(nodeResults, null, 2)}
+                </pre>
+              </CollapsibleContent>
+            </Collapsible>
+          )}
         </div>
       </div>
     </div>

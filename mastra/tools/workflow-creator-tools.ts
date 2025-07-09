@@ -63,7 +63,7 @@ export const workflowTool = createTool({
       }),
     ),
   }),
-  execute: async ({ context }) => {
+  execute: async ({ context, runtimeContext }) => {
     try {
       const { steps } = context;
 
@@ -84,6 +84,7 @@ export const workflowTool = createTool({
         id: workflowId,
         description: context.description,
         nodes,
+        runtimeContext,
       });
 
       return {

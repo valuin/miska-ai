@@ -3,12 +3,11 @@ import { db } from '@/lib/db/queries/db';
 import { workflow } from '@/lib/db/schema/ai/workflow.schema';
 import { eq } from 'drizzle-orm';
 
-export async function GET(
-  req: Request,
-  { params }: { params: { workflowId: string } },
-) {
+export async function GET(req: Request, props: { params: Promise<{ workflowId: string }> }) {
+  const params = await props.params;
   try {
-    const { workflowId } = params;
+    const resolvedParams = Object.assign({}, params);
+    const workflowId = resolvedParams.workflowId;
 
     if (!workflowId) {
       return NextResponse.json({ error: 'Missing workflowId' }, { status: 400 });
