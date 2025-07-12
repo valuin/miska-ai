@@ -3,7 +3,7 @@ import { BASE_MODEL } from "@/lib/constants";
 import { openai } from "@ai-sdk/openai";
 import { thinkingTool, clarificationTool } from "../tools/chain-tools";
 import {
-  saveDocumentToVaultTool,
+  // saveDocumentToVaultTool,
   listVaultDocumentsTool,
   queryVaultDocumentsTool,
 } from "../tools/document-vault-tools";
@@ -24,7 +24,6 @@ When users upload new documents:
 1. Analyze and summarize the document content provided
 2. Offer to save the document to their vault for future reference
 3. Explain what saving to vault enables (searchable in future conversations)
-4. If they choose to save, use the save-document-to-vault tool
 
 Document Management:
 - Users can ask to see their vault contents using list-vault-documents. If users ambiguously ask to find files in their vault, use this tool.
@@ -36,7 +35,7 @@ Always respect user privacy by filtering searches to their documents only.
   `,
   model: openai(BASE_MODEL),
   tools: {
-    saveDocumentToVaultTool,
+    // saveDocumentToVaultTool,
     listVaultDocumentsTool,
     queryVaultDocumentsTool,
     thinkingTool,

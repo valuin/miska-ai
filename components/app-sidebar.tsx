@@ -1,12 +1,10 @@
-'use client';
+"use client";
 
-import type { User } from 'next-auth';
-import { useRouter } from 'next/navigation';
+import type { User } from "next-auth";
 
-import { LineChart, PlusIcon, RepeatIcon } from 'lucide-react';
-import { SidebarHistory } from '@/components/sidebar-history';
-import { SidebarUserNav } from '@/components/sidebar-user-nav';
-import { Button } from '@/components/ui/button';
+import { Bot, LineChart, RepeatIcon } from "lucide-react";
+import { SidebarHistory } from "@/components/sidebar-history";
+import { SidebarUserNav } from "@/components/sidebar-user-nav";
 import {
   Sidebar,
   SidebarContent,
@@ -14,71 +12,70 @@ import {
   SidebarHeader,
   SidebarMenu,
   useSidebar,
-} from '@/components/ui/sidebar';
-import Link from 'next/link';
-import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
+} from "@/components/ui/sidebar";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { cn } from "@/lib/utils";
+
+function SidebarItem({
+  path,
+  icon,
+  label,
+}: {
+  path: string;
+  icon: React.ReactNode;
+  label: string;
+}) {
+  const pathName = usePathname();
+  const isActive = pathName === path;
+  const { setOpenMobile } = useSidebar();
+
+  return (
+    <div
+      className={cn(
+        "flex flex-row justify-between items-center w-full rounded-lg py-2 px-3 hover:bg-muted cursor-pointer",
+        isActive && "bg-muted",
+      )}
+    >
+      <Link
+        href={path}
+        onClick={() => {
+          setOpenMobile(false);
+        }}
+        className="flex flex-row items-center"
+      >
+        {icon}
+        <span className="text-base font-semibold px-2 rounded-md cursor-pointer w-full text-left">
+          {label}
+        </span>
+      </Link>
+    </div>
+  );
+}
 
 export function AppSidebar({ user }: { user: User | undefined }) {
-  const router = useRouter();
   const { setOpenMobile } = useSidebar();
 
   return (
     <Sidebar className="group-data-[side=left]:border-r-0">
       <SidebarHeader>
         <SidebarMenu>
-          <div className="flex flex-row justify-between items-center">
-            <Link
-              href="/"
-              onClick={() => {
-                setOpenMobile(false);
-              }}
-              className="flex flex-row gap-3 items-center"
-            >
-              <span className="text-lg font-semibold px-2 hover:bg-muted rounded-md cursor-pointer">
-                Chatbot
-              </span>
-            </Link>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  type="button"
-                  className="p-2 h-fit"
-                  onClick={() => {
-                    setOpenMobile(false);
-                    router.push('/');
-                    router.refresh();
-                  }}
-                >
-                  <PlusIcon />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent align="end">New Chat</TooltipContent>
-            </Tooltip>
-          </div>
-          <div className="flex flex-col ml-2 justify-start items-start">
-            <Link
-              href="/analytics"
-              onClick={() => {
-                setOpenMobile(false);
-              }}
-              className="flex flex-row items-center"
-            >
-              <LineChart className="h-4 w-4" />
-              <span className="text-lg font-semibold px-2 hover:bg-muted rounded-md cursor-pointer">
-                Analytics
-              </span>
-            </Link>
-          <Link
-            href="/workflows"
-            onClick={() => { setOpenMobile(false); }}
-            className="flex flex-row items-center"
-          >
-            <RepeatIcon className="h-4 w-4" />
-            <span className="text-lg font-semibold px-2 hover:bg-muted rounded-md cursor-pointer">
-              Workflows
-            </span>
-          </Link>
+          <div className="flex flex-col justify-start items-start gap-2">
+            <SidebarItem
+              path="/"
+              icon={<Bot className="size-4" />}
+              label="Chatbot"
+            />
+            <SidebarItem
+              path="/analytics"
+              icon={<LineChart className="size-4" />}
+              label="Analytics"
+            />
+            <SidebarItem
+              path="/workflows"
+              icon={<RepeatIcon className="size-4" />}
+              label="Workflows"
+            />
           </div>
         </SidebarMenu>
       </SidebarHeader>
