@@ -117,8 +117,8 @@ export default function WorkflowDetailPage() {
 
   return (
     <div className="flex flex-col md:flex-row h-full p-4 gap-4">
-      <div className="md:w-2/3 h-[600px] border border-border rounded-lg">
-        <SchemaVisualizer nodes={workflow.schema.nodes} edges={workflow.schema.edges} />
+      <div className="md:w-2/3 border border-border rounded-lg">
+        <SchemaVisualizer height="h-screen" nodes={workflow.schema.nodes} edges={workflow.schema.edges} />
       </div>
 
       <div className="md:w-1/3 flex flex-col gap-4">

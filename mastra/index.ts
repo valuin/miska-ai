@@ -23,14 +23,16 @@ export const memory = new Memory({
   }),
 });
 
+export const agents = {
+  researchAgent,
+  ragChatAgent,
+  normalAgent,
+  workflowCreatorAgent,
+  documentAgent,
+};
+
 export const mastra = new Mastra({
-  agents: {
-    researchAgent,
-    ragChatAgent,
-    normalAgent,
-    workflowCreatorAgent,
-    documentAgent,
-  },
+  agents,
   logger: new PinoLogger({
     name: "Mastra",
     level: "info",

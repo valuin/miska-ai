@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ReactFlow,
   ReactFlowProvider,
@@ -29,7 +29,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { v4 as uuidv4 } from 'uuid';
-import { toast } from '@/components/toast';
+import { toast } from 'sonner';
 
 
 const nodeTypes = {
@@ -43,11 +43,21 @@ const edgeTypes = {
 type SchemaVisualizerProps = {
   nodes?: any[];
   edges?: any[];
+  height?: string;
 };
 
-function SchemaVisualizerInner({ nodes: propNodes, edges: propEdges }: SchemaVisualizerProps) {
+function SchemaVisualizerInner({ nodes: propNodes, edges: propEdges, height = 'h-[600px]' }: SchemaVisualizerProps) {
   const [nodes, setNodes, onNodesChange] = useNodesState(propNodes ?? initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(propEdges ?? initialEdges);
+
+  useEffect(() => {
+    if (propNodes) {
+      setNodes(propNodes);
+    }
+    if (propEdges) {
+      setEdges(propEdges);
+    }
+  }, [propNodes, propEdges, setNodes, setEdges]);
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const { fitView, zoomIn, zoomOut, getNodes, getEdges } = useReactFlow();
   const [isSaving, setIsSaving] = useState(false);
@@ -62,10 +72,7 @@ function SchemaVisualizerInner({ nodes: propNodes, edges: propEdges }: SchemaVis
       const currentEdges = getEdges();
 
       if (!workflowName) {
-        toast({
-          type: 'error',
-          description: 'Workflow name cannot be empty.',
-        });
+        toast.error('Workflow name cannot be empty.');
         setIsSaving(false);
         return;
       }
@@ -94,30 +101,21 @@ function SchemaVisualizerInner({ nodes: propNodes, edges: propEdges }: SchemaVis
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ schema: workflowData }),
+        body: JSON.stringify({ schema: workflowData, name: workflowName, description: workflowDescription }),
       });
 
       if (response.ok) {
-        toast({
-          type: 'success',
-          description: 'Workflow saved successfully!',
-        });
+        toast.success('Workflow saved successfully!');
         setWorkflowName('');
         setWorkflowDescription('');
         setIsModalOpen(false);
       } else {
         const errorData = await response.json();
-        toast({
-          type: 'error',
-          description: `Failed to save workflow: ${errorData.error || response.statusText}`,
-        });
+        toast.error(`Failed to save workflow: ${errorData.error || response.statusText}`);
       }
     } catch (error) {
       console.error('Error saving workflow:', error);
-      toast({
-        type: 'error',
-        description: 'An unexpected error occurred while saving the workflow.',
-      });
+      toast.error('An unexpected error occurred while saving the workflow.');
     } finally {
       setIsSaving(false);
     }
@@ -129,7 +127,7 @@ function SchemaVisualizerInner({ nodes: propNodes, edges: propEdges }: SchemaVis
 
   return (
    <main className="flex-1 flex items-stretch">
-     <div className="w-full h-[600px] border border-border rounded-lg bg-background" ref={reactFlowWrapper}>
+     <div className={`w-full ${height} border border-border rounded-lg bg-background`} ref={reactFlowWrapper}>
        <ReactFlow
          nodes={nodes}
          edges={edges}

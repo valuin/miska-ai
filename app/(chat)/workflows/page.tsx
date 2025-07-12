@@ -4,7 +4,8 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { LayoutGrid, Workflow } from 'lucide-react';
-import { toast } from '@/components/toast';
+import { toast } from 'sonner';
+import { ManualWorkflowDialog } from '@/components/manual-workflow-dialog';
 
 interface WorkflowData {
   id: string;
@@ -28,24 +29,18 @@ export default function WorkflowsPage() {
           setWorkflows(data.workflows);
         } else {
           const errorData = await response.json();
-          toast({
-            type: 'error',
-            description: `Failed to fetch workflows: ${errorData.error || response.statusText}`,
-          });
+          toast.error(`Failed to fetch workflows: ${errorData.error || response.statusText}`);
         }
       } catch (error) {
         console.error('Error fetching workflows:', error);
-        toast({
-          type: 'error',
-          description: 'An unexpected error occurred while fetching workflows.',
-        });
+        toast.error('An unexpected error occurred while fetching workflows.');
       } finally {
         setLoading(false);
       }
     };
 
     fetchWorkflows();
-  }, [toast]);
+  }, []);
 
   if (loading) {
     return (
@@ -62,7 +57,7 @@ export default function WorkflowsPage() {
           <LayoutGrid className="size-8" />
           Your Workflows
         </h1>
-        {/* Potentially add a "Create New Workflow" button here later */}
+        <ManualWorkflowDialog />
       </div>
 
       {workflows.length === 0 ? (
