@@ -14,8 +14,8 @@ const FileSchema = z.object({
       message: 'File size should be less than 5MB',
     })
     // Update the file type based on the kind of files you want to accept
-    .refine((file) => ['image/jpeg', 'image/png'].includes(file.type), {
-      message: 'File type should be JPEG or PNG',
+    .refine((file) => ['image/jpeg', 'image/png', 'application/pdf'].includes(file.type), {
+      message: 'File type should be JPEG, PNG or PDF',
     }),
 });
 
@@ -57,8 +57,8 @@ export async function POST(request: Request) {
         access: 'public',
       });
 
+      const text = await getAttachmentText({ url: data.url, name: filename });
       try {
-        const text = await getAttachmentText({ url: data.url, name: filename });
         await uploadFile({
           name: filename,
           url: data.url,
@@ -67,10 +67,9 @@ export async function POST(request: Request) {
         });
       } catch (dbError) {
         console.warn(`Failed to save file to database: ${filename}`, dbError);
-
       }
 
-      return NextResponse.json(data);
+      return NextResponse.json({ ...data, text });
     } catch (error) {
       return NextResponse.json({ error: 'Upload failed' }, { status: 500 });
     }

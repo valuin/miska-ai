@@ -13,6 +13,11 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  Dropzone,
+  DropzoneContent,
+  DropzoneEmptyState,
+} from "@/components/ui/dropzone";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -66,6 +71,12 @@ export function ManualWorkflowDialog() {
   const [edges, setEdges] = useState<any[]>([]);
   const [currentNodeDescription, setCurrentNodeDescription] = useState("");
   const [currentNodeAgent, setCurrentNodeAgent] = useState("");
+  const [prompt, setPrompt] = useState("");
+  const [file, setFile] = useState<File | null>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [clarificationQuestions, setClarificationQuestions] = useState<
+    string[]
+  >([]);
 
   const agentNames = useMemo(() => agents, []);
 
@@ -177,6 +188,108 @@ export function ManualWorkflowDialog() {
     }
   };
 
+  const handleGenerateWorkflow = async () => {
+    setIsGenerating(true);
+    let workflowPrompt = prompt;
+
+    if (file) {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      try {
+        const response = await fetch("/api/files/upload", {
+          method: "POST",
+          body: formData,
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          toast.error(
+            `Failed to upload file: ${errorData.error || response.statusText}`,
+          );
+          setIsGenerating(false);
+          return;
+        }
+
+        const uploadData = await response.json();
+        workflowPrompt = uploadData.text;
+      } catch (error) {
+        toast.error("An unexpected error occurred while uploading the file.");
+        setIsGenerating(false);
+        return;
+      }
+    }
+
+    if (!workflowPrompt) {
+      toast.error("Please provide a prompt or a file.");
+      setIsGenerating(false);
+      return;
+    }
+
+    try {
+      console.log("Sending workflow generation request with prompt:", workflowPrompt);
+      const response = await fetch("/api/workflows/generate", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ prompt: workflowPrompt }),
+      });
+
+      if (!response.ok) {
+        console.error("Failed to generate workflow:", response.status, response.statusText);
+        const errorData = await response.json();
+        toast.error(
+          `Failed to generate workflow: ${
+            errorData.error || response.statusText
+          }`,
+        );
+        setIsGenerating(false); // Ensure generating state is reset on error
+        return;
+      }
+
+      const data = await response.json();
+      console.log("Workflow generation response data:", data);
+
+      if (data.type === "clarification") {
+        setClarificationQuestions(data.questions);
+      } else if (data.type === "workflow") {
+        const newNodes = data.steps.map((step: any, index: number) => ({
+          id: `node-${index + 1}`,
+          type: "workflowNode",
+          position: { x: 250, y: 100 + index * 150 },
+          data: {
+            type: step.type,
+            description: step.description,
+            agent: step.agent || "",
+          },
+        }));
+
+        const newEdges = newNodes
+          .slice(0, -1)
+          .map((node: any, index: number) => ({
+            id: `edge-${node.id}-${newNodes[index + 1].id}`,
+            source: node.id,
+            target: newNodes[index + 1].id,
+            type: "custom",
+          }));
+
+        setNodes(newNodes);
+        setEdges(newEdges);
+        setWorkflowName(data.name);
+        setWorkflowDescription(data.description);
+        setClarificationQuestions([]);
+        setActiveStep(2); // Move to the "Add Nodes" step to show the generated workflow
+      }
+    } catch (error) {
+      toast.error(
+        "An unexpected error occurred while generating the workflow.",
+      );
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
@@ -233,6 +346,49 @@ export function ManualWorkflowDialog() {
                     rows={8}
                     placeholder="Describe what this workflow does."
                   />
+                </div>
+                <div className="space-y-2">
+                  <Label>Example / Prompt</Label>
+                  {clarificationQuestions.length > 0 && (
+                    <div className="p-4 border rounded-md bg-amber-50 border-amber-200">
+                      <p className="font-semibold text-amber-800">
+                        Please answer the following questions to generate the
+                        workflow:
+                      </p>
+                      <ul className="list-disc list-inside mt-2 text-sm text-amber-700">
+                        {clarificationQuestions.map((q, i) => (
+                          <li key={i}>{q}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  <Textarea
+                    placeholder="Describe the workflow you want to generate, or answer the questions above."
+                    value={prompt}
+                    onChange={(e) => setPrompt(e.target.value)}
+                    rows={4}
+                  />
+                  <Dropzone
+                    onDrop={(acceptedFiles) => setFile(acceptedFiles[0])}
+                    accept={{ "application/pdf": [".pdf"] }}
+                    maxFiles={1}
+                  >
+                    {file ? (
+                      <DropzoneContent>
+                        <p>{file.name}</p>
+                      </DropzoneContent>
+                    ) : (
+                      <DropzoneEmptyState>
+                        <p>Drop a PDF file here</p>
+                      </DropzoneEmptyState>
+                    )}
+                  </Dropzone>
+                  <Button
+                    onClick={handleGenerateWorkflow}
+                    disabled={isGenerating}
+                  >
+                    {isGenerating ? "Generating..." : "Generate"}
+                  </Button>
                 </div>
               </div>
             )}
