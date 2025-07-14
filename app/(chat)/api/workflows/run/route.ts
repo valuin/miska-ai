@@ -1,10 +1,11 @@
-import { NextResponse } from 'next/server';
-import type { Agent } from '@mastra/core/agent';
-import { researchAgent } from '@/mastra/agents/research-agent';
-import { ragChatAgent } from '@/mastra/agents/rag-chat-agent';
-import { workflowCreatorAgent } from '@/mastra/agents/workflow-creator-agent';
-import { normalAgent } from '@/mastra/agents/normal-agent';
-import { documentAgent } from '@/mastra/agents/document-agent';
+import { communicationAgent } from "@/mastra/agents/communication-agent";
+import { documentAgent } from "@/mastra/agents/document-agent";
+import { NextResponse } from "next/server";
+import { normalAgent } from "@/mastra/agents/normal-agent";
+import { ragChatAgent } from "@/mastra/agents/rag-chat-agent";
+import { researchAgent } from "@/mastra/agents/research-agent";
+import { workflowCreatorAgent } from "@/mastra/agents/workflow-creator-agent";
+import type { Agent } from "@mastra/core/agent";
 
 // Define a type for the workflow schema for better type safety
 interface WorkflowNode {
@@ -40,6 +41,7 @@ const agentMap: Record<string, Agent<any>> = {
   workflowCreatorAgent: workflowCreatorAgent as Agent<any>,
   normalAgent: normalAgent as Agent<any>,
   documentAgent: documentAgent as Agent<any>,
+  communicationAgent: communicationAgent as Agent<any>,
 };
 
 export async function POST(req: Request) {
@@ -49,16 +51,26 @@ export async function POST(req: Request) {
 
     const { workflowId, workflowSchema, inputQuery } = body;
 
-    if (!workflowId || !workflowSchema || inputQuery === null || inputQuery === undefined) {
+    if (
+      !workflowId ||
+      !workflowSchema ||
+      inputQuery === null ||
+      inputQuery === undefined
+    ) {
       console.error("Missing required fields in request body:", {
         hasWorkflowId: !!workflowId,
         hasWorkflowSchema: !!workflowSchema,
         hasInputQuery: !!inputQuery,
       });
-      return NextResponse.json({ error: 'Missing workflowId, workflowSchema, or inputQuery' }, { status: 400 });
+      return NextResponse.json(
+        { error: "Missing workflowId, workflowSchema, or inputQuery" },
+        { status: 400 },
+      );
     }
 
-    console.log(`Executing workflow: ${workflowSchema.name} (ID: ${workflowId}) with query: "${inputQuery}"`);
+    console.log(
+      `Executing workflow: ${workflowSchema.name} (ID: ${workflowId}) with query: "${inputQuery}"`,
+    );
 
     const nodeResults: any[] = [];
     let currentInput: any = inputQuery;
@@ -73,20 +85,26 @@ export async function POST(req: Request) {
         continue;
       }
 
-      console.log(`Running agent: ${agentName} for node ID: ${node.id} with description: "${agentDescription}"`);
+      console.log(
+        `Running agent: ${agentName} for node ID: ${node.id} with description: "${agentDescription}"`,
+      );
 
       try {
         const systemPrompt = `You are running in a predefined workflow. Do not ask clarifying questions or use the options tool. Execute the task as described.`;
         const result = await agent.generate([
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: `${agentDescription}\n\nInput: ${JSON.stringify(currentInput)}` },
+          { role: "system", content: systemPrompt },
+          {
+            role: "user",
+            content: `${agentDescription}\n\nInput: ${JSON.stringify(currentInput)}`,
+          },
         ]);
 
         console.log(`Agent ${agentName} raw output:`, result);
 
-        const output = (result && typeof result === 'object' && 'text' in result)
-          ? (result as { text: string }).text
-          : JSON.stringify(result);
+        const output =
+          result && typeof result === "object" && "text" in result
+            ? (result as { text: string }).text
+            : JSON.stringify(result);
 
         nodeResults.push({
           nodeId: node.id,
@@ -97,15 +115,23 @@ export async function POST(req: Request) {
 
         currentInput = output; // Pass the output of this node as input to the next
       } catch (agentError) {
-        console.error(`Error executing agent ${agentName} for node ID ${node.id}:`, agentError);
-        return NextResponse.json({ error: `Agent execution failed for ${agentName}: ${agentError}` }, { status: 500 });
+        console.error(
+          `Error executing agent ${agentName} for node ID ${node.id}:`,
+          agentError,
+        );
+        return NextResponse.json(
+          { error: `Agent execution failed for ${agentName}: ${agentError}` },
+          { status: 500 },
+        );
       }
     }
 
     return NextResponse.json({ output: nodeResults }, { status: 200 });
-
   } catch (error) {
-    console.error('Error in workflow execution API:', error);
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    console.error("Error in workflow execution API:", error);
+    return NextResponse.json(
+      { error: "Internal Server Error" },
+      { status: 500 },
+    );
   }
 }

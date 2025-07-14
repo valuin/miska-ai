@@ -74,6 +74,7 @@ export async function streamWithMastraAgent(
       ragChatAgent: "Initiating Vault Search Agent...",
       workflowCreatorAgent: "Initiating Workflow Agent...",
       documentAgent: "Initiating Document Agent...",
+      communicationAgent: "Initiating Communication Agent...",
     };
     const agentChoice = agentMap[selectedAgent];
     if (!agentChoice) return;

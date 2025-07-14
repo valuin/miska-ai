@@ -42,6 +42,8 @@ export const agentRouter = new Agent({
     - This agent is used to build workflows for the user; for example, building a workflow to draft an email.
   - documentAgent
     - This agent is used to create, update, and request suggestions for new documents (not vault-related).
+  - communicationAgent
+    - This agent is used to communicate with the user via WhatsApp.
   `,
   model: openai(BASE_MODEL),
 });

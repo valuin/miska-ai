@@ -8,6 +8,7 @@ const AGENT_TYPES = [
   "ragChatAgent",
   "documentAgent",
   "normalAgent",
+  "communicationAgent",
 ] as const;
 
 export type WorkflowNode = {

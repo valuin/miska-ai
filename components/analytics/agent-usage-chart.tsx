@@ -1,6 +1,6 @@
-"use client"
+"use client";
 
-import { Pie, PieChart } from "recharts"
+import { Pie, PieChart } from "recharts";
 
 import {
   Card,
@@ -9,17 +9,15 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card"
-import type {
-  ChartConfig,
-} from "@/components/ui/chart"
+} from "@/components/ui/card";
+import type { ChartConfig } from "@/components/ui/chart";
 import {
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
-} from "@/components/ui/chart"
+} from "@/components/ui/chart";
 
-export const description = "A pie chart with no separator"
+export const description = "A pie chart with no separator";
 
 const chartData = [
   { agent: "researchAgent", usage: 275, fill: "hsl(210, 100%, 80%)" },
@@ -27,7 +25,7 @@ const chartData = [
   { agent: "workflowCreatorAgent", usage: 187, fill: "hsl(220, 85%, 60%)" },
   { agent: "documentAgent", usage: 173, fill: "hsl(225, 80%, 50%)" },
   { agent: "normalAgent", usage: 90, fill: "hsl(230, 75%, 40%)" },
-]
+];
 
 const chartConfig = {
   usage: {
@@ -53,7 +51,7 @@ const chartConfig = {
     label: "Normal Agent",
     color: "hsl(230, 75%, 40%)",
   },
-} satisfies ChartConfig
+} satisfies ChartConfig;
 
 export function AgentUsageChart() {
   return (
@@ -89,10 +87,8 @@ export function AgentUsageChart() {
                 style={{ backgroundColor: item.fill }}
               />
               <span className="text-xs">
-                {
-                  chartConfig[item.agent as keyof typeof chartConfig]?.label ||
-                  item.agent
-                }
+                {chartConfig[item.agent as keyof typeof chartConfig]?.label ||
+                  item.agent}
               </span>
             </div>
           ))}
@@ -104,5 +100,5 @@ export function AgentUsageChart() {
         </div>
       </CardFooter>
     </Card>
-  )
+  );
 }

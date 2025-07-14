@@ -227,7 +227,10 @@ export function ManualWorkflowDialog() {
     }
 
     try {
-      console.log("Sending workflow generation request with prompt:", workflowPrompt);
+      console.log(
+        "Sending workflow generation request with prompt:",
+        workflowPrompt,
+      );
       const response = await fetch("/api/workflows/generate", {
         method: "POST",
         headers: {
@@ -237,7 +240,11 @@ export function ManualWorkflowDialog() {
       });
 
       if (!response.ok) {
-        console.error("Failed to generate workflow:", response.status, response.statusText);
+        console.error(
+          "Failed to generate workflow:",
+          response.status,
+          response.statusText,
+        );
         const errorData = await response.json();
         toast.error(
           `Failed to generate workflow: ${
@@ -327,83 +334,91 @@ export function ManualWorkflowDialog() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 flex-1 overflow-auto">
           <div className="p-2 border rounded-lg overflow-y-auto">
             {activeStep === 1 && (
-              <div className="space-y-4 py-4 px-3">
-                <div className="flex flex-col gap-2">
-                  <Label htmlFor="workflow-name">Workflow Name</Label>
-                  <Input
-                    id="workflow-name"
-                    value={workflowName}
-                    onChange={(e) => setWorkflowName(e.target.value)}
-                    placeholder="e.g., Customer Support Automation"
-                  />
-                </div>
-                <div className="flex flex-col gap-2">
-                  <Label htmlFor="workflow-description">Description</Label>
-                  <Textarea
-                    id="workflow-description"
-                    value={workflowDescription}
-                    onChange={(e) => setWorkflowDescription(e.target.value)}
-                    rows={8}
-                    placeholder="Describe what this workflow does."
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Example / Prompt</Label>
-                  {clarificationQuestions.length > 0 && (
-                    <div className="p-4 border rounded-md bg-amber-50 border-amber-200">
-                      <p className="font-semibold text-amber-800">
-                        Please answer the following questions to generate the
-                        workflow:
-                      </p>
-                      <ul className="list-disc list-inside mt-2 text-sm text-amber-700">
-                        {clarificationQuestions.map((q, i) => (
-                          <li key={i}>{q}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                  <Textarea
-                    placeholder="Describe the workflow you want to generate, or answer the questions above."
-                    value={prompt}
-                    onChange={(e) => setPrompt(e.target.value)}
-                    rows={4}
-                  />
-                  <Dropzone
-                    onDrop={(acceptedFiles) => setFile(acceptedFiles[0])}
-                    accept={{ "application/pdf": [".pdf"] }}
-                    maxFiles={1}
-                  >
-                    {file ? (
-                      <DropzoneContent>
-                        <p>{file.name}</p>
-                      </DropzoneContent>
-                    ) : (
-                      <DropzoneEmptyState>
-                        <p>Drop a PDF file here</p>
-                      </DropzoneEmptyState>
+              <div className="space-y-4 py-4 px-3 flex flex-col h-full">
+                <div className="flex flex-col gap-2 flex-0 overflow-y-auto px-1">
+                  <div className="flex flex-col gap-2">
+                    <Label htmlFor="workflow-name">Workflow Name</Label>
+                    <Input
+                      id="workflow-name"
+                      value={workflowName}
+                      onChange={(e) => setWorkflowName(e.target.value)}
+                      placeholder="e.g., Customer Support Automation"
+                    />
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    <Label htmlFor="workflow-description">Description</Label>
+                    <Textarea
+                      id="workflow-description"
+                      value={workflowDescription}
+                      onChange={(e) => setWorkflowDescription(e.target.value)}
+                      rows={8}
+                      placeholder="Describe what this workflow does."
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Example / Prompt</Label>
+                    {clarificationQuestions.length > 0 && (
+                      <div className="p-4 border rounded-md bg-amber-50 border-amber-200">
+                        <p className="font-semibold text-amber-800">
+                          Please answer the following questions to generate the
+                          workflow:
+                        </p>
+                        <ul className="list-disc list-inside mt-2 text-sm text-amber-700">
+                          {clarificationQuestions.map((q, i) => (
+                            <li key={i}>{q}</li>
+                          ))}
+                        </ul>
+                      </div>
                     )}
-                  </Dropzone>
-                  <Button
-                    onClick={handleGenerateWorkflow}
-                    disabled={isGenerating}
-                  >
-                    {isGenerating ? "Generating..." : "Generate"}
-                  </Button>
+                    <Textarea
+                      placeholder="Describe the workflow you want to generate, or answer the questions above."
+                      value={prompt}
+                      onChange={(e) => setPrompt(e.target.value)}
+                      rows={4}
+                    />
+                    <Dropzone
+                      onDrop={(acceptedFiles) => setFile(acceptedFiles[0])}
+                      accept={{ "application/pdf": [".pdf"] }}
+                      maxFiles={1}
+                    >
+                      {file ? (
+                        <DropzoneContent>
+                          <p>{file.name}</p>
+                        </DropzoneContent>
+                      ) : (
+                        <DropzoneEmptyState>
+                          <p>Drop a PDF file here</p>
+                        </DropzoneEmptyState>
+                      )}
+                    </Dropzone>
+                  </div>
                 </div>
+                <Button
+                  className="flex-1"
+                  onClick={handleGenerateWorkflow}
+                  disabled={isGenerating}
+                >
+                  {isGenerating ? "Generating..." : "Generate"}
+                </Button>
               </div>
             )}
             {activeStep === 2 && (
               <div className="space-y-4">
                 <div>
                   <Label>Nodes</Label>
-                  <div className="p-2 border rounded-md bg-muted min-h-[100px]">
+                  <div className="p-2 pt-0 border rounded-md bg-muted min-h-[100px] flex flex-col divide-y divide-white/10">
                     {nodes.map((n) => (
                       <div
                         key={n.id}
                         className="flex items-center justify-between text-sm p-1"
                       >
-                        <span>
-                          {n.data.description} ({n.data.agent})
+                        <span className="w-full">
+                          <span className="text-xs bg-white rounded-lg px-1 py-px text-[#27272a] mr-1">
+                            {n.data.type === "agent-task"
+                              ? n.data.agent
+                              : "Human Input"}
+                          </span>
+                          <span className="text-xs">{n.data.description}</span>
                         </span>
                         <Button
                           variant="ghost"
@@ -419,6 +434,7 @@ export function ManualWorkflowDialog() {
                 <div>
                   <Label htmlFor="node-description">Node Description</Label>
                   <Textarea
+                    className="overflow-x-visible"
                     id="node-description"
                     value={currentNodeDescription}
                     onChange={(e) => setCurrentNodeDescription(e.target.value)}
