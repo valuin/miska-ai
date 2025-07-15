@@ -41,6 +41,7 @@ import SchemaVisualizer from "./schema-builder";
 import { agents } from "@/mastra/client";
 import { v4 as uuidv4 } from "uuid";
 import { toast } from "sonner";
+import { useQueryClient } from '@tanstack/react-query';
 
 const steps = [
   { id: "step-1", title: "Workflow Details", description: "Name and describe" },
@@ -62,7 +63,7 @@ const nodeSchema = z.object({
   currentNodeAgent: z.string().min(1, "An agent is required."),
 });
 
-export function ManualWorkflowDialog() {
+export function ManualWorkflowDialog({ onWorkflowCreated }: { onWorkflowCreated?: () => void }) {
   const [open, setOpen] = useState(false);
   const [activeStep, setActiveStep] = useState(1);
   const [workflowName, setWorkflowName] = useState("");
@@ -74,9 +75,8 @@ export function ManualWorkflowDialog() {
   const [prompt, setPrompt] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [clarificationQuestions, setClarificationQuestions] = useState<
-    string[]
-  >([]);
+  const [clarificationQuestions, setClarificationQuestions] = useState<string[]>([]);
+  const queryClient = useQueryClient();
 
   const agentNames = useMemo(() => agents, []);
 
@@ -177,6 +177,13 @@ export function ManualWorkflowDialog() {
         setWorkflowDescription("");
         setNodes([]);
         setEdges([]);
+        
+        // Invalidate the workflows query to refresh the list
+        queryClient.invalidateQueries({ queryKey: ['workflows'] });
+        
+        if (onWorkflowCreated) {
+          onWorkflowCreated();
+        }
       } else {
         const errorData = await response.json();
         toast.error(

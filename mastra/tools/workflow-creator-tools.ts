@@ -2,7 +2,7 @@ import { createTool } from '@mastra/core/tools';
 import { z } from 'zod';
 import { createMastraWorkflowFromJson } from './load-dynamic-workflow';
 
-const AGENT_TYPES = ['researchAgent', 'ragChatAgent', 'documentAgent'] as const;
+const AGENT_TYPES = ['researchAgent', 'ragChatAgent', 'documentAgent', 'normalAgent', 'communicationAgent'] as const;
 const agentEnum = z.enum(AGENT_TYPES);
 
 export type WorkflowNode = {
@@ -31,6 +31,18 @@ export const workflowTool = createTool({
   - description: string (clear step description)
   - agent: string (required for agent-task nodes)
   - next: string[] (optional array of next node IDs)
+  
+  Available agents and their use cases:
+  - researchAgent: For web research, data gathering, and information retrieval tasks
+  - ragChatAgent: For conversational AI with document context (RAG-based queries)
+  - documentAgent: For document creation, editing, and file management
+  - normalAgent: For general-purpose AI tasks and standard operations
+  - communicationAgent: For email, messaging, and communication-related tasks
+  
+  Examples:
+  - Research workflow: researchAgent → documentAgent
+  - Document Q&A: human-input → ragChatAgent
+  - Email campaign: human-input → communicationAgent → documentAgent
   
   Rules:
   1. All nodes must be connected via 'next' fields

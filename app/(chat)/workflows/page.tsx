@@ -1,11 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { LayoutGrid, Workflow } from 'lucide-react';
 import { toast } from 'sonner';
 import { ManualWorkflowDialog } from '@/components/manual-workflow-dialog';
+import { useQuery } from '@tanstack/react-query';
 
 interface WorkflowData {
   id: string;
@@ -16,36 +16,35 @@ interface WorkflowData {
   updatedAt: string;
 }
 
+const fetchWorkflows = async (): Promise<WorkflowData[]> => {
+  const response = await fetch('/api/workflows');
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.error || response.statusText);
+  }
+  const data = await response.json();
+  return data.workflows;
+};
+
 export default function WorkflowsPage() {
-  const [workflows, setWorkflows] = useState<WorkflowData[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: workflows, isLoading, error, refetch } = useQuery({
+    queryKey: ['workflows'],
+    queryFn: fetchWorkflows,
+  });
 
-  useEffect(() => {
-    const fetchWorkflows = async () => {
-      try {
-        const response = await fetch('/api/workflows');
-        if (response.ok) {
-          const data = await response.json();
-          setWorkflows(data.workflows);
-        } else {
-          const errorData = await response.json();
-          toast.error(`Failed to fetch workflows: ${errorData.error || response.statusText}`);
-        }
-      } catch (error) {
-        console.error('Error fetching workflows:', error);
-        toast.error('An unexpected error occurred while fetching workflows.');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchWorkflows();
-  }, []);
-
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <p>Loading workflows...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    toast.error(`Failed to fetch workflows: ${error.message}`);
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <p>Error loading workflows. Please try again.</p>
       </div>
     );
   }
@@ -57,17 +56,17 @@ export default function WorkflowsPage() {
           <LayoutGrid className="size-8" />
           Your Workflows
         </h1>
-        <ManualWorkflowDialog />
+        <ManualWorkflowDialog onWorkflowCreated={refetch} />
       </div>
 
-      {workflows.length === 0 ? (
+      {workflows?.length === 0 ? (
         <div className="text-center text-muted-foreground">
           <p className="text-lg">No workflows saved yet.</p>
           <p className="text-sm">Create a workflow in the chat interface and save it!</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {workflows.map((wf) => (
+          {workflows?.map((wf) => (
             <Link key={wf.id} href={`/workflows/${wf.id}`}>
               <Card className="h-full flex flex-col justify-between hover:bg-muted hover:shadow-lg transition-shadow duration-200 cursor-pointer">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">

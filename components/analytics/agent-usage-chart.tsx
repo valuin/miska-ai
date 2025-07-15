@@ -25,6 +25,7 @@ const chartData = [
   { agent: "workflowCreatorAgent", usage: 187, fill: "hsl(220, 85%, 60%)" },
   { agent: "documentAgent", usage: 173, fill: "hsl(225, 80%, 50%)" },
   { agent: "normalAgent", usage: 90, fill: "hsl(230, 75%, 40%)" },
+  { agent: "communicationAgent", usage: 50, fill: "hsl(235, 70%, 30%)" },
 ];
 
 const chartConfig = {
