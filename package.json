@@ -120,7 +120,8 @@
     "twilio": "^5.7.3",
     "usehooks-ts": "^3.1.0",
     "vaul": "^1.1.2",
-    "zod": "^3.23.8"
+    "zod": "^3.23.8",
+    "zustand": "^5.0.6"
   },
   "devDependencies": {
     "@biomejs/biome": "1.9.4",

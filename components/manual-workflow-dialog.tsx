@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Trash2 } from "lucide-react";
 import { z } from "zod";
@@ -14,14 +14,6 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import {
-  Dropzone,
-  DropzoneContent,
-  DropzoneEmptyState,
-} from "@/components/ui/dropzone";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import {
   Stepper,
   StepperItem,
   StepperTrigger,
@@ -30,29 +22,18 @@ import {
   StepperDescription,
   StepperSeparator,
 } from "@/components/ui/stepper";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Progress } from "@/components/ui/progress";
 import SchemaVisualizer from "./schema-builder";
 import { agents } from "@/mastra/client";
 import { v4 as uuidv4 } from "uuid";
 import { toast } from "sonner";
 import { useQueryClient } from '@tanstack/react-query';
 
-const steps = [
-  { id: "step-1", title: "Workflow Details", description: "Name and describe" },
-  { id: "step-2", title: "Add Nodes", description: "Build your workflow" },
-  {
-    id: "step-3",
-    title: "Review & Save",
-    description: "Finalize your workflow",
-  },
-];
+import { StepContent } from "./workflow/step-content";
+import { NodeBuilder } from "./workflow/node-builder";
+import { WorkflowReview } from "./workflow/workflow-review";
+import { WorkflowProgress } from "./workflow/workflow-progress";
+import { steps } from "./workflow/workflow-steps";
+import { useWorkflowStore } from "@/lib/store/workflow-store";
 
 const workflowDetailSchema = z.object({
   workflowName: z.string().min(1, "Workflow name is required."),
@@ -65,27 +46,49 @@ const nodeSchema = z.object({
 });
 
 export function ManualWorkflowDialog({ onWorkflowCreated }: { onWorkflowCreated?: () => void }) {
-  const [open, setOpen] = useState(false);
-  const [activeStep, setActiveStep] = useState(1);
-  const [workflowName, setWorkflowName] = useState("");
-  const [workflowDescription, setWorkflowDescription] = useState("");
-  const [nodes, setNodes] = useState<any[]>([]);
-  const [edges, setEdges] = useState<any[]>([]);
-  const [currentNodeDescription, setCurrentNodeDescription] = useState("");
-  const [currentNodeAgent, setCurrentNodeAgent] = useState("");
-  const [prompt, setPrompt] = useState("");
-  const [file, setFile] = useState<File | null>(null);
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [clarificationQuestions, setClarificationQuestions] = useState<string[]>([]);
-  const [workflowProgress, setWorkflowProgress] = useState<Map<string, { status: 'pending' | 'running' | 'completed' | 'error', output?: string, error?: string, description?: string }>>(new Map());
-  const [isRunningWorkflow, setIsRunningWorkflow] = useState(false);
-  const [executionMessage, setExecutionMessage] = useState<string>('');
-  const [generationProgress, setGenerationProgress] = useState(0);
-  const [generationMessage, setGenerationMessage] = useState<string>('');
-  const [showGenerationProgress, setShowGenerationProgress] = useState(false);
   const queryClient = useQueryClient();
-
   const agentNames = useMemo(() => agents, []);
+
+  // Zustand store
+  const {
+    workflowName,
+    workflowDescription,
+    nodes,
+    edges,
+    currentNodeDescription,
+    currentNodeAgent,
+    prompt,
+    file,
+    isGenerating,
+    clarificationQuestions,
+    workflowProgress,
+    isRunningWorkflow,
+    executionMessage,
+    generationProgress,
+    generationMessage,
+    showGenerationProgress,
+    activeStep,
+    open,
+    setWorkflowName,
+    setWorkflowDescription,
+    setNodes,
+    setEdges,
+    setCurrentNodeDescription,
+    setCurrentNodeAgent,
+    setPrompt,
+    setFile,
+    setIsGenerating,
+    setClarificationQuestions,
+    setWorkflowProgress,
+    setIsRunningWorkflow,
+    setExecutionMessage,
+    setGenerationProgress,
+    setGenerationMessage,
+    setShowGenerationProgress,
+    setActiveStep,
+    setOpen,
+    resetWorkflow,
+  } = useWorkflowStore();
 
   const addNode = () => {
     const result = nodeSchema.safeParse({
@@ -109,7 +112,7 @@ export function ManualWorkflowDialog({ onWorkflowCreated }: { onWorkflowCreated?
       },
     };
 
-    setNodes((prev) => [...prev, newNode]);
+    setNodes([...nodes, newNode]);
 
     if (nodes.length > 0) {
       const prevNodeId = nodes[nodes.length - 1].id;
@@ -119,7 +122,7 @@ export function ManualWorkflowDialog({ onWorkflowCreated }: { onWorkflowCreated?
         target: newNodeId,
         type: "custom",
       };
-      setEdges((prev) => [...prev, newEdge]);
+      setEdges([...edges, newEdge]);
     }
 
     setCurrentNodeDescription("");
@@ -127,10 +130,8 @@ export function ManualWorkflowDialog({ onWorkflowCreated }: { onWorkflowCreated?
   };
 
   const deleteNode = (nodeId: string) => {
-    setNodes((prev) => prev.filter((node) => node.id !== nodeId));
-    setEdges((prev) =>
-      prev.filter((edge) => edge.source !== nodeId && edge.target !== nodeId),
-    );
+    setNodes(nodes.filter((node) => node.id !== nodeId));
+    setEdges(edges.filter((edge) => edge.source !== nodeId && edge.target !== nodeId));
   };
 
   const handleNextStep = () => {
@@ -144,7 +145,7 @@ export function ManualWorkflowDialog({ onWorkflowCreated }: { onWorkflowCreated?
         return;
       }
     }
-    setActiveStep((s) => s + 1);
+    setActiveStep(activeStep + 1);
   };
 
   const handleSaveWorkflow = async () => {
@@ -178,10 +179,7 @@ export function ManualWorkflowDialog({ onWorkflowCreated }: { onWorkflowCreated?
         toast.success("Workflow saved successfully!");
         setOpen(false);
         setActiveStep(1);
-        setWorkflowName("");
-        setWorkflowDescription("");
-        setNodes([]);
-        setEdges([]);
+        resetWorkflow();
         
         // Invalidate the workflows query to refresh the list
         queryClient.invalidateQueries({ queryKey: ['workflows'] });
@@ -255,28 +253,28 @@ export function ManualWorkflowDialog({ onWorkflowCreated }: { onWorkflowCreated?
                 break;
                 
               case 'node_started':
-                setWorkflowProgress(prev => new Map(prev).set(data.nodeId, {
+                setWorkflowProgress(new Map([...Array.from(workflowProgress.entries()), [data.nodeId, {
                   status: 'running',
                   description: data.description
-                }));
+                }]]));
                 setExecutionMessage(`Running ${data.agentName}...`);
                 break;
                 
               case 'node_completed':
-                setWorkflowProgress(prev => new Map(prev).set(data.nodeId, {
+                setWorkflowProgress(new Map([...Array.from(workflowProgress.entries()), [data.nodeId, {
                   status: 'completed',
                   output: data.output,
                   description: data.description
-                }));
+                }]]));
                 setExecutionMessage(`${data.agentName} completed`);
                 break;
                 
               case 'node_error':
-                setWorkflowProgress(prev => new Map(prev).set(data.nodeId, {
+                setWorkflowProgress(new Map([...Array.from(workflowProgress.entries()), [data.nodeId, {
                   status: 'error',
                   error: data.error,
                   description: data.description
-                }));
+                }]]));
                 setExecutionMessage(`Error: ${data.error}`);
                 break;
                 
@@ -386,13 +384,12 @@ export function ManualWorkflowDialog({ onWorkflowCreated }: { onWorkflowCreated?
 
       // Simulate progress lol
       const progressInterval = setInterval(() => {
-        setGenerationProgress(prev => {
-          const newProgress = Math.min(prev + 1, 90);
-          if (newProgress >= 90) {
-            clearInterval(progressInterval);
-          }
-          return newProgress;
-        });
+        const currentProgress = useWorkflowStore.getState().generationProgress;
+        const newProgress = Math.min(currentProgress + 1, 90);
+        setGenerationProgress(newProgress);
+        if (newProgress >= 90) {
+          clearInterval(progressInterval);
+        }
       }, 125);
 
       while (true) {
@@ -515,7 +512,6 @@ export function ManualWorkflowDialog({ onWorkflowCreated }: { onWorkflowCreated?
     }
   };
 
-
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
@@ -549,159 +545,48 @@ export function ManualWorkflowDialog({ onWorkflowCreated }: { onWorkflowCreated?
             ))}
           </Stepper>
           
-          {showGenerationProgress && activeStep === 1 && (
-            <div className="w-48 ml-4">
-              <div className="text-sm text-muted-foreground mb-2">{generationMessage}</div>
-              <Progress value={generationProgress} className="h-2" />
-              <div className="text-xs text-muted-foreground mt-1">{Math.round(generationProgress)}%</div>
-            </div>
-          )}
+          <WorkflowProgress
+            showGenerationProgress={showGenerationProgress && activeStep === 1}
+            generationProgress={generationProgress}
+            generationMessage={generationMessage}
+          />
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 flex-1 overflow-auto">
           <div className="p-2 border rounded-lg overflow-y-auto">
             {activeStep === 1 && (
-              <div className="space-y-4 py-4 px-3 flex flex-col h-full">
-                <div className="flex flex-col gap-2 flex-0 overflow-y-auto px-1">
-                  <div className="flex flex-col gap-2">
-                    <Label htmlFor="workflow-name">Workflow Name</Label>
-                    <Input
-                      id="workflow-name"
-                      value={workflowName}
-                      onChange={(e) => setWorkflowName(e.target.value)}
-                      placeholder="e.g., Customer Support Automation"
-                    />
-                  </div>
-                  <div className="flex flex-col gap-2">
-                    <Label htmlFor="workflow-description">Description</Label>
-                    <Textarea
-                      id="workflow-description"
-                      value={workflowDescription}
-                      onChange={(e) => setWorkflowDescription(e.target.value)}
-                      rows={8}
-                      placeholder="Describe what this workflow does."
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Example / Prompt</Label>
-                    {clarificationQuestions.length > 0 && (
-                      <div className="p-4 border rounded-md bg-amber-50 border-amber-200">
-                        <p className="font-semibold text-amber-800">
-                          Please answer the following questions to generate the
-                          workflow:
-                        </p>
-                        <ul className="list-disc list-inside mt-2 text-sm text-amber-700">
-                          {clarificationQuestions.map((q, i) => (
-                            <li key={i}>{q}</li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-                    <Textarea
-                      placeholder="Describe the workflow you want to generate, or answer the questions above."
-                      value={prompt}
-                      onChange={(e) => setPrompt(e.target.value)}
-                      rows={4}
-                    />
-                    <Dropzone
-                      onDrop={(acceptedFiles) => setFile(acceptedFiles[0])}
-                      accept={{ "application/pdf": [".pdf"] }}
-                      maxFiles={1}
-                    >
-                      {file ? (
-                        <DropzoneContent>
-                          <p>{file.name}</p>
-                        </DropzoneContent>
-                      ) : (
-                        <DropzoneEmptyState>
-                          <p>Drop a PDF file here</p>
-                        </DropzoneEmptyState>
-                      )}
-                    </Dropzone>
-                  </div>
-                </div>
-                <Button
-                  className="flex-1"
-                  onClick={handleGenerateWorkflow}
-                  disabled={isGenerating}
-                >
-                  {isGenerating ? "Generating..." : "Generate"}
-                </Button>
-              </div>
+              <StepContent
+                workflowName={workflowName}
+                workflowDescription={workflowDescription}
+                prompt={prompt}
+                file={file}
+                clarificationQuestions={clarificationQuestions}
+                isGenerating={isGenerating}
+                onWorkflowNameChange={setWorkflowName}
+                onWorkflowDescriptionChange={setWorkflowDescription}
+                onPromptChange={setPrompt}
+                onFileChange={setFile}
+                onGenerateWorkflow={handleGenerateWorkflow}
+              />
             )}
             {activeStep === 2 && (
-              <div className="space-y-4">
-                <div>
-                  <Label>Nodes</Label>
-                  <div className="p-2 pt-0 border rounded-md bg-muted min-h-[100px] flex flex-col divide-y divide-white/10">
-                    {nodes.map((n) => (
-                      <div
-                        key={n.id}
-                        className="flex items-center justify-between text-sm p-1"
-                      >
-                        <span className="w-full">
-                          <span className="text-xs bg-white rounded-lg px-1 py-px text-[#27272a] mr-1">
-                            {n.data.type === "agent-task"
-                              ? n.data.agent
-                              : "Human Input"}
-                          </span>
-                          <span className="text-xs">{n.data.description}</span>
-                        </span>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => deleteNode(n.id)}
-                        >
-                          <Trash2 className="size-4" />
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                <div>
-                  <Label htmlFor="node-description">Node Description</Label>
-                  <Textarea
-                    className="overflow-x-visible"
-                    id="node-description"
-                    value={currentNodeDescription}
-                    onChange={(e) => setCurrentNodeDescription(e.target.value)}
-                    placeholder="Describe the agent's task for this node."
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="node-agent">Select Agent</Label>
-                  <Select
-                    value={currentNodeAgent}
-                    onValueChange={setCurrentNodeAgent}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Choose an agent" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {agentNames.map((agent) => (
-                        <SelectItem key={agent} value={agent}>
-                          {agent}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <Button onClick={addNode}>Add Node</Button>
-              </div>
+              <NodeBuilder
+                nodes={nodes}
+                currentNodeDescription={currentNodeDescription}
+                currentNodeAgent={currentNodeAgent}
+                agentNames={agentNames}
+                onCurrentNodeDescriptionChange={setCurrentNodeDescription}
+                onCurrentNodeAgentChange={setCurrentNodeAgent}
+                onAddNode={addNode}
+                onDeleteNode={deleteNode}
+              />
             )}
             {activeStep === 3 && (
-              <div>
-                <h3 className="font-semibold text-lg">Review Your Workflow</h3>
-                <p>
-                  <strong>Name:</strong> {workflowName}
-                </p>
-                <p>
-                  <strong>Description:</strong> {workflowDescription || "N/A"}
-                </p>
-                <p>
-                  <strong>Nodes:</strong> {nodes.length}
-                </p>
-              </div>
+              <WorkflowReview
+                workflowName={workflowName}
+                workflowDescription={workflowDescription}
+                nodes={nodes}
+              />
             )}
           </div>
 
@@ -719,7 +604,7 @@ export function ManualWorkflowDialog({ onWorkflowCreated }: { onWorkflowCreated?
           {activeStep > 1 && (
             <Button
               variant="outline"
-              onClick={() => setActiveStep((s) => s - 1)}
+              onClick={() => setActiveStep(activeStep - 1)}
             >
               Back
             </Button>
