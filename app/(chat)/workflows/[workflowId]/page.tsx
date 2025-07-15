@@ -32,6 +32,7 @@ export default function WorkflowDetailPage() {
   const [inputQuery, setInputQuery] = useState('');
   const [nodeResults, setNodeResults] = useState<any[]>([]);
   const [isExecuting, setIsExecuting] = useState(false);
+  const [workflowProgress, setWorkflowProgress] = useState<Map<string, { status: 'pending' | 'running' | 'completed' | 'error', output?: string, error?: string, description?: string }>>(new Map());
 
   useEffect(() => {
     if (workflowId) {
@@ -64,6 +65,7 @@ export default function WorkflowDetailPage() {
 
     setIsExecuting(true);
     setNodeResults([]);
+    setWorkflowProgress(new Map());
     const runningToast = toast.info(`Running workflow: ${workflow.name}`, {
       description: 'Please wait, this may take a moment...',
       duration: Number.POSITIVE_INFINITY,
@@ -82,20 +84,91 @@ export default function WorkflowDetailPage() {
         }),
       });
 
-      if (response.ok) {
-        const result = await response.json();
-        setNodeResults(result.output);
-        toast.success('Workflow execution completed!', { id: runningToast });
-      } else {
+      if (!response.ok) {
         const errorData = await response.json();
         toast.error(`Workflow execution failed: ${errorData.error || response.statusText}`, { id: runningToast });
+        setIsExecuting(false);
+        return;
       }
+
+      // Handle SSE stream
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
+      
+      if (!reader) {
+        throw new Error('No response body');
+      }
+
+      const newNodeResults: any[] = [];
+      
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value);
+        const lines = chunk.split('\n').filter(line => line.trim() !== '');
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            try {
+              const data = JSON.parse(line.slice(6));
+              
+              switch (data.type) {
+                case 'workflow_started':
+                  toast.info(data.message, { id: runningToast });
+                  break;
+                  
+                case 'node_started':
+                  setWorkflowProgress(prev => new Map(prev).set(data.nodeId, {
+                    status: 'running',
+                    description: data.description
+                  }));
+                  break;
+                  
+                case 'node_completed':
+                  setWorkflowProgress(prev => new Map(prev).set(data.nodeId, {
+                    status: 'completed',
+                    output: data.output,
+                    description: data.description
+                  }));
+                  newNodeResults.push({
+                    nodeId: data.nodeId,
+                    agentName: data.agentName,
+                    description: data.description,
+                    output: data.output,
+                  });
+                  break;
+                  
+                case 'node_error':
+                  setWorkflowProgress(prev => new Map(prev).set(data.nodeId, {
+                    status: 'error',
+                    error: data.error,
+                    description: data.description
+                  }));
+                  toast.error(`Error: ${data.error}`, { id: runningToast });
+                  break;
+                  
+                case 'workflow_completed':
+                  toast.success('Workflow execution completed!', { id: runningToast });
+                  break;
+                  
+                case 'error':
+                  toast.error(data.message, { id: runningToast });
+                  break;
+              }
+            } catch (parseError) {
+              console.error('Error parsing SSE data:', parseError);
+            }
+          }
+        }
+      }
+
+      setNodeResults(newNodeResults);
+      setIsExecuting(false);
     } catch (error) {
       console.error('Error running workflow:', error);
       toast.error('An unexpected error occurred during workflow execution.', { id: runningToast });
-    } finally {
       setIsExecuting(false);
-      toast.dismiss(runningToast);
     }
   };
 
@@ -118,7 +191,12 @@ export default function WorkflowDetailPage() {
   return (
     <div className="flex flex-col md:flex-row h-full p-4 gap-4">
       <div className="md:w-2/3 border border-border rounded-lg">
-        <SchemaVisualizer height="h-screen" nodes={workflow.schema.nodes} edges={workflow.schema.edges} />
+        <SchemaVisualizer 
+          height="h-screen" 
+          nodes={workflow.schema.nodes} 
+          edges={workflow.schema.edges} 
+          workflowProgress={workflowProgress}
+        />
       </div>
 
       <div className="md:w-1/3 flex flex-col gap-4">

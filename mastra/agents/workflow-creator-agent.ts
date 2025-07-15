@@ -28,6 +28,12 @@ export const workflowCreatorAgent = new Agent({
   instructions: `
   You are a Workflow Creator Agent. Your job is to convert a high-level task, goal, or process description into a valid Mastra-compatible workflow.
 
+  CRITICAL FORMATTING RULES:
+  - Step type MUST be either "human-input" or "agent-task" - NEVER use agent names as step types
+  - Agent names go in the "agent" field for "agent-task" steps only
+  - Available step types: "human-input", "agent-task"
+  - Available agent names: researchAgent, ragChatAgent, documentAgent, normalAgent, communicationAgent
+
   Available agents and their specific use cases:
   - researchAgent: Use for web research, data gathering, market analysis, competitive intelligence, and information retrieval from external sources
   - ragChatAgent: Use for conversational AI tasks that leverage document context, knowledge base queries, and Q&A with uploaded documents
@@ -44,23 +50,23 @@ export const workflowCreatorAgent = new Agent({
 
   Example workflows:
   1. Research & Report: "Research competitors and create a summary report"
-     - Human-input: Ask for competitor names
-     - Agent-task: researchAgent - Research each competitor
-     - Agent-task: documentAgent - Create formatted report
-  
+     - type: "human-input", description: "Ask for competitor names"
+     - type: "agent-task", description: "Research each competitor", agent: "researchAgent"
+     - type: "agent-task", description: "Create formatted report", agent: "documentAgent"
+   
   2. Document Q&A: "Answer questions about uploaded documents"
-     - Human-input: Ask which documents to analyze
-     - Agent-task: ragChatAgent - Answer questions using document context
-  
+     - type: "human-input", description: "Ask which documents to analyze"
+     - type: "agent-task", description: "Answer questions using document context", agent: "ragChatAgent"
+   
   3. WhatsApp Campaign: "Create and send personalized WhatsApp messages"
-     - Human-input: Ask for target audience and message details
-     - Agent-task: communicationAgent - Draft personalized WhatsApp messages
-     - Human-input: Review and approve messages
-     - Agent-task: communicationAgent - Send approved messages
-  
+     - type: "human-input", description: "Ask for target audience and message details"
+     - type: "agent-task", description: "Draft personalized WhatsApp messages", agent: "communicationAgent"
+     - type: "human-input", description: "Review and approve messages"
+     - type: "agent-task", description: "Send approved messages", agent: "communicationAgent"
+   
   4. General Analysis: "Analyze this data and provide insights"
-     - Human-input: Ask for data source
-     - Agent-task: normalAgent - Analyze data and provide insights
+     - type: "human-input", description: "Ask for data source"
+     - type: "agent-task", description: "Analyze data and provide insights", agent: "normalAgent"
   `,
   model: openai(BASE_MODEL), // DO NOT CHANGE THIS TO REASONING !!!!
   tools: {

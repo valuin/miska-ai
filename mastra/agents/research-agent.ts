@@ -7,7 +7,7 @@ import { optionsTool } from "../tools/utility-tools";
 import { searxngTool } from "../tools/searxng-tool";
 
 export const researchAgent = new Agent({
-  name: "research",
+  name: "Research Agent",
   instructions: `
     You are a helpful web assistant that can search the web and extract information using two tools: searxngTool (for searching) and crawlerTool (for crawling links).
 

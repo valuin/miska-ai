@@ -3,6 +3,8 @@ import { Handle, Position, type NodeProps, type Node, useUpdateNodeInternals } f
 import { cn } from "@/lib/utils";
 import { Textarea } from "@/components/ui/textarea";
 import { useReactFlow } from '@xyflow/react';
+import { Loader2, CheckCircle2, AlertCircle, Clock } from "lucide-react";
+import Badge from "@/components/badge";
 
 interface WorkflowNodeData extends Record<string, unknown> {
   type: "human-input" | "agent-task";
@@ -11,6 +13,12 @@ interface WorkflowNodeData extends Record<string, unknown> {
   tool?: string;
   selected?: boolean;
   humanFeedback?: string;
+  progress?: {
+    status: 'pending' | 'running' | 'completed' | 'error';
+    output?: string;
+    error?: string;
+    description?: string;
+  };
 }
 
 export interface Edge {
@@ -47,6 +55,23 @@ function WorkflowNode({ id, data, selected }: NodeProps<WorkflowNodeType>) {
     updateNodeInternals(id);
   };
 
+  const getStatusBadge = () => {
+    if (!data.progress) return null;
+    
+    switch (data.progress.status) {
+      case 'running':
+        return <Badge icon={(props) => <Loader2 {...props} className={`${props.className} animate-spin`} />} text="Running" />;
+      case 'completed':
+        return <Badge icon={CheckCircle2} text="Completed" />;
+      case 'error':
+        return <Badge icon={AlertCircle} text="Error" />;
+      case 'pending':
+        return <Badge icon={Clock} text="Pending" />;
+      default:
+        return null;
+    }
+  };
+
   return (
     <div
       className={cn(
@@ -54,12 +79,17 @@ function WorkflowNode({ id, data, selected }: NodeProps<WorkflowNodeType>) {
         selected ? "ring-2 ring-primary ring-offset-2" : "",
       )}
     >
-      <div className="text-sm uppercase text-muted-foreground font-semibold mb-1">
-        {data.type === "human-input" ? "🧍 Human Input" : "🤖 Agent Task"}
+      <div className="flex items-center justify-center w-full mb-2">
+        <div className="text-sm uppercase text-muted-foreground font-semibold">
+          {data.type === "human-input" ? "🧍 Human Input" : "🤖 Agent Task"}
+        </div>
+        {getStatusBadge()}
       </div>
-      <div className="text-base font-medium text-center">
+      
+      <div className="text-base font-medium text-center mb-2">
         {data.description}
       </div>
+      
       <div>
         {data.agent && (
           <span className="text-xs text-muted-foreground mt-1">
@@ -67,11 +97,13 @@ function WorkflowNode({ id, data, selected }: NodeProps<WorkflowNodeType>) {
           </span>
         )}
       </div>
+      
       {data.tool && (
         <div className="text-xs text-muted-foreground mt-1 italic">
           Tool: {data.tool}
         </div>
       )}
+      
       
       {data.type === "human-input" && (
         <div className="w-full mt-3">

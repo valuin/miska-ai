@@ -31,7 +31,6 @@ import { Label } from '@/components/ui/label';
 import { v4 as uuidv4 } from 'uuid';
 import { toast } from 'sonner';
 
-
 const nodeTypes = {
   workflowNode: WorkflowNode,
 };
@@ -44,12 +43,14 @@ type SchemaVisualizerProps = {
   nodes?: any[];
   edges?: any[];
   height?: string;
+  workflowProgress?: Map<string, { status: 'pending' | 'running' | 'completed' | 'error', output?: string, error?: string, description?: string }>;
 };
 
-function SchemaVisualizerInner({ nodes: propNodes, edges: propEdges, height = 'h-[600px]' }: SchemaVisualizerProps) {
+function SchemaVisualizerInner({ nodes: propNodes, edges: propEdges, height = 'h-[600px]', workflowProgress }: SchemaVisualizerProps) {
   const [nodes, setNodes, onNodesChange] = useNodesState(propNodes ?? initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(propEdges ?? initialEdges);
 
+  // Update nodes when propNodes changes
   useEffect(() => {
     if (propNodes) {
       setNodes(propNodes);
@@ -58,6 +59,25 @@ function SchemaVisualizerInner({ nodes: propNodes, edges: propEdges, height = 'h
       setEdges(propEdges);
     }
   }, [propNodes, propEdges, setNodes, setEdges]);
+
+  // Update nodes with progress information
+  useEffect(() => {
+    if (workflowProgress && workflowProgress.size > 0) {
+      setNodes(prevNodes => 
+        prevNodes.map(node => {
+          const progress = workflowProgress.get(node.id);
+          return {
+            ...node,
+            data: {
+              ...node.data,
+              progress: progress || { status: 'pending' }
+            }
+          };
+        })
+      );
+    }
+  }, [workflowProgress, setNodes]);
+
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const { fitView, zoomIn, zoomOut, getNodes, getEdges } = useReactFlow();
   const [isSaving, setIsSaving] = useState(false);
@@ -242,7 +262,7 @@ function SchemaVisualizerInner({ nodes: propNodes, edges: propEdges, height = 'h
        </ReactFlow>
      </div>
    </main>
- );
+  );
 }
 
 export default function SchemaVisualizer(props: SchemaVisualizerProps) {

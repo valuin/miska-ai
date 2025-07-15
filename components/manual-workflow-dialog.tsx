@@ -76,6 +76,9 @@ export function ManualWorkflowDialog({ onWorkflowCreated }: { onWorkflowCreated?
   const [file, setFile] = useState<File | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [clarificationQuestions, setClarificationQuestions] = useState<string[]>([]);
+  const [workflowProgress, setWorkflowProgress] = useState<Map<string, { status: 'pending' | 'running' | 'completed' | 'error', output?: string, error?: string, description?: string }>>(new Map());
+  const [isRunningWorkflow, setIsRunningWorkflow] = useState(false);
+  const [executionMessage, setExecutionMessage] = useState<string>('');
   const queryClient = useQueryClient();
 
   const agentNames = useMemo(() => agents, []);
@@ -137,8 +140,6 @@ export function ManualWorkflowDialog({ onWorkflowCreated }: { onWorkflowCreated?
         return;
       }
     }
-    // For step 2, we don't have explicit validation to prevent moving forward if no nodes are added,
-    // but we could add a check here if needed (e.g., if (activeStep === 2 && nodes.length === 0) return;)
     setActiveStep((s) => s + 1);
   };
 
@@ -192,6 +193,105 @@ export function ManualWorkflowDialog({ onWorkflowCreated }: { onWorkflowCreated?
       }
     } catch (error) {
       toast.error("An unexpected error occurred while saving the workflow.");
+    }
+  };
+
+  const handleRunWorkflow = async () => {
+    if (nodes.length === 0) {
+      toast.error("Please add at least one node to run the workflow");
+      return;
+    }
+
+    setIsRunningWorkflow(true);
+    setExecutionMessage('Starting workflow execution...');
+    setWorkflowProgress(new Map());
+
+    const workflowData = {
+      id: uuidv4(),
+      name: workflowName || "Test Workflow",
+      description: workflowDescription,
+      nodes: nodes,
+      edges: edges,
+    };
+
+    try {
+      const response = await fetch("/api/workflows/run", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          workflowId: workflowData.id,
+          workflowSchema: workflowData,
+          inputQuery: "Execute workflow"
+        }),
+      });
+
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
+
+      if (!reader) {
+        throw new Error("No response body");
+      }
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value);
+        const lines = chunk.split('\n').filter(line => line.trim() !== '');
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const data = JSON.parse(line.slice(6));
+            
+            switch (data.type) {
+              case 'workflow_started':
+                setExecutionMessage(data.message);
+                break;
+                
+              case 'node_started':
+                setWorkflowProgress(prev => new Map(prev).set(data.nodeId, {
+                  status: 'running',
+                  description: data.description
+                }));
+                setExecutionMessage(`Running ${data.agentName}...`);
+                break;
+                
+              case 'node_completed':
+                setWorkflowProgress(prev => new Map(prev).set(data.nodeId, {
+                  status: 'completed',
+                  output: data.output,
+                  description: data.description
+                }));
+                setExecutionMessage(`${data.agentName} completed`);
+                break;
+                
+              case 'node_error':
+                setWorkflowProgress(prev => new Map(prev).set(data.nodeId, {
+                  status: 'error',
+                  error: data.error,
+                  description: data.description
+                }));
+                setExecutionMessage(`Error: ${data.error}`);
+                break;
+                
+              case 'workflow_completed':
+                setExecutionMessage('Workflow completed successfully');
+                break;
+                
+              case 'error':
+                setExecutionMessage(data.message);
+                break;
+            }
+          }
+        }
+      }
+
+      setIsRunningWorkflow(false);
+    } catch (error) {
+      setExecutionMessage('Failed to execute workflow');
+      setIsRunningWorkflow(false);
     }
   };
 
@@ -258,7 +358,7 @@ export function ManualWorkflowDialog({ onWorkflowCreated }: { onWorkflowCreated?
             errorData.error || response.statusText
           }`,
         );
-        setIsGenerating(false); // Ensure generating state is reset on error
+        setIsGenerating(false);
         return;
       }
 
@@ -293,7 +393,7 @@ export function ManualWorkflowDialog({ onWorkflowCreated }: { onWorkflowCreated?
         setWorkflowName(data.name);
         setWorkflowDescription(data.description);
         setClarificationQuestions([]);
-        setActiveStep(2); // Move to the "Add Nodes" step to show the generated workflow
+        setActiveStep(2);
       }
     } catch (error) {
       toast.error(
@@ -303,6 +403,7 @@ export function ManualWorkflowDialog({ onWorkflowCreated }: { onWorkflowCreated?
       setIsGenerating(false);
     }
   };
+
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -486,7 +587,12 @@ export function ManualWorkflowDialog({ onWorkflowCreated }: { onWorkflowCreated?
           </div>
 
           <div className="border rounded-lg h-full">
-            <SchemaVisualizer nodes={nodes} edges={edges} height="h-[62.5vh]" />
+            <SchemaVisualizer
+              nodes={nodes}
+              edges={edges}
+              height="h-[62.5vh]"
+              workflowProgress={workflowProgress}
+            />
           </div>
         </div>
 
@@ -503,7 +609,16 @@ export function ManualWorkflowDialog({ onWorkflowCreated }: { onWorkflowCreated?
             <Button onClick={handleNextStep}>Next</Button>
           )}
           {activeStep === steps.length && (
-            <Button onClick={handleSaveWorkflow}>Save Workflow</Button>
+            <>
+              <Button 
+                onClick={handleRunWorkflow} 
+                disabled={isRunningWorkflow || nodes.length === 0}
+                variant="secondary"
+              >
+                {isRunningWorkflow ? "Running..." : "Run Workflow"}
+              </Button>
+              <Button onClick={handleSaveWorkflow}>Save Workflow</Button>
+            </>
           )}
         </DialogFooter>
       </DialogContent>
