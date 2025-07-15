@@ -26,14 +26,6 @@ interface WorkflowEdge {
   target: string;
 }
 
-interface WorkflowSchema {
-  id: string;
-  name: string;
-  description: string | null;
-  nodes: WorkflowNode[];
-  edges: WorkflowEdge[];
-}
-
 // Map agent names to their imported instances
 const agentMap: Record<string, Agent<any>> = {
   researchAgent: researchAgent as Agent<any>,
@@ -113,7 +105,7 @@ export async function POST(req: Request) {
           output,
         });
 
-        currentInput = output; // Pass the output of this node as input to the next
+        currentInput = output;
       } catch (agentError) {
         console.error(
           `Error executing agent ${agentName} for node ID ${node.id}:`,

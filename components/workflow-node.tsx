@@ -1,6 +1,8 @@
 import { memo } from "react";
-import { Handle, Position, type NodeProps, type Node } from "@xyflow/react";
+import { Handle, Position, type NodeProps, type Node, useUpdateNodeInternals } from "@xyflow/react";
 import { cn } from "@/lib/utils";
+import { Textarea } from "@/components/ui/textarea";
+import { useReactFlow } from '@xyflow/react';
 
 interface WorkflowNodeData extends Record<string, unknown> {
   type: "human-input" | "agent-task";
@@ -8,6 +10,7 @@ interface WorkflowNodeData extends Record<string, unknown> {
   agent?: string;
   tool?: string;
   selected?: boolean;
+  humanFeedback?: string;
 }
 
 export interface Edge {
@@ -19,11 +22,35 @@ export interface Edge {
 
 type WorkflowNodeType = Node<WorkflowNodeData, "workflowNode">;
 
-function WorkflowNode({ data, selected }: NodeProps<WorkflowNodeType>) {
+function WorkflowNode({ id, data, selected }: NodeProps<WorkflowNodeType>) {
+  const { setNodes } = useReactFlow();
+  const updateNodeInternals = useUpdateNodeInternals();
+
+  const handleHumanFeedbackChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const newFeedback = e.target.value;
+    
+    setNodes((nodes) =>
+      nodes.map((node) => {
+        if (node.id === id) {
+          return {
+            ...node,
+            data: {
+              ...node.data,
+              humanFeedback: newFeedback,
+            },
+          };
+        }
+        return node;
+      })
+    );
+    
+    updateNodeInternals(id);
+  };
+
   return (
     <div
       className={cn(
-        "rounded-xl bg-card shadow w-96 p-4 flex flex-col items-center border",
+        "rounded-xl bg-card shadow w-96 p-4 flex flex-col items-center border mb-6",
         selected ? "ring-2 ring-primary ring-offset-2" : "",
       )}
     >
@@ -45,6 +72,19 @@ function WorkflowNode({ data, selected }: NodeProps<WorkflowNodeType>) {
           Tool: {data.tool}
         </div>
       )}
+      
+      {data.type === "human-input" && (
+        <div className="w-full mt-3">
+          <Textarea
+            placeholder="Enter human feedback..."
+            value={data.humanFeedback || ""}
+            onChange={handleHumanFeedbackChange}
+            onClick={(e) => e.stopPropagation()}
+            className="text-sm"
+          />
+        </div>
+      )}
+      
       <Handle type="target" position={Position.Top} />
       <Handle type="source" position={Position.Bottom} />
     </div>

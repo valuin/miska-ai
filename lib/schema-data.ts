@@ -16,7 +16,7 @@ export const initialNodes: Node[] = [
   {
     id: '2',
     type: 'workflowNode',
-    position: { x: 500, y: 100 },
+    position: { x: 200, y: 300 },
     data: {
       type: 'agent-task',
       description: 'Agent processes the input',
@@ -26,7 +26,7 @@ export const initialNodes: Node[] = [
   {
     id: '3',
     type: 'workflowNode',
-    position: { x: 800, y: 100 },
+    position: { x: 200, y: 500 },
     data: {
       type: 'agent-task',
       description: 'Agent generates report',

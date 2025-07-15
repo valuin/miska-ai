@@ -122,7 +122,7 @@ function SchemaVisualizerInner({ nodes: propNodes, edges: propEdges, height = 'h
   };
 
   const onFitView = useCallback(() => {
-    fitView({ padding: 0.2 });
+    fitView({ padding: 0.4 });
   }, [fitView]);
 
   return (
@@ -136,12 +136,14 @@ function SchemaVisualizerInner({ nodes: propNodes, edges: propEdges, height = 'h
          nodeTypes={nodeTypes}
          edgeTypes={edgeTypes}
          fitView
-         minZoom={0.5}
+         minZoom={0.2}
          maxZoom={1}
          defaultEdgeOptions={{
            type: 'custom',
            style: { stroke: '#888', strokeWidth: 2, opacity: 1 },
          }}
+         snapGrid={[20, 20]}
+         snapToGrid={true}
          style={
            {
              '--xy-background-pattern-dots-color-default':

@@ -4,7 +4,7 @@ function getVerticalLayoutPositions(
   count: number,
   xStart = 200,
   yStart = 100,
-  yGap = 160,
+  yGap = 800,
 ) {
   const positions: { x: number; y: number }[] = [];
   for (let i = 0; i < count; i++) {
@@ -64,3 +64,4 @@ export function extractWorkflowGraph(workflowArr: any[]): {
 
   return { nodes, edges };
 }
+

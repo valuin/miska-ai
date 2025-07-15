@@ -94,7 +94,7 @@ export function ManualWorkflowDialog({ onWorkflowCreated }: { onWorkflowCreated?
     const newNode = {
       id: newNodeId,
       type: "workflowNode",
-      position: { x: 250, y: 100 + nodes.length * 150 },
+      position: { x: 250, y: 100 + nodes.length * 250 },
       data: {
         type: "agent-task",
         description: currentNodeDescription,
@@ -271,7 +271,7 @@ export function ManualWorkflowDialog({ onWorkflowCreated }: { onWorkflowCreated?
         const newNodes = data.steps.map((step: any, index: number) => ({
           id: `node-${index + 1}`,
           type: "workflowNode",
-          position: { x: 250, y: 100 + index * 150 },
+          position: { x: 250, y: 100 + index * (step.type === "human-input" ? 250 : 200) },
           data: {
             type: step.type,
             description: step.description,
