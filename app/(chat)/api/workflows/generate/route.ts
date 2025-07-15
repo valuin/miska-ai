@@ -7,7 +7,7 @@ const generateWorkflowSchema = z.object({
   prompt: z.string().min(1, 'Prompt is required.'),
 });
 
-export const maxDuration = 5;
+export const maxDuration = 30;
 
 export async function POST(request: NextRequest) {
   try {
@@ -26,63 +26,81 @@ export async function POST(request: NextRequest) {
 
     const { prompt } = validationResult.data;
 
-    const workflowCreatorAgent = mastra.getAgent('workflowCreatorAgent');
+    const encoder = new TextEncoder();
+    
+    const stream = new ReadableStream({
+      async start(controller) {
+        const sendEvent = (event: string, data: any) => {
+          const sseData = `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
+          controller.enqueue(encoder.encode(sseData));
+        };
 
-    if (!workflowCreatorAgent) {
-      return new Response('Workflow Creator Agent not available', {
-        status: 503,
-      });
-    }
+        try {
+          const workflowCreatorAgent = mastra.getAgent('workflowCreatorAgent');
 
-    const runtimeContext = new RuntimeContext();
-    runtimeContext.set('mastra', mastra);
+          if (!workflowCreatorAgent) {
+            sendEvent('error', { message: 'Workflow Creator Agent not available' });
+            controller.close();
+            return;
+          }
 
-    const result = await workflowCreatorAgent.generate(
-      [{ role: 'user', content: prompt }],
-      {
-        toolChoice: 'required',
-        runtimeContext,
+          const runtimeContext = new RuntimeContext();
+          runtimeContext.set('mastra', mastra);
+
+          // Send initial progress
+          sendEvent('progress', { message: 'Starting workflow generation...' });
+
+          // Stream the generation process
+          const result = await workflowCreatorAgent.generate(
+            [{ role: 'user', content: prompt }],
+            {
+              toolChoice: 'required',
+              runtimeContext,
+            },
+          );
+
+          const toolCall = result.toolCalls?.[0];
+
+          if (!toolCall) {
+            sendEvent('error', { 
+              message: 'Failed to generate workflow. Agent did not return a tool call.',
+              text: result.text 
+            });
+            controller.close();
+            return;
+          }
+
+          if (toolCall.toolName === 'clarification-tool') {
+            sendEvent('clarification', { 
+              questions: toolCall.args.questions 
+            });
+            controller.close();
+            return;
+          }
+
+          const workflow = toolCall.args;
+          
+          // Send the complete workflow
+          sendEvent('workflow', workflow);
+          sendEvent('complete', { message: 'Workflow generation completed' });
+          
+          controller.close();
+        } catch (error) {
+          console.error('Workflow generation error:', error);
+          sendEvent('error', { 
+            message: error instanceof Error ? error.message : 'Unknown error occurred' 
+          });
+          controller.close();
+        }
       },
-    );
+    });
 
-    const toolCall = result.toolCalls?.[0];
-
-    if (!toolCall) {
-      console.error(
-        'Agent did not return a tool call. Final text:',
-        result.text,
-      );
-      return new Response(
-        JSON.stringify({
-          error:
-            'Failed to generate workflow. Agent did not return a tool call.',
-          text: result.text,
-        }),
-        {
-          status: 500,
-          headers: { 'Content-Type': 'application/json' },
-        },
-      );
-    }
-
-    if (toolCall.toolName === 'clarification-tool') {
-      return new Response(
-        JSON.stringify({
-          type: 'clarification',
-          questions: toolCall.args.questions,
-        }),
-        {
-          status: 200,
-          headers: { 'Content-Type': 'application/json' },
-        },
-      );
-    }
-
-    const workflow = toolCall.args;
-
-    return new Response(JSON.stringify({ type: 'workflow', ...workflow }), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' },
+    return new Response(stream, {
+      headers: {
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        'Connection': 'keep-alive',
+      },
     });
   } catch (error) {
     console.error('Workflow generation API error:', error);

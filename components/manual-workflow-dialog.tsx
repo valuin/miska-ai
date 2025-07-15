@@ -37,6 +37,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Progress } from "@/components/ui/progress";
 import SchemaVisualizer from "./schema-builder";
 import { agents } from "@/mastra/client";
 import { v4 as uuidv4 } from "uuid";
@@ -79,6 +80,9 @@ export function ManualWorkflowDialog({ onWorkflowCreated }: { onWorkflowCreated?
   const [workflowProgress, setWorkflowProgress] = useState<Map<string, { status: 'pending' | 'running' | 'completed' | 'error', output?: string, error?: string, description?: string }>>(new Map());
   const [isRunningWorkflow, setIsRunningWorkflow] = useState(false);
   const [executionMessage, setExecutionMessage] = useState<string>('');
+  const [generationProgress, setGenerationProgress] = useState(0);
+  const [generationMessage, setGenerationMessage] = useState<string>('');
+  const [showGenerationProgress, setShowGenerationProgress] = useState(false);
   const queryClient = useQueryClient();
 
   const agentNames = useMemo(() => agents, []);
@@ -297,6 +301,9 @@ export function ManualWorkflowDialog({ onWorkflowCreated }: { onWorkflowCreated?
 
   const handleGenerateWorkflow = async () => {
     setIsGenerating(true);
+    setShowGenerationProgress(true);
+    setGenerationProgress(0);
+    setGenerationMessage('Initializing...');
     let workflowPrompt = prompt;
 
     if (file) {
@@ -315,6 +322,7 @@ export function ManualWorkflowDialog({ onWorkflowCreated }: { onWorkflowCreated?
             `Failed to upload file: ${errorData.error || response.statusText}`,
           );
           setIsGenerating(false);
+          setShowGenerationProgress(false);
           return;
         }
 
@@ -323,6 +331,7 @@ export function ManualWorkflowDialog({ onWorkflowCreated }: { onWorkflowCreated?
       } catch (error) {
         toast.error("An unexpected error occurred while uploading the file.");
         setIsGenerating(false);
+        setShowGenerationProgress(false);
         return;
       }
     }
@@ -330,6 +339,7 @@ export function ManualWorkflowDialog({ onWorkflowCreated }: { onWorkflowCreated?
     if (!workflowPrompt) {
       toast.error("Please provide a prompt or a file.");
       setIsGenerating(false);
+      setShowGenerationProgress(false);
       return;
     }
 
@@ -338,6 +348,7 @@ export function ManualWorkflowDialog({ onWorkflowCreated }: { onWorkflowCreated?
         "Sending workflow generation request with prompt:",
         workflowPrompt,
       );
+      
       const response = await fetch("/api/workflows/generate", {
         method: "POST",
         headers: {
@@ -359,16 +370,109 @@ export function ManualWorkflowDialog({ onWorkflowCreated }: { onWorkflowCreated?
           }`,
         );
         setIsGenerating(false);
+        setShowGenerationProgress(false);
         return;
       }
 
-      const data = await response.json();
-      console.log("Workflow generation response data:", data);
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
 
-      if (data.type === "clarification") {
-        setClarificationQuestions(data.questions);
-      } else if (data.type === "workflow") {
-        const newNodes = data.steps.map((step: any, index: number) => ({
+      if (!reader) {
+        throw new Error("No response body");
+      }
+
+      let workflowData: any = null;
+      let eventBuffer = '';
+
+      // Simulate progress lol
+      const progressInterval = setInterval(() => {
+        setGenerationProgress(prev => {
+          const newProgress = Math.min(prev + 1, 90);
+          if (newProgress >= 90) {
+            clearInterval(progressInterval);
+          }
+          return newProgress;
+        });
+      }, 125);
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value);
+        eventBuffer += chunk;
+
+        // Process SSE events
+        const events = eventBuffer.split('\n\n');
+        eventBuffer = events.pop() || '';
+
+        for (const event of events) {
+          const lines = event.split('\n');
+          let eventType = '';
+          let data = '';
+
+          for (const line of lines) {
+            if (line.startsWith('event: ')) {
+              eventType = line.slice(7);
+            } else if (line.startsWith('data: ')) {
+              data = line.slice(6);
+            }
+          }
+
+          if (data) {
+            try {
+              const parsedData = JSON.parse(data);
+              
+              switch (eventType) {
+                case 'clarification':
+                  setClarificationQuestions(parsedData.questions);
+                  toast.info("Clarification needed", {
+                    description: "Please answer the questions to continue",
+                  });
+                  clearInterval(progressInterval);
+                  setIsGenerating(false);
+                  setShowGenerationProgress(false);
+                  return;
+                  
+                case 'workflow':
+                  workflowData = parsedData;
+                  clearInterval(progressInterval);
+                  setGenerationProgress(100);
+                  setGenerationMessage('Workflow generated successfully');
+                  toast.success("Workflow generated successfully");
+                  break;
+                  
+                case 'progress':
+                  setGenerationMessage(parsedData.message);
+                  toast.info("Generating workflow", {
+                    description: parsedData.message,
+                  });
+                  break;
+                  
+                case 'complete':
+                  clearInterval(progressInterval);
+                  setGenerationProgress(100);
+                  setGenerationMessage('Generation completed');
+                  break;
+                  
+                case 'error':
+                  toast.error("Generation failed", {
+                    description: parsedData.message,
+                  });
+                  clearInterval(progressInterval);
+                  setIsGenerating(false);
+                  setShowGenerationProgress(false);
+                  return;
+              }
+            } catch (error) {
+              console.error('Error parsing SSE data:', error);
+            }
+          }
+        }
+      }
+
+      if (workflowData) {
+        const newNodes = workflowData.steps.map((step: any, index: number) => ({
           id: `node-${index + 1}`,
           type: "workflowNode",
           position: { x: 250, y: 100 + index * (step.type === "human-input" ? 250 : 200) },
@@ -390,15 +494,22 @@ export function ManualWorkflowDialog({ onWorkflowCreated }: { onWorkflowCreated?
 
         setNodes(newNodes);
         setEdges(newEdges);
-        setWorkflowName(data.name);
-        setWorkflowDescription(data.description);
+        setWorkflowName(workflowData.name);
+        setWorkflowDescription(workflowData.description);
         setClarificationQuestions([]);
         setActiveStep(2);
+        
+        // Hide progress after a short delay
+        setTimeout(() => {
+          setShowGenerationProgress(false);
+          setGenerationProgress(0);
+        }, 1000);
       }
     } catch (error) {
       toast.error(
         "An unexpected error occurred while generating the workflow.",
       );
+      setShowGenerationProgress(false);
     } finally {
       setIsGenerating(false);
     }
@@ -418,7 +529,7 @@ export function ManualWorkflowDialog({ onWorkflowCreated }: { onWorkflowCreated?
           </DialogDescription>
         </DialogHeader>
 
-        <div className="flex justify-start mb-4">
+        <div className="flex justify-between items-center mb-4">
           <Stepper
             value={activeStep}
             onValueChange={setActiveStep}
@@ -437,6 +548,14 @@ export function ManualWorkflowDialog({ onWorkflowCreated }: { onWorkflowCreated?
               </StepperItem>
             ))}
           </Stepper>
+          
+          {showGenerationProgress && activeStep === 1 && (
+            <div className="w-48 ml-4">
+              <div className="text-sm text-muted-foreground mb-2">{generationMessage}</div>
+              <Progress value={generationProgress} className="h-2" />
+              <div className="text-xs text-muted-foreground mt-1">{Math.round(generationProgress)}%</div>
+            </div>
+          )}
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 flex-1 overflow-auto">
