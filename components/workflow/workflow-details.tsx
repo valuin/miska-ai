@@ -235,8 +235,8 @@ export function WorkflowDetails() {
   ]);
 
   return (
-    <form onSubmit={submit} className="flex flex-col gap-2 h-full p-4">
-      <div className="flex h-full flex-col gap-2 flex-0 overflow-y-auto px-1">
+    <form onSubmit={submit} className="flex flex-col gap-2 h-full">
+      <div className="flex h-full flex-col gap-2 flex-0 overflow-y-auto">
         {clarificationQuestions.length > 0 && (
           <div className="p-4 border rounded-md bg-amber-50 border-amber-200">
             <p className="font-semibold text-amber-800">
@@ -250,7 +250,9 @@ export function WorkflowDetails() {
           </div>
         )}
 
-        <Label htmlFor="workflow-name">Workflow Name</Label>
+        <Label htmlFor="workflow-name" className="text-lg">
+          Workflow Name
+        </Label>
         <Input
           id="workflow-name"
           name="name"
@@ -262,7 +264,9 @@ export function WorkflowDetails() {
           }}
         />
 
-        <Label htmlFor="workflow-description">Description</Label>
+        <Label htmlFor="workflow-description" className="text-lg">
+          Description
+        </Label>
         <Textarea
           rows={4}
           id="workflow-description"
@@ -275,7 +279,9 @@ export function WorkflowDetails() {
           }}
         />
 
-        <Label htmlFor="workflow-example">Example Prompt</Label>
+        <Label htmlFor="workflow-example" className="text-lg">
+          Example Prompt
+        </Label>
         <Textarea
           rows={4}
           id="workflow-example"
@@ -288,7 +294,9 @@ export function WorkflowDetails() {
           }}
         />
 
-        <Label htmlFor="workflow-file">File</Label>
+        <Label htmlFor="workflow-file" className="text-lg">
+          File
+        </Label>
         <Dropzone
           onDrop={async (acceptedFiles) => {
             const file = acceptedFiles[0];

@@ -72,15 +72,15 @@ export default function WorkflowsPage() {
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {workflows?.map((wf) => (
             <Link key={wf.id} href={`/workflows/${wf.id}`}>
               <Card className="h-full flex flex-col justify-between hover:bg-muted hover:shadow-lg transition-shadow duration-200 cursor-pointer">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-lg font-medium">
+                <CardHeader className="flex flex-row items-center justify-between space-x-4 pb-2">
+                  <Workflow className="size-8 text-muted-foreground" />
+                  <CardTitle className="text-lg font-medium flex-1">
                     {wf.name}
                   </CardTitle>
-                  <Workflow className="size-6 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
                   <p className="text-sm text-muted-foreground">

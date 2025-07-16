@@ -82,12 +82,12 @@ export function NodeBuilder() {
   return (
     <div className="space-y-4">
       <div>
-        <Label>Nodes</Label>
-        <div className="p-2 pt-0 border rounded-md bg-muted min-h-[100px] flex flex-col divide-y divide-white/10">
+        <Label className="text-lg">Nodes</Label>
+        <div className="border rounded-md bg-muted min-h-[100px] max-h-[220px] flex flex-col divide-y divide-white/10 overflow-x-hidden overflow-y-auto">
           {nodes.map((n) => (
             <div
               key={n.id}
-              className="flex items-center justify-between text-sm p-1"
+              className="flex items-center justify-between text-sm hover:bg-muted-foreground/10 px-2"
             >
               <span className="w-full">
                 <span className="text-xs bg-white rounded-lg px-1 py-px text-[#27272a] mr-1">
@@ -106,32 +106,34 @@ export function NodeBuilder() {
           ))}
         </div>
       </div>
-      <div>
-        <Label htmlFor="node-description">Node Description</Label>
-        <Textarea
-          className="overflow-x-visible"
-          id="node-description"
-          value={currentNodeDescription}
-          onChange={(e) => setCurrentNodeDescription(e.target.value)}
-          placeholder="Describe the agent's task for this node."
-        />
+
+      <div className="space-y-2">
+        <Label className="text-lg">Create a new node</Label>
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="node-agent">Select Agent</Label>
+          <Select value={currentNodeAgent} onValueChange={setCurrentNodeAgent}>
+            <SelectTrigger>
+              <SelectValue placeholder="Choose an agent" />
+            </SelectTrigger>
+            <SelectContent>
+              {agents.map((agent) => (
+                <SelectItem key={agent} value={agent}>
+                  {agent}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Label htmlFor="node-description">Node Description</Label>
+          <Textarea
+            className="overflow-x-visible"
+            id="node-description"
+            value={currentNodeDescription}
+            onChange={(e) => setCurrentNodeDescription(e.target.value)}
+            placeholder="Describe the agent's task for this node."
+          />
+          <Button onClick={addNode}>Add Node</Button>
+        </div>
       </div>
-      <div>
-        <Label htmlFor="node-agent">Select Agent</Label>
-        <Select value={currentNodeAgent} onValueChange={setCurrentNodeAgent}>
-          <SelectTrigger>
-            <SelectValue placeholder="Choose an agent" />
-          </SelectTrigger>
-          <SelectContent>
-            {agents.map((agent) => (
-              <SelectItem key={agent} value={agent}>
-                {agent}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-      <Button onClick={addNode}>Add Node</Button>
     </div>
   );
 }
