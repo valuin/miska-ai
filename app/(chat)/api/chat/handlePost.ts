@@ -73,7 +73,10 @@ async function handleChatStreaming({
   const mastraRuntimeContext = new RuntimeContext<MastraRuntimeContext>();
   mastraRuntimeContext.set("session", session);
   mastraRuntimeContext.set("dataStream", responsePipe);
-  mastraRuntimeContext.set("selectedVaultFileNames", selectedVaultFileNames ?? []); // Use nullish coalescing for clarity
+  mastraRuntimeContext.set(
+    "selectedVaultFileNames",
+    selectedVaultFileNames ?? [],
+  ); // Use nullish coalescing for clarity
 
   await streamWithMastraAgent(id, messages, {
     responsePipe,
@@ -122,7 +125,8 @@ export async function handlePost(request: Request) {
     }
 
     const previousMessages: DBMessage[] = await getMessagesByChatId({ id });
-    const dbMessage: DBMessage = { // Add type annotation here
+    const dbMessage: DBMessage = {
+      // Add type annotation here
       chatId: id,
       id: message.id,
       agentName: null,
@@ -137,7 +141,8 @@ export async function handlePost(request: Request) {
     const streamId = generateUUID();
     await createStreamId({ streamId, chatId: id });
 
-    const uiMessages: Message[] = messages.map((msg) => ({ // Renamed arg to msg to avoid conflict
+    const uiMessages: Message[] = messages.map((msg) => ({
+      // Renamed arg to msg to avoid conflict
       id: msg.id,
       role: msg.role as Message["role"],
       content: Array.isArray(msg.parts)

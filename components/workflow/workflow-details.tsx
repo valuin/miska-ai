@@ -6,14 +6,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { useChat, useCompletion } from "@ai-sdk/react";
-import { useState, type ChangeEvent } from "react";
+import { type Message, useChat } from "@ai-sdk/react";
+import { useCallback, useEffect, useState, type ChangeEvent } from "react";
 import { useWorkflowStore } from "@/lib/store/workflow-store";
-import {
-  Dropzone,
-  DropzoneContent,
-  DropzoneEmptyState,
-} from "@/components/ui/dropzone";
+import { Dropzone } from "@/components/ui/dropzone";
 
 export function WorkflowDetails() {
   const [readySubmit, setReadySubmit] = useState(false);
@@ -35,6 +31,10 @@ export function WorkflowDetails() {
     setShowGenerationProgress,
     setGenerationProgress,
     setGenerationMessage,
+    setNodes,
+    setEdges,
+    setClarificationQuestions,
+    setActiveStep,
   } = useWorkflowStore();
 
   const uploadFile = async (file: File) => {
@@ -68,6 +68,9 @@ export function WorkflowDetails() {
   const { messages, handleInputChange, handleSubmit, setInput } = useChat({
     api: "/api/workflows/generate",
     streamProtocol: "data",
+    onResponse: (response) => {
+      console.log(response);
+    },
   });
 
   const getPrompt = ({
@@ -120,6 +123,116 @@ export function WorkflowDetails() {
     setGenerationMessage("Initializing...");
     handleSubmit();
   };
+
+  const updatingWorkflow = useCallback(
+    (name: string, description: string, steps: any[]) => {
+      // create nodes
+      const newNodes = steps.map((step: any, index: number) => ({
+        id: `node-${index + 1}`,
+        type: "workflowNode",
+        position: {
+          x: 250,
+          y: 100 + index * (step.type === "human-input" ? 250 : 200),
+        },
+        data: {
+          type: step.type,
+          description: step.description,
+          agent: step.agent || "",
+        },
+      }));
+      const newEdges = newNodes
+        .slice(0, -1)
+        .map((node: any, index: number) => ({
+          id: `edge-${node.id}-${newNodes[index + 1].id}`,
+          source: node.id,
+          target: newNodes[index + 1].id,
+          type: "custom",
+        }));
+      setNodes(newNodes);
+      setEdges(newEdges);
+      setWorkflowName(name);
+      setWorkflowDescription(description);
+      setClarificationQuestions([]);
+      setActiveStep(2);
+    },
+    [
+      setNodes,
+      setEdges,
+      setWorkflowName,
+      setWorkflowDescription,
+      setClarificationQuestions,
+      setActiveStep,
+    ],
+  );
+
+  // handling tool invocations
+  useEffect(() => {
+    try {
+      const processTools = (messages: Message[]) => {
+        const assistantMessage = messages.find((m) => m.role === "assistant");
+        if (!assistantMessage) return;
+        const { parts } = assistantMessage;
+        if (!parts) return "Couldn't find parts";
+        const toolInvocations = parts.filter(
+          (p) => p.type === "tool-invocation",
+        );
+        if (!toolInvocations || toolInvocations.length === 0)
+          return "No tool invocations";
+        const result = toolInvocations[0] as any;
+        const { toolInvocation } = result;
+        const { name, description, steps } = toolInvocation?.args || {};
+        if (!steps || !Array.isArray(steps)) return "No steps";
+        updatingWorkflow(name, description, steps);
+        return "success";
+      };
+
+      const result = processTools(messages);
+      if (!result) return;
+      if (result === "success") {
+        toast.success("Workflow generated successfully");
+        setShowGenerationProgress(false);
+        setIsGenerating(false);
+      }
+    } catch (error) {
+      setShowGenerationProgress(false);
+      setIsGenerating(false);
+      toast.error(
+        "An unexpected error occurred while generating the workflow.",
+      );
+    }
+  }, [messages, updatingWorkflow, setIsGenerating, setShowGenerationProgress]);
+
+  // handling tool invocations
+  useEffect(() => {
+    const processAnnotations = (messages: Message[]) => {
+      const annotations: any[] = messages
+        .flatMap((m) => m.annotations)
+        .filter(Boolean);
+
+      if (!annotations || annotations.length === 0) return;
+
+      const progress = annotations
+        .filter((a) => a.type === "progress")
+        .at(-1) as any;
+
+      if (progress) {
+        setGenerationProgress(progress.progress);
+        setGenerationMessage(progress.message);
+        if (progress.progress === 100) {
+          setIsGenerating(false);
+          setShowGenerationProgress(false);
+        }
+      }
+    };
+
+    processAnnotations(messages);
+  }, [
+    messages,
+    setGenerationProgress,
+    setGenerationMessage,
+    setIsGenerating,
+    setShowGenerationProgress,
+  ]);
 
   return (
     <form onSubmit={submit} className="flex flex-col gap-2 h-full p-4">
@@ -211,268 +324,6 @@ export function WorkflowDetails() {
         disabled={isGenerating || !readySubmit}
       >
         {isGenerating ? "Generating..." : "Generate Workflow"}
-      </Button>
-
-      <div>Messages:{JSON.stringify(messages, null, 2)}</div>
-    </form>
-  );
-}
-
-export function Page() {
-  const { input, setInput, handleSubmit } = useCompletion({
-    api: "/api/workflows/generate",
-    onResponse: (response) => {
-      console.log(response);
-    },
-  });
-
-  const {
-    workflowName,
-    workflowDescription,
-    workflowExample,
-    file,
-    clarificationQuestions,
-    isGenerating,
-    setWorkflowExample,
-    setWorkflowName,
-    setWorkflowDescription,
-    setFile,
-    setIsGenerating,
-    setShowGenerationProgress,
-    setGenerationProgress,
-    setGenerationMessage,
-  } = useWorkflowStore();
-
-  const handleGenerateWorkflow = async (
-    e: React.FormEvent<HTMLFormElement>,
-  ) => {
-    e.preventDefault();
-
-    let prompt = `Workflow Name: ${workflowName}\n`;
-    prompt += `Description: ${workflowDescription}\n`;
-    prompt += `Workflow Example: ${workflowExample}\n`;
-
-    if (!prompt) {
-      toast.error("Please provide a prompt or a file.");
-      setIsGenerating(false);
-      setShowGenerationProgress(false);
-      return;
-    }
-
-    setInput(prompt);
-
-    // try {
-    //   console.log(
-    //     "Sending workflow generation request with prompt:",
-    //     workflowPrompt,
-    //   );
-    //   const response = await fetch("/api/workflows/generate", {
-    //     method: "POST",
-    //     headers: {
-    //       "Content-Type": "application/json",
-    //     },
-    //     body: JSON.stringify({ prompt: workflowPrompt }),
-    //   });
-    //   if (!response.ok) {
-    //     console.error(
-    //       "Failed to generate workflow:",
-    //       response.status,
-    //       response.statusText,
-    //     );
-    //     const errorData = await response.json();
-    //     toast.error(
-    //       `Failed to generate workflow: ${
-    //         errorData.error || response.statusText
-    //       }`,
-    //     );
-    //     setIsGenerating(false);
-    //     setShowGenerationProgress(false);
-    //     return;
-    //   }
-    //   const reader = response.body?.getReader();
-    //   const decoder = new TextDecoder();
-    //   if (!reader) {
-    //     throw new Error("No response body");
-    //   }
-    //   let workflowData: any = null;
-    //   let eventBuffer = "";
-    //   // Simulate progress lol
-    //   const progressInterval = setInterval(() => {
-    //     const currentProgress = useWorkflowStore.getState().generationProgress;
-    //     const newProgress = Math.min(currentProgress + 1, 90);
-    //     setGenerationProgress(newProgress);
-    //     if (newProgress >= 90) {
-    //       clearInterval(progressInterval);
-    //     }
-    //   }, 125);
-    //   while (true) {
-    //     const { done, value } = await reader.read();
-    //     if (done) break;
-    //     const chunk = decoder.decode(value);
-    //     eventBuffer += chunk;
-    //     // Process SSE events
-    //     const events = eventBuffer.split("\n\n");
-    //     eventBuffer = events.pop() || "";
-    //     for (const event of events) {
-    //       const lines = event.split("\n");
-    //       let eventType = "";
-    //       let data = "";
-    //       for (const line of lines) {
-    //         if (line.startsWith("event: ")) {
-    //           eventType = line.slice(7);
-    //         } else if (line.startsWith("data: ")) {
-    //           data = line.slice(6);
-    //         }
-    //       }
-    //       if (data) {
-    //         try {
-    //           const parsedData = JSON.parse(data);
-    //           switch (eventType) {
-    //             case "clarification":
-    //               setClarificationQuestions(parsedData.questions);
-    //               toast.info("Clarification needed", {
-    //                 description: "Please answer the questions to continue",
-    //               });
-    //               clearInterval(progressInterval);
-    //               setIsGenerating(false);
-    //               setShowGenerationProgress(false);
-    //               return;
-    //             case "workflow":
-    //               workflowData = parsedData;
-    //               clearInterval(progressInterval);
-    //               setGenerationProgress(100);
-    //               setGenerationMessage("Workflow generated successfully");
-    //               toast.success("Workflow generated successfully");
-    //               break;
-    //             case "progress":
-    //               setGenerationMessage(parsedData.message);
-    //               toast.info("Generating workflow", {
-    //                 description: parsedData.message,
-    //               });
-    //               break;
-    //             case "complete":
-    //               clearInterval(progressInterval);
-    //               setGenerationProgress(100);
-    //               setGenerationMessage("Generation completed");
-    //               break;
-    //             case "error":
-    //               toast.error("Generation failed", {
-    //                 description: parsedData.message,
-    //               });
-    //               clearInterval(progressInterval);
-    //               setIsGenerating(false);
-    //               setShowGenerationProgress(false);
-    //               return;
-    //           }
-    //         } catch (error) {
-    //           console.error("Error parsing SSE data:", error);
-    //         }
-    //       }
-    //     }
-    //   }
-    //   if (workflowData) {
-    //     const newNodes = workflowData.steps.map((step: any, index: number) => ({
-    //       id: `node-${index + 1}`,
-    //       type: "workflowNode",
-    //       position: {
-    //         x: 250,
-    //         y: 100 + index * (step.type === "human-input" ? 250 : 200),
-    //       },
-    //       data: {
-    //         type: step.type,
-    //         description: step.description,
-    //         agent: step.agent || "",
-    //       },
-    //     }));
-    //     const newEdges = newNodes
-    //       .slice(0, -1)
-    //       .map((node: any, index: number) => ({
-    //         id: `edge-${node.id}-${newNodes[index + 1].id}`,
-    //         source: node.id,
-    //         target: newNodes[index + 1].id,
-    //         type: "custom",
-    //       }));
-    //     setNodes(newNodes);
-    //     setEdges(newEdges);
-    //     setWorkflowName(workflowData.name);
-    //     setWorkflowDescription(workflowData.description);
-    //     setClarificationQuestions([]);
-    //     setActiveStep(2);
-    //     // Hide progress after a short delay
-    //     setTimeout(() => {
-    //       setShowGenerationProgress(false);
-    //       setGenerationProgress(0);
-    //     }, 1000);
-    //   }
-    // } catch (error) {
-    //   toast.error(
-    //     "An unexpected error occurred while generating the workflow.",
-    //   );
-    //   setShowGenerationProgress(false);
-    // } finally {
-    //   setIsGenerating(false);
-    // }
-  };
-
-  return (
-    <form
-      className="flex flex-col gap-2 h-full p-4"
-      onSubmit={(e) => {
-        handleGenerateWorkflow(e);
-        handleSubmit(e);
-      }}
-    >
-      <input type="hidden" value={input} readOnly />
-      <div className="flex flex-col gap-2 flex-0 overflow-y-auto">
-        <div className="flex flex-col gap-2">
-          <Label htmlFor="workflow-name">Workflow Name</Label>
-          <Input
-            id="workflow-name"
-            value={workflowName}
-            onChange={(e) => setWorkflowName(e.target.value)}
-            placeholder="e.g., Customer Support Automation"
-          />
-        </div>
-        {/* Clarification Questions */}
-
-        <div className="flex flex-col gap-2">
-          <Label htmlFor="workflow-description">Description</Label>
-          <Textarea
-            id="workflow-description"
-            value={workflowDescription}
-            onChange={(e) => setWorkflowDescription(e.target.value)}
-            rows={8}
-            placeholder="Describe what this workflow does."
-          />
-        </div>
-        <div className="space-y-2">
-          <Label>Example Prompt</Label>
-          <Textarea
-            placeholder="Describe the workflow you want to generate."
-            value={workflowExample}
-            onChange={(e) => setWorkflowExample(e.target.value)}
-            rows={4}
-          />
-          <Dropzone
-            onDrop={(acceptedFiles) => setFile(acceptedFiles[0])}
-            accept={{ "application/pdf": [".pdf"] }}
-            maxFiles={1}
-          >
-            {file ? (
-              <DropzoneContent>
-                <p>{file.name}</p>
-              </DropzoneContent>
-            ) : (
-              <DropzoneEmptyState>
-                <p>Drop a PDF file here</p>
-              </DropzoneEmptyState>
-            )}
-          </Dropzone>
-        </div>
-      </div>
-
-      <Button className="flex-1 h-full" type="submit" disabled={isGenerating}>
-        {isGenerating ? "Generating..." : "Generate"}
       </Button>
     </form>
   );
