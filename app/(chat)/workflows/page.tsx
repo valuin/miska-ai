@@ -1,11 +1,11 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { LayoutGrid, Workflow } from 'lucide-react';
-import { toast } from 'sonner';
-import { ManualWorkflowDialog } from '@/components/manual-workflow-dialog';
-import { useQuery } from '@tanstack/react-query';
+import Link from "next/link";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { LayoutGrid, Workflow } from "lucide-react";
+import { toast } from "sonner";
+import { ManualWorkflowDialog } from "@/components/manual-workflow-dialog";
+import { useQuery } from "@tanstack/react-query";
 
 interface WorkflowData {
   id: string;
@@ -17,7 +17,7 @@ interface WorkflowData {
 }
 
 const fetchWorkflows = async (): Promise<WorkflowData[]> => {
-  const response = await fetch('/api/workflows');
+  const response = await fetch("/api/workflows");
   if (!response.ok) {
     const errorData = await response.json();
     throw new Error(errorData.error || response.statusText);
@@ -27,8 +27,13 @@ const fetchWorkflows = async (): Promise<WorkflowData[]> => {
 };
 
 export default function WorkflowsPage() {
-  const { data: workflows, isLoading, error, refetch } = useQuery({
-    queryKey: ['workflows'],
+  const {
+    data: workflows,
+    isLoading,
+    error,
+    refetch,
+  } = useQuery({
+    queryKey: ["workflows"],
     queryFn: fetchWorkflows,
   });
 
@@ -62,20 +67,24 @@ export default function WorkflowsPage() {
       {workflows?.length === 0 ? (
         <div className="text-center text-muted-foreground">
           <p className="text-lg">No workflows saved yet.</p>
-          <p className="text-sm">Create a workflow in the chat interface and save it!</p>
+          <p className="text-sm">
+            Create a workflow in the chat interface and save it!
+          </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {workflows?.map((wf) => (
             <Link key={wf.id} href={`/workflows/${wf.id}`}>
               <Card className="h-full flex flex-col justify-between hover:bg-muted hover:shadow-lg transition-shadow duration-200 cursor-pointer">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-lg font-medium">{wf.name}</CardTitle>
+                  <CardTitle className="text-lg font-medium">
+                    {wf.name}
+                  </CardTitle>
                   <Workflow className="size-6 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
                   <p className="text-sm text-muted-foreground">
-                    {wf.description || 'No description provided.'}
+                    {wf.description || "No description provided."}
                   </p>
                 </CardContent>
               </Card>

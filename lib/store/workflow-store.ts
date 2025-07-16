@@ -1,5 +1,5 @@
-import { create } from 'zustand';
-import { devtools } from 'zustand/middleware';
+import { create } from "zustand";
+import { devtools } from "zustand/middleware";
 
 interface WorkflowNode {
   id: string;
@@ -20,7 +20,7 @@ interface WorkflowEdge {
 }
 
 interface WorkflowProgress {
-  status: 'pending' | 'running' | 'completed' | 'error';
+  status: "pending" | "running" | "completed" | "error";
   output?: string;
   error?: string;
   description?: string;
@@ -30,11 +30,12 @@ interface WorkflowStore {
   // State
   workflowName: string;
   workflowDescription: string;
+  workflowExample: string;
+  workflowFileText: string;
   nodes: WorkflowNode[];
   edges: WorkflowEdge[];
   currentNodeDescription: string;
   currentNodeAgent: string;
-  prompt: string;
   file: File | null;
   isGenerating: boolean;
   clarificationQuestions: string[];
@@ -50,11 +51,12 @@ interface WorkflowStore {
   // Actions
   setWorkflowName: (name: string) => void;
   setWorkflowDescription: (description: string) => void;
+  setWorkflowExample: (example: string) => void;
+  setWorkflowFileText: (fileText: string) => void;
   setNodes: (nodes: WorkflowNode[]) => void;
   setEdges: (edges: WorkflowEdge[]) => void;
   setCurrentNodeDescription: (description: string) => void;
   setCurrentNodeAgent: (agent: string) => void;
-  setPrompt: (prompt: string) => void;
   setFile: (file: File | null) => void;
   setIsGenerating: (isGenerating: boolean) => void;
   setClarificationQuestions: (questions: string[]) => void;
@@ -66,27 +68,28 @@ interface WorkflowStore {
   setShowGenerationProgress: (show: boolean) => void;
   setActiveStep: (step: number) => void;
   setOpen: (open: boolean) => void;
-  
+
   // Reset
   resetWorkflow: () => void;
 }
 
 const initialState = {
-  workflowName: '',
-  workflowDescription: '',
+  workflowName: "",
+  workflowDescription: "",
+  workflowExample: "",
+  workflowFileText: "",
   nodes: [],
   edges: [],
-  currentNodeDescription: '',
-  currentNodeAgent: '',
-  prompt: '',
+  currentNodeDescription: "",
+  currentNodeAgent: "",
   file: null,
   isGenerating: false,
   clarificationQuestions: [],
   workflowProgress: new Map(),
   isRunningWorkflow: false,
-  executionMessage: '',
+  executionMessage: "",
   generationProgress: 0,
-  generationMessage: '',
+  generationMessage: "",
   showGenerationProgress: false,
   activeStep: 1,
   open: false,
@@ -96,30 +99,37 @@ export const useWorkflowStore = create<WorkflowStore>()(
   devtools(
     (set) => ({
       ...initialState,
-      
+
       setWorkflowName: (name) => set({ workflowName: name }),
-      setWorkflowDescription: (description) => set({ workflowDescription: description }),
+      setWorkflowDescription: (description) =>
+        set({ workflowDescription: description }),
+      setWorkflowFileText: (fileText) => set({ workflowFileText: fileText }),
       setNodes: (nodes) => set({ nodes }),
       setEdges: (edges) => set({ edges }),
-      setCurrentNodeDescription: (description) => set({ currentNodeDescription: description }),
+      setCurrentNodeDescription: (description) =>
+        set({ currentNodeDescription: description }),
       setCurrentNodeAgent: (agent) => set({ currentNodeAgent: agent }),
-      setPrompt: (prompt) => set({ prompt }),
+      setWorkflowExample: (example) => set({ workflowExample: example }),
       setFile: (file) => set({ file }),
       setIsGenerating: (isGenerating) => set({ isGenerating }),
-      setClarificationQuestions: (questions) => set({ clarificationQuestions: questions }),
+      setClarificationQuestions: (questions) =>
+        set({ clarificationQuestions: questions }),
       setWorkflowProgress: (progress) => set({ workflowProgress: progress }),
-      setIsRunningWorkflow: (isRunning) => set({ isRunningWorkflow: isRunning }),
+      setIsRunningWorkflow: (isRunning) =>
+        set({ isRunningWorkflow: isRunning }),
       setExecutionMessage: (message) => set({ executionMessage: message }),
-      setGenerationProgress: (progress) => set({ generationProgress: progress }),
+      setGenerationProgress: (progress) =>
+        set({ generationProgress: progress }),
       setGenerationMessage: (message) => set({ generationMessage: message }),
-      setShowGenerationProgress: (show) => set({ showGenerationProgress: show }),
+      setShowGenerationProgress: (show) =>
+        set({ showGenerationProgress: show }),
       setActiveStep: (step) => set({ activeStep: step }),
       setOpen: (open) => set({ open }),
-      
+
       resetWorkflow: () => set(initialState),
     }),
     {
-      name: 'workflow-store',
-    }
-  )
+      name: "workflow-store",
+    },
+  ),
 );

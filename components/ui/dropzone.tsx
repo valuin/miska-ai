@@ -1,21 +1,21 @@
-import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
-import { UploadIcon } from 'lucide-react';
-import type { ReactNode } from 'react';
-import { createContext, useContext } from 'react';
-import { useDropzone } from 'react-dropzone';
-import type { DropEvent, DropzoneOptions, FileRejection } from 'react-dropzone';
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+import { UploadIcon } from "lucide-react";
+import type { ReactNode } from "react";
+import { createContext, useContext } from "react";
+import { useDropzone } from "react-dropzone";
+import type { DropEvent, DropzoneOptions, FileRejection } from "react-dropzone";
 
 type DropzoneContextType = {
   src?: File[];
-  accept?: DropzoneOptions['accept'];
-  maxSize?: DropzoneOptions['maxSize'];
-  minSize?: DropzoneOptions['minSize'];
-  maxFiles?: DropzoneOptions['maxFiles'];
+  accept?: DropzoneOptions["accept"];
+  maxSize?: DropzoneOptions["maxSize"];
+  minSize?: DropzoneOptions["minSize"];
+  maxFiles?: DropzoneOptions["maxFiles"];
 };
 
 const renderBytes = (bytes: number) => {
-  const units = ['B', 'KB', 'MB', 'GB', 'TB', 'PB'];
+  const units = ["B", "KB", "MB", "GB", "TB", "PB"];
   let size = bytes;
   let unitIndex = 0;
 
@@ -28,16 +28,16 @@ const renderBytes = (bytes: number) => {
 };
 
 const DropzoneContext = createContext<DropzoneContextType | undefined>(
-  undefined
+  undefined,
 );
 
-export type DropzoneProps = Omit<DropzoneOptions, 'onDrop'> & {
+export type DropzoneProps = Omit<DropzoneOptions, "onDrop"> & {
   src?: File[];
   className?: string;
   onDrop?: (
     acceptedFiles: File[],
     fileRejections: FileRejection[],
-    event: DropEvent
+    event: DropEvent,
   ) => void;
   children?: ReactNode;
 };
@@ -84,9 +84,9 @@ export const Dropzone = ({
         disabled={disabled}
         variant="outline"
         className={cn(
-          'relative h-auto w-full flex-col overflow-hidden p-8',
-          isDragActive && 'outline-none ring-1 ring-ring',
-          className
+          "relative h-auto w-full flex-col overflow-hidden p-8",
+          isDragActive && "outline-none ring-1 ring-ring",
+          className,
         )}
         {...getRootProps()}
       >
@@ -101,7 +101,7 @@ const useDropzoneContext = () => {
   const context = useContext(DropzoneContext);
 
   if (!context) {
-    throw new Error('useDropzoneContext must be used within a Dropzone');
+    throw new Error("useDropzoneContext must be used within a Dropzone");
   }
 
   return context;
@@ -131,10 +131,10 @@ export const DropzoneContent = ({ children }: DropzoneContentProps) => {
       </div>
       <p className="my-2 w-full truncate font-medium text-sm">
         {src.length > maxLabelItems
-          ? `${new Intl.ListFormat('en').format(
-              src.slice(0, maxLabelItems).map((file) => file.name)
+          ? `${new Intl.ListFormat("en").format(
+              src.slice(0, maxLabelItems).map((file) => file.name),
             )} and ${src.length - maxLabelItems} more`
-          : new Intl.ListFormat('en').format(src.map((file) => file.name))}
+          : new Intl.ListFormat("en").format(src.map((file) => file.name))}
       </p>
       <p className="w-full text-muted-foreground text-xs">
         Drag and drop or click to replace
@@ -158,11 +158,11 @@ export const DropzoneEmptyState = ({ children }: DropzoneEmptyStateProps) => {
     return children;
   }
 
-  let caption = '';
+  let caption = "";
 
   if (accept) {
-    caption += 'Accepts ';
-    caption += new Intl.ListFormat('en').format(Object.keys(accept));
+    caption += "Accepts ";
+    caption += new Intl.ListFormat("en").format(Object.keys(accept));
   }
 
   if (minSize && maxSize) {
@@ -179,7 +179,7 @@ export const DropzoneEmptyState = ({ children }: DropzoneEmptyStateProps) => {
         <UploadIcon size={16} />
       </div>
       <p className="my-2 w-full truncate font-medium text-sm">
-        Upload {maxFiles === 1 ? 'a file' : 'files'}
+        Upload {maxFiles === 1 ? "a file" : "files"}
       </p>
       <p className="w-full truncate text-muted-foreground text-xs">
         Drag and drop or click to upload

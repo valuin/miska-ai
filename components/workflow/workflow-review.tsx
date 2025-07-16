@@ -1,12 +1,9 @@
 "use client";
 
-interface WorkflowReviewProps {
-  workflowName: string;
-  workflowDescription: string;
-  nodes: any[];
-}
+import { useWorkflowStore } from "@/lib/store/workflow-store";
 
-export function WorkflowReview({ workflowName, workflowDescription, nodes }: WorkflowReviewProps) {
+export function WorkflowReview() {
+  const { workflowName, workflowDescription, nodes } = useWorkflowStore();
   return (
     <div>
       <h3 className="font-semibold text-lg">Review Your Workflow</h3>
