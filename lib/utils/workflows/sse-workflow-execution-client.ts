@@ -18,7 +18,7 @@ export class SSEWorkflowExecutionClient {
     try {
       this.abortController = new AbortController();
 
-      const response = await fetch('/api/workflow/execute', {
+      const response = await fetch('/api/workflows/execute', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

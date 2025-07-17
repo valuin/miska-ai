@@ -40,6 +40,8 @@
         "@radix-ui/react-tooltip": "^1.1.3",
         "@radix-ui/react-visually-hidden": "^1.1.0",
         "@tanstack/react-query": "^5.83.0",
+        "@uiw/codemirror-themes": "^4.24.1",
+        "@uiw/react-codemirror": "^4.24.1",
         "@vercel/analytics": "^1.3.1",
         "@vercel/blob": "^0.24.1",
         "@vercel/functions": "^2.0.0",
@@ -63,6 +65,7 @@
         "geist": "^1.3.1",
         "libsql": "^0.5.13",
         "lucide-react": "^0.525.0",
+        "marked": "^16.1.0",
         "mastra": "^0.10.6",
         "nanoid": "^5.0.8",
         "next": "15.3.0-canary.31",
@@ -1154,6 +1157,12 @@
 
     "@typescript-eslint/visitor-keys": ["@typescript-eslint/visitor-keys@7.2.0", "", { "dependencies": { "@typescript-eslint/types": "7.2.0", "eslint-visitor-keys": "^3.4.1" } }, "sha512-c6EIQRHhcpl6+tO8EMR+kjkkV+ugUNXOmeASA1rlzkd8EPIriavpWoiEz1HR/VLhbVIdhqnV6E7JZm00cBDx2A=="],
 
+    "@uiw/codemirror-extensions-basic-setup": ["@uiw/codemirror-extensions-basic-setup@4.24.1", "", { "dependencies": { "@codemirror/autocomplete": "^6.0.0", "@codemirror/commands": "^6.0.0", "@codemirror/language": "^6.0.0", "@codemirror/lint": "^6.0.0", "@codemirror/search": "^6.0.0", "@codemirror/state": "^6.0.0", "@codemirror/view": "^6.0.0" } }, "sha512-o1m1a8eUS3fWERMbDFvN8t8sZUFPgDKNemmlQ5Ot2vKm+Ax84lKP1dhEFgkiOaZ1bDHk4T5h6SjHuTghrJHKww=="],
+
+    "@uiw/codemirror-themes": ["@uiw/codemirror-themes@4.24.1", "", { "dependencies": { "@codemirror/language": "^6.0.0", "@codemirror/state": "^6.0.0", "@codemirror/view": "^6.0.0" } }, "sha512-hduBbFNiWNW6nYa2/giKQ9YpzhWNw87BGpCjC+cXYMZ7bCD6q5DC6Hw+7z7ZwSzEaOQvV91lmirOjJ8hn9+pkg=="],
+
+    "@uiw/react-codemirror": ["@uiw/react-codemirror@4.24.1", "", { "dependencies": { "@babel/runtime": "^7.18.6", "@codemirror/commands": "^6.1.0", "@codemirror/state": "^6.1.1", "@codemirror/theme-one-dark": "^6.0.0", "@uiw/codemirror-extensions-basic-setup": "4.24.1", "codemirror": "^6.0.0" }, "peerDependencies": { "@codemirror/view": ">=6.0.0", "react": ">=16.8.0", "react-dom": ">=16.8.0" } }, "sha512-BivF4NLqbuBQK5gPVhSkOARi9nPXw8X5r25EnInPeY+I9l1dfEX8O9V6+0xHTlGHyUo0cNfGEF9t1KHEicUfJw=="],
+
     "@ungap/structured-clone": ["@ungap/structured-clone@1.3.0", "", {}, "sha512-WmoN8qaIAo7WTYWbAZuG8PYEhn5fkz7dZrqTBZ7dtt//lL2Gwms1IcnQ5yHqjDfX8Ft5j4YzDM23f87zBfDe9g=="],
 
     "@unrs/resolver-binding-android-arm-eabi": ["@unrs/resolver-binding-android-arm-eabi@1.9.2", "", { "os": "android", "cpu": "arm" }, "sha512-tS+lqTU3N0kkthU+rYp0spAYq15DU8ld9kXkaKg9sbQqJNF+WPMuNHZQGCgdxrUOEO0j22RKMwRVhF1HTl+X8A=="],
@@ -2069,6 +2078,8 @@
     "markdown-it": ["markdown-it@14.1.0", "", { "dependencies": { "argparse": "^2.0.1", "entities": "^4.4.0", "linkify-it": "^5.0.0", "mdurl": "^2.0.0", "punycode.js": "^2.3.1", "uc.micro": "^2.1.0" }, "bin": { "markdown-it": "bin/markdown-it.mjs" } }, "sha512-a54IwgWPaeBCAAsv13YgmALOF1elABB08FxO9i+r4VFk5Vl4pKokRPeX8u5TCgSsPi6ec1otfLjdOpVcgbpshg=="],
 
     "markdown-table": ["markdown-table@3.0.4", "", {}, "sha512-wiYz4+JrLyb/DqW2hkFJxP7Vd7JuTDm77fvbM8VfEQdmSMqcImWeeRbHwZjBjIFki/VaMK2BhFi7oUUZeM5bqw=="],
+
+    "marked": ["marked@16.1.0", "", { "bin": { "marked": "bin/marked.js" } }, "sha512-Me7BNa1aqrxVinDnFfvCgHh2yHvLbFvILBs899MhuBpbE5VPzpSqv7alaESfkqkgc9JNvUGH4gqwZeOzLnY8Jg=="],
 
     "mastra": ["mastra@0.10.8", "", { "dependencies": { "@clack/prompts": "^0.11.0", "@lukeed/uuid": "^2.0.1", "@mastra/deployer": "^0.10.8", "@mastra/loggers": "^0.10.2", "@mastra/mcp": "^0.10.5", "@opentelemetry/auto-instrumentations-node": "^0.60.1", "@opentelemetry/core": "^2.0.1", "@opentelemetry/exporter-trace-otlp-grpc": "^0.202.0", "@opentelemetry/exporter-trace-otlp-http": "^0.202.0", "@opentelemetry/instrumentation": "^0.202.0", "@opentelemetry/resources": "^2.0.1", "@opentelemetry/sdk-node": "^0.202.0", "@opentelemetry/sdk-trace-base": "^2.0.1", "@opentelemetry/semantic-conventions": "^1.34.0", "@webcontainer/env": "^1.1.1", "commander": "^12.1.0", "dotenv": "^16.5.0", "execa": "^9.6.0", "fs-extra": "^11.3.0", "get-port": "^7.1.0", "json-schema-to-zod": "^2.6.1", "open": "^10.1.2", "picocolors": "^1.1.1", "posthog-node": "4.18.0", "prettier": "^3.5.3", "prompt": "^1.3.0", "shell-quote": "^1.8.3", "shiki": "^1.29.2", "strip-json-comments": "^5.0.2", "superjson": "^2.2.2", "swr": "^2.3.3", "tcp-port-used": "^1.0.2", "yocto-spinner": "^0.2.3", "zod": "^3.25.67", "zod-to-json-schema": "^3.24.5" }, "peerDependencies": { "@mastra/core": "^0.10.2-alpha.0" }, "bin": { "mastra": "dist/index.js" } }, "sha512-8x4P1sR3K9IjAzl+LoYCMeCEF57bWb6k6ChmSxSKiWl3ePYDZucUj6a43tvSZklnRD3boD5mb0iy8jQaeYKkEA=="],
 

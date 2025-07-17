@@ -1,10 +1,8 @@
 import type { GenerateTextNode } from "@/components/flow/generate-text-node";
 import type { Model } from "@/components/ui/model-selector";
-import { deepseek } from "@ai-sdk/deepseek";
-import { groq } from "@ai-sdk/groq";
-import { openai } from "@ai-sdk/openai";
 import { generateText } from "ai";
 import { z } from "zod";
+import { myProvider } from "@/lib/ai/providers";
 
 interface ToolResult {
 	id: string;
@@ -13,19 +11,21 @@ interface ToolResult {
 }
 
 function createAIClient(model: Model) {
-	switch (model) {
-		case "deepseek-chat":
-			return deepseek;
-		case "llama-3.3-70b-versatile":
-		case "llama-3.1-8b-instant":
-		case "deepseek-r1-distill-llama-70b":
-			return groq;
-		case "gpt-4o":
-		case "gpt-4o-mini":
-			return openai;
-		default:
-			throw new Error(`Unsupported model: ${model}`);
+	const modelMap: Record<Model, string> = {
+		"gpt-4o": "chat-model",
+		"gpt-4o-mini": "title-model",
+		"deepseek-chat": "chat-model",
+		"llama-3.3-70b-versatile": "chat-model",
+		"llama-3.1-8b-instant": "title-model",
+		"deepseek-r1-distill-llama-70b": "chat-model",
+	};
+
+	const mappedModel = modelMap[model];
+	if (!mappedModel) {
+		throw new Error(`Unsupported model: ${model}`);
 	}
+
+	return myProvider.languageModel(mappedModel);
 }
 
 function mapToolsForAI(
@@ -56,11 +56,11 @@ export async function generateAIText({
 	model: Model;
 	tools: GenerateTextNode["data"]["dynamicHandles"]["tools"];
 }) {
-	const client = createAIClient(model);
+	const modelInstance = createAIClient(model);
 	const mappedTools = mapToolsForAI(tools);
 
 	const result = await generateText({
-		model: client(model),
+		model: modelInstance,
 		system,
 		prompt,
 		...(tools.length > 0 && {
