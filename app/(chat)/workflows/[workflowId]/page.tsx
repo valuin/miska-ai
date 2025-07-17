@@ -2,13 +2,16 @@
 
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
-import SchemaVisualizer from '@/components/schema-builder';
+import { ReactFlowProvider } from '@xyflow/react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 import { Play, ChevronDown } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Spinner } from '@/components/ui/spinner';
+import { Flow } from '@/components/workflow-detail-flow';
+import { useWorkflow } from '@/hooks/use-workflow';
+import { shallow } from 'zustand/shallow';
 
 interface WorkflowData {
   id: string;
@@ -34,6 +37,21 @@ export default function WorkflowDetailPage() {
   const [isExecuting, setIsExecuting] = useState(false);
   const [workflowProgress, setWorkflowProgress] = useState<Map<string, { status: 'pending' | 'running' | 'completed' | 'error', output?: string, error?: string, description?: string }>>(new Map());
 
+  const store = useWorkflow(
+    (store) => ({
+      nodes: store.nodes,
+      edges: store.edges,
+      onNodesChange: store.onNodesChange,
+      onEdgesChange: store.onEdgesChange,
+      onConnect: store.onConnect,
+      startExecution: store.startExecution,
+      createNode: store.createNode,
+      workflowExecutionState: store.workflowExecutionState,
+      initializeWorkflow: store.initializeWorkflow,
+    }),
+    shallow
+  );
+
   useEffect(() => {
     if (workflowId) {
       const fetchWorkflow = async () => {
@@ -42,6 +60,100 @@ export default function WorkflowDetailPage() {
           if (response.ok) {
             const data = await response.json();
             setWorkflow(data.workflow);
+            
+            if (data.workflow?.schema?.nodes && data.workflow?.schema?.edges) {
+              // Transform existing nodes
+              const baseNodes = data.workflow.schema.nodes.map((node: any) => {
+                if (node.type === 'workflowNode') {
+                  const agentType = node.data.agent || 'normalAgent';
+                  const description = node.data.description || '';
+                  // Use text-input for human input, generate-text for agent tasks
+                  let newType = 'generate-text';
+                  const agent = node.data.agent || 'normalAgent';
+                  if (agent === 'human' || agent === 'user') {
+                    newType = 'text-input';
+                  }
+                  
+                  return {
+                    id: node.id,
+                    type: newType,
+                    position: node.position,
+                    data: {
+                      config: {
+                        value: description,
+                        model: 'llama-3.1-8b-instant',
+                        agent: node.data.agent || 'normalAgent',
+                        description: node.data.description || 'Agent task'
+                      },
+                      dynamicHandles: {
+                        tools: [],
+                        'template-tags': []
+                      },
+                      executionState: {
+                        status: 'idle',
+                        timestamp: new Date().toISOString()
+                      }
+                    },
+                    width: 300,
+                    height: 200
+                  };
+                }
+                return node;
+              });
+
+              // Add result node (renamed from visualize-text)
+              const resultNodeId = `result-${Date.now()}`;
+              const resultNode = {
+                id: resultNodeId,
+                type: 'visualize-text',
+                position: { x: 400, y: 300 },
+                data: {
+                  status: 'idle',
+                  input: 'Workflow results will appear here'
+                },
+                width: 300,
+                height: 200
+              };
+
+              const transformedNodes = [...baseNodes, resultNode];
+
+              // Connect last node to result node
+              const lastNode = baseNodes[baseNodes.length - 1];
+              const resultEdge = {
+                id: `edge-${lastNode.id}-${resultNodeId}`,
+                type: 'status',
+                source: lastNode.id,
+                target: resultNodeId,
+                sourceHandle: 'result',
+                targetHandle: 'input',
+                data: {
+                  executionState: {
+                    status: 'idle',
+                    timestamp: new Date().toISOString()
+                  }
+                }
+              };
+
+              const transformedEdges = [
+                ...data.workflow.schema.edges.map((edge: any) => ({
+                  id: edge.id,
+                  type: 'status',
+                  source: edge.source,
+                  target: edge.target,
+                  sourceHandle: 'result',
+                  targetHandle: 'prompt',
+                  data: {
+                    executionState: {
+                      status: 'idle',
+                      timestamp: new Date().toISOString()
+                    }
+                  }
+                })),
+                resultEdge
+              ];
+
+              store.initializeWorkflow(transformedNodes, transformedEdges);
+            }
           } else {
             const errorData = await response.json();
             toast.error(`Failed to fetch workflow: ${errorData.error || response.statusText}`);
@@ -191,12 +303,9 @@ export default function WorkflowDetailPage() {
   return (
     <div className="flex flex-col md:flex-row h-full p-4 gap-4">
       <div className="md:w-2/3 border border-border rounded-lg">
-        <SchemaVisualizer 
-          height="h-screen" 
-          nodes={workflow.schema.nodes} 
-          edges={workflow.schema.edges} 
-          workflowProgress={workflowProgress}
-        />
+        <ReactFlowProvider>
+          <Flow />
+        </ReactFlowProvider>
       </div>
 
       <div className="md:w-1/3 flex flex-col gap-4">
@@ -239,7 +348,7 @@ export default function WorkflowDetailPage() {
               </CollapsibleTrigger>
               <CollapsibleContent className="mt-2 p-2 border border-border rounded-lg bg-gray-50 dark:bg-gray-900 overflow-auto max-h-60">
                 <pre className="text-sm whitespace-pre-wrap break-all">
-                  {JSON.stringify(result.output, null, 2)}
+                  {result.output}
                 </pre>
               </CollapsibleContent>
             </Collapsible>

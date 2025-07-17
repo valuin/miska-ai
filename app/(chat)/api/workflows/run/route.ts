@@ -7,13 +7,17 @@ import { researchAgent } from "@/mastra/agents/research-agent";
 import { workflowCreatorAgent } from "@/mastra/agents/workflow-creator-agent";
 import type { Agent } from "@mastra/core/agent";
 
-// Define a type for the workflow schema for better type safety
+
 interface WorkflowNode {
   id: string;
   data: {
     type: string;
-    agent: string;
-    description: string;
+    agent?: string;
+    description?: string;
+    config?: {
+      value?: string;
+      model?: string;
+    };
   };
   type: string;
   position: { x: number; y: number };
@@ -24,9 +28,10 @@ interface WorkflowEdge {
   type: string;
   source: string;
   target: string;
+  sourceHandle?: string;
+  targetHandle?: string;
 }
 
-// Map agent names to their imported instances
 const agentMap: Record<string, Agent<any>> = {
   researchAgent: researchAgent as Agent<any>,
   ragChatAgent: ragChatAgent as Agent<any>,
@@ -35,6 +40,9 @@ const agentMap: Record<string, Agent<any>> = {
   documentAgent: documentAgent as Agent<any>,
   communicationAgent: communicationAgent as Agent<any>,
 };
+
+// Remove the deterministic node type to agent mapping entirely
+// Agent selection is now fully dynamic based on node.data.agent
 
 export async function POST(req: Request) {
   const encoder = new TextEncoder();
@@ -69,12 +77,13 @@ export async function POST(req: Request) {
           return;
         }
 
-        console.log(
-          `Executing workflow: ${workflowSchema.name} (ID: ${workflowId}) with query: "${inputQuery}"`,
-        );
-
         const nodeResults: any[] = [];
-        let currentInput: any = inputQuery;
+        const effectiveInput = inputQuery?.trim() || workflowSchema.description || "Execute workflow step";
+        let currentInput: any = effectiveInput;
+
+        console.log(
+          `Executing workflow: ${workflowSchema.name} (ID: ${workflowId}) with effective query: "${effectiveInput}"`,
+        );
 
         // Send initial event
         const initialEvent = {
@@ -84,9 +93,37 @@ export async function POST(req: Request) {
         };
         controller.enqueue(encoder.encode(`data: ${JSON.stringify(initialEvent)}\n\n`));
 
-        for (const node of workflowSchema.nodes) {
-          const agentName = node.data.agent;
-          const agentDescription = node.data.description;
+        // Transform nodes to their executable types (generate-text or text-input)
+        const transformedNodes = workflowSchema.nodes.map((node: WorkflowNode) => {
+          if (node.type === 'workflowNode') {
+            let newType = 'generate-text';
+            const agent = node.data.agent || 'normalAgent';
+            if (agent === 'human' || agent === 'user') {
+              newType = 'text-input';
+            }
+            return {
+              ...node,
+              type: newType,
+            };
+          }
+          return node;
+        });
+
+        // Filter for executable nodes after transformation
+        const executableNodes = transformedNodes.filter(
+          (node: WorkflowNode) => node.type === "generate-text" || node.type === "text-input"
+        );
+        console.log("Executable nodes after filter:", executableNodes);
+
+        for (const node of executableNodes) {
+          const agentName = node.data.agent || "normalAgent";
+          const agentDescription = node.data.description || node.data.config?.value || `Execute ${node.type} node`;
+          
+          // For text-input nodes, use the config value as the prompt, but still execute
+          let nodePrompt = agentDescription;
+          if (node.type === "text-input" && node.data.config?.value) {
+            nodePrompt = node.data.config.value;
+          }
 
           const agent = agentMap[agentName];
           if (!agent) {
@@ -117,16 +154,21 @@ export async function POST(req: Request) {
               { role: "system", content: systemPrompt },
               {
                 role: "user",
-                content: `${agentDescription}\n\nInput: ${JSON.stringify(currentInput)}`,
+                content: `${nodePrompt}\n\nInput: ${JSON.stringify(currentInput)}`,
               },
             ]);
 
-            console.log(`Agent ${agentName} raw output:`, result);
+            console.log(`Agent ${agentName} raw result:`, result);
 
-            const output =
-              result && typeof result === "object" && "text" in result
-                ? (result as { text: string }).text
-                : JSON.stringify(result);
+            let output: string;
+            if (result && typeof result === "object" && "text" in result) {
+              output = (result as { text: string }).text;
+            } else if (typeof result === "string") {
+              output = result;
+            } else {
+              output = JSON.stringify(result, null, 2);
+            }
+            console.log(`Agent ${agentName} processed output:`, output);
 
             nodeResults.push({
               nodeId: node.id,

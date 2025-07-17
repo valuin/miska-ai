@@ -31,6 +31,10 @@ export type GenerateTextData = {
 	status: "processing" | "error" | "success" | "idle" | undefined;
 	config: {
 		model: Model;
+		description?: string;
+		value?: string;
+		agent?: string;
+		agentName?: string;
 	};
 	dynamicHandles: {
 		tools: {
@@ -111,7 +115,9 @@ export function GenerateTextNode({
 				<NodeHeaderIcon>
 					<Bot />
 				</NodeHeaderIcon>
-				<NodeHeaderTitle>Generate Text</NodeHeaderTitle>
+				<NodeHeaderTitle>
+					{data.config?.agent || "Generate Text"}
+				</NodeHeaderTitle>
 				<NodeHeaderActions>
 					<NodeHeaderStatus status={data.status} />
 					{deletable && (
@@ -127,16 +133,9 @@ export function GenerateTextNode({
 			</NodeHeader>
 			<Separator />
 			<div className="p-4 flex flex-col gap-4">
-				<ModelSelector
-					value={data.config.model}
-					onChange={handleModelChange}
-					disabled={disableModelSelector}
-					disabledModels={[
-						"gpt-4o",
-						"gpt-4o-mini",
-						"deepseek-r1-distill-llama-70b",
-					]}
-				/>
+				<div className="text-sm text-muted-foreground">
+					{data.config?.description || data.config?.value || "Agent task"}
+				</div>
 			</div>
 			<div className="grid grid-cols-[2fr,1fr] gap-2 pt-2 text-sm">
 				<div className="flex flex-col gap-2 min-w-0">
