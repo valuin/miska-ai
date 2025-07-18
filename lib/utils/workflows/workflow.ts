@@ -412,8 +412,8 @@ export function prepareWorkflow(
 
 const dagreGraph = new dagre.graphlib.Graph().setDefaultEdgeLabel(() => ({}));
 
-const nodeWidth = 172;
-const nodeHeight = 200;
+const nodeWidth = 600;
+const nodeHeight = 180;
 
 export const getLayoutedElements = (
   nodes: FlowNode[],

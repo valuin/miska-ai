@@ -122,15 +122,12 @@ export default function WorkflowDetailPage() {
               position: node.position,
               data: {
                 config: {
-                  value: description,
-                  model: "llama-3.1-8b-instant",
                   agent: node.data.agent || "normalAgent",
+                  type: node.data.type || "agent-task",
                   description: node.data.description || "Agent task",
+                  // model: "llama-3.1-8b-instant",
                 },
-                dynamicHandles: {
-                  tools: [],
-                  "template-tags": [],
-                },
+
                 executionState: {
                   status: "idle",
                   timestamp: new Date().toISOString(),
