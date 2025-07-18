@@ -1,19 +1,19 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Textarea } from "@/components/ui/textarea";
-import { cn } from "@/lib/utils";
 import { BaseHandle } from "@/components/flow/base-handle";
-import type { HandleProps, Node } from "@xyflow/react";
-import { useOnSelectionChange } from "@xyflow/react";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { Edit2, Trash } from "lucide-react";
-import React, { useState, useCallback } from "react";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { useOnSelectionChange } from "@xyflow/react";
+import { useState, useCallback, forwardRef } from "react";
+import type { HandleProps, Node } from "@xyflow/react";
 
 type HandleEditorProps = {
   variant: "edit" | "create";
@@ -135,7 +135,7 @@ type EditableHandleProps = HandleProps &
     showDescription?: boolean;
   };
 
-const EditableHandle = React.forwardRef<HTMLDivElement, EditableHandleProps>(
+const EditableHandle = forwardRef<HTMLDivElement, EditableHandleProps>(
   (
     {
       nodeId,

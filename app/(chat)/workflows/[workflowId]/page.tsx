@@ -353,15 +353,16 @@ export default function WorkflowDetailPage() {
   }
 
   return (
-    <div className="flex flex-col md:flex-row h-full p-4 gap-4">
-      <div className="md:w-2/3 border border-border rounded-lg">
+    <div className="grid grid-cols-3 h-full p-4 gap-4">
+      <div className="col-span-2 size-full border border-border rounded-lg">
         <ReactFlowProvider>
           <Flow />
         </ReactFlowProvider>
       </div>
 
-      <div className="md:w-1/3 flex flex-col gap-4">
-        <div className="border border-border rounded-lg p-4 grow">
+      <div className="w-full flex flex-col gap-4">
+        <div className="border border-border rounded-lg p-4">
+          {/* Workflow Details */}
           <h2 className="text-xl font-semibold mb-4">Workflow Details</h2>
           <p className="text-lg font-medium">{workflow.name}</p>
           <p className="text-sm text-muted-foreground mb-4">
@@ -392,29 +393,49 @@ export default function WorkflowDetailPage() {
               </>
             )}
           </Button>
+        </div>
 
-          {nodeResults.map((result, index) => (
-            <Collapsible key={result.nodeId} className="w-full mt-4">
-              <CollapsibleTrigger asChild>
-                <Button variant="outline" className="w-full justify-between">
-                  <b className="truncate">{result.description}</b>{" "}
-                  <ChevronDown className="size-1" />
-                </Button>
-              </CollapsibleTrigger>
-              <CollapsibleContent className="mt-2 p-2 border border-border rounded-lg bg-gray-50 dark:bg-gray-900 overflow-auto max-h-60">
-                <pre className="text-sm whitespace-pre-wrap break-words">
-                  {result.output}
-                </pre>
-              </CollapsibleContent>
-            </Collapsible>
-          ))}
+        {/* Individual Node Output */}
+        <div className="border border-border rounded-lg p-4">
+          {nodeResults.length > 0 ? (
+            <>
+              <h3 className="text-lg font-semibold mb-2">Node Output</h3>
+              {nodeResults.map((result) => (
+                <Collapsible key={result.nodeId} className="w-full mt-4">
+                  <CollapsibleTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="w-full justify-between"
+                    >
+                      <b className="truncate">{result.description}</b>{" "}
+                      <ChevronDown className="size-1" />
+                    </Button>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent className="mt-2 p-2 border border-border rounded-lg bg-gray-50 dark:bg-gray-900 overflow-auto max-h-60">
+                    <pre className="text-sm whitespace-pre-wrap break-words">
+                      {result.output}
+                    </pre>
+                  </CollapsibleContent>
+                </Collapsible>
+              ))}
+            </>
+          ) : (
+            <div className="flex items-center justify-center h-full">
+              <p className="text-sm text-muted-foreground">
+                No node outputs available.
+              </p>
+            </div>
+          )}
+        </div>
 
-          {nodeResults.length > 0 &&
+        {/* Workflow Output */}
+        <div className="border border-border rounded-lg p-4">
+          {nodeResults.length > 0 ? (
             workflow?.schema.nodes.length === nodeResults.length && (
               <Collapsible className="w-full mt-4">
                 <CollapsibleTrigger asChild>
                   <Button variant="outline" className="w-full justify-between">
-                    Final Workflow Output <ChevronDown className="size-4" />
+                    Workflow Output <ChevronDown className="size-4" />
                   </Button>
                 </CollapsibleTrigger>
                 <CollapsibleContent className="mt-2 p-2 border border-border rounded-lg bg-gray-50 dark:bg-gray-900 overflow-auto max-h-60">
@@ -423,7 +444,14 @@ export default function WorkflowDetailPage() {
                   </pre>
                 </CollapsibleContent>
               </Collapsible>
-            )}
+            )
+          ) : (
+            <div className="flex items-center justify-center h-full">
+              <p className="text-sm text-muted-foreground">
+                No workflow outputs available.
+              </p>
+            </div>
+          )}
         </div>
       </div>
     </div>
