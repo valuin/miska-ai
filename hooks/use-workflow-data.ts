@@ -29,6 +29,19 @@ export function useWorkflowData(
           return;
         }
 
+        // Prepare workflow context for all nodes
+        const workflowContext = {
+          name: data.workflow.name,
+          description: data.workflow.description,
+          totalNodes: data.workflow.schema.nodes.length,
+          workflowId: data.workflow.id,
+          nodeNames: data.workflow.schema.nodes.map((n: any) => n.data.description || "Unnamed node"),
+          connections: data.workflow.schema.edges.map((e: any) => ({
+            from: e.source,
+            to: e.target
+          }))
+        };
+
         // Transform existing nodes
         const baseNodes = data.workflow.schema.nodes.map((node: any) => {
           if (node.type === "workflowNode") {
@@ -52,7 +65,7 @@ export function useWorkflowData(
                   description: node.data.description || "Agent task",
                   // model: "llama-3.1-8b-instant",
                 },
-
+                workflowContext,
                 executionState: {
                   status: "idle",
                   timestamp: new Date().toISOString(),
@@ -65,38 +78,7 @@ export function useWorkflowData(
           return node;
         });
 
-        // Add result node (renamed from visualize-text)
-        const resultNodeId = `result-${Date.now()}`;
-        const resultNode = {
-          id: resultNodeId,
-          type: "visualize-text",
-          position: { x: 400, y: 300 },
-          data: {
-            status: "idle",
-            input: "Workflow results will appear here",
-          },
-          width: 300,
-          height: 200,
-        };
-
-        const transformedNodes = [...baseNodes, resultNode];
-
-        // Connect last node to result node
-        const lastNode = baseNodes[baseNodes.length - 1];
-        const resultEdge = {
-          id: `edge-${lastNode.id}-${resultNodeId}`,
-          type: "status",
-          source: lastNode.id,
-          target: resultNodeId,
-          sourceHandle: "result",
-          targetHandle: "input",
-          data: {
-            executionState: {
-              status: "idle",
-              timestamp: new Date().toISOString(),
-            },
-          },
-        };
+        const transformedNodes = [...baseNodes];
 
         const transformedEdges = [
           ...data.workflow.schema.edges.map((edge: any) => ({
@@ -112,8 +94,7 @@ export function useWorkflowData(
                 timestamp: new Date().toISOString(),
               },
             },
-          })),
-          resultEdge,
+          }))
         ];
 
         initializeWorkflow(transformedNodes, transformedEdges);

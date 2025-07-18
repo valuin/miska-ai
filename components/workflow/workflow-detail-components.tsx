@@ -28,6 +28,36 @@ export function WorkflowDetails({
         {workflow.description || "No description."}
       </p>
 
+      <Collapsible className="w-full mb-4">
+        <CollapsibleTrigger asChild>
+          <Button variant="outline" className="w-full justify-between mb-2">
+            <span>Workflow Structure ({workflow.schema.nodes.length} nodes)</span>
+            <ChevronDown className="size-4" />
+          </Button>
+        </CollapsibleTrigger>
+        <CollapsibleContent className="space-y-2">
+          <div className="text-sm text-muted-foreground">
+            <p className="font-medium mb-2">Nodes:</p>
+            <ul className="space-y-1">
+              {workflow.schema.nodes.map((node, index) => (
+                <li key={node.id} className="flex items-start">
+                  <span className="mr-2 text-xs bg-primary/20 px-1 rounded">{index + 1}</span>
+                  <span>{node.data.description || "Unnamed node"}</span>
+                </li>
+              ))}
+            </ul>
+            <p className="font-medium mt-3 mb-1">Connections:</p>
+            <ul className="space-y-1">
+              {workflow.schema.edges.map((edge, index) => (
+                <li key={edge.id} className="text-xs">
+                  <span className="text-primary">→</span> {edge.source} → {edge.target}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </CollapsibleContent>
+      </Collapsible>
+
       <h3 className="text-lg font-semibold mb-2">Input Query</h3>
       <Input
         placeholder="Enter your query here..."

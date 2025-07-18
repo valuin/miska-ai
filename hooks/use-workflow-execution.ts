@@ -35,6 +35,13 @@ export function useWorkflowExecution(
           workflowId: workflow.id,
           workflowSchema: workflow.schema,
           inputQuery,
+          workflowContext: {
+            name: workflow.name,
+            description: workflow.description,
+            totalNodes: workflow.schema.nodes.length,
+            nodeCount: workflow.schema.nodes.length,
+            edgeCount: workflow.schema.edges.length,
+          }
         }),
       });
 
