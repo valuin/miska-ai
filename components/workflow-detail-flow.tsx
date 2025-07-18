@@ -3,21 +3,21 @@
 import {
   Controls,
   type EdgeTypes,
-  MiniMap,
+  // MiniMap,
   type NodeTypes,
 } from "@xyflow/react";
-import { Background, Panel, ReactFlow, useReactFlow } from "@xyflow/react";
-import { type DragEvent, useEffect } from "react";
-import { shallow } from "zustand/shallow";
 import "@xyflow/react/dist/style.css";
+import { Background, Panel, ReactFlow, useReactFlow } from "@xyflow/react";
+import { Button } from "@/components/ui/button";
 import { ErrorIndicator } from "@/components/error-indicator";
 import { GenerateTextNodeController } from "@/components/flow/generate-text-node-controller";
 import { PromptCrafterNodeController } from "@/components/flow/prompt-crafter-node-controller";
+import { shallow } from "zustand/shallow";
 import { StatusEdgeController } from "@/components/flow/status-edge-controller";
 import { TextInputNodeController } from "@/components/flow/text-input-node-controller";
-import { VisualizeTextNodeController } from "@/components/flow/visualize-text-node-controller";
-import { Button } from "@/components/ui/button";
 import { useWorkflow } from "@/hooks/use-workflow";
+import { VisualizeTextNodeController } from "@/components/flow/visualize-text-node-controller";
+import type { DragEvent } from "react";
 import type { FlowNode } from "@/lib/utils/workflows/workflow";
 
 const nodeTypes: NodeTypes = {
@@ -43,7 +43,7 @@ export function Flow() {
       createNode: store.createNode,
       workflowExecutionState: store.workflowExecutionState,
     }),
-    shallow
+    shallow,
   );
 
   const { screenToFlowPosition } = useReactFlow();
@@ -57,7 +57,7 @@ export function Flow() {
     event.preventDefault();
 
     const type = event.dataTransfer.getData(
-      "application/reactflow"
+      "application/reactflow",
     ) as FlowNode["type"];
 
     if (!type) {
@@ -81,6 +81,7 @@ export function Flow() {
 
   return (
     <ReactFlow
+      className="react-flow dark"
       nodes={store.nodes}
       edges={store.edges}
       onNodesChange={store.onNodesChange}
@@ -94,7 +95,7 @@ export function Flow() {
     >
       <Background />
       <Controls />
-      <MiniMap />
+      {/* <MiniMap /> */}
       <Panel position="top-right" className="flex gap-2 items-center">
         <ErrorIndicator errors={store.workflowExecutionState.errors} />
         <Button

@@ -1,13 +1,19 @@
-import { createTool } from '@mastra/core/tools';
-import { z } from 'zod';
-import { createMastraWorkflowFromJson } from './load-dynamic-workflow';
+import { createTool } from "@mastra/core/tools";
+import { z } from "zod";
+import { createMastraWorkflowFromJson } from "./load-dynamic-workflow";
 
-const AGENT_TYPES = ['researchAgent', 'ragChatAgent', 'documentAgent', 'normalAgent', 'communicationAgent'] as const;
+const AGENT_TYPES = [
+  "researchAgent",
+  "ragChatAgent",
+  "documentAgent",
+  "normalAgent",
+  "communicationAgent",
+] as const;
 const agentEnum = z.enum(AGENT_TYPES);
 
 export type WorkflowNode = {
   id: string;
-  type: 'human-input' | 'agent-task';
+  type: "human-input" | "agent-task";
   description: string;
   agent?: (typeof AGENT_TYPES)[number];
   next?: string[];
@@ -21,7 +27,7 @@ export type CreatedWorkflow = {
 };
 
 export const workflowTool = createTool({
-  id: 'create-workflow-tool',
+  id: "create-workflow-tool",
   description: `
   Generates a directed workflow graph from a description and list of steps.
   
@@ -51,12 +57,14 @@ export const workflowTool = createTool({
   4. The last node should omit 'next' field
   `,
   inputSchema: z.object({
-    name: z.string().describe('Name of the workflow'),
-    description: z.string().describe('High-level description of the workflow'),
+    name: z.string().describe("Name of the workflow"),
+    description: z.string().describe("High-level description of the workflow"),
     steps: z.array(
       z.object({
-        type: z.enum(['human-input', 'agent-task']),
-        description: z.string(),
+        type: z.enum(["human-input", "agent-task"]),
+        description: z
+          .string()
+          .describe("Description of the step, no more than ten words"),
         agent: agentEnum.optional(),
       }),
     ),
@@ -68,7 +76,7 @@ export const workflowTool = createTool({
     nodes: z.array(
       z.object({
         id: z.string(),
-        type: z.enum(['human-input', 'agent-task']),
+        type: z.enum(["human-input", "agent-task"]),
         description: z.string(),
         agent: agentEnum.optional(),
         next: z.array(z.string()).optional(),
@@ -106,11 +114,11 @@ export const workflowTool = createTool({
         nodes,
       };
     } catch (e) {
-      console.error('Workflow generation failed:', e);
+      console.error("Workflow generation failed:", e);
       return {
-        id: '',
-        name: '',
-        description: '',
+        id: "",
+        name: "",
+        description: "",
         nodes: [],
       };
     }

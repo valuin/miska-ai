@@ -1,8 +1,8 @@
 import {
-	type Node,
-	type NodeProps,
-	Position,
-	useUpdateNodeInternals,
+  type Node,
+  type NodeProps,
+  Position,
+  useUpdateNodeInternals,
 } from "@xyflow/react";
 
 import { Button } from "@/components/ui/button";
@@ -11,16 +11,16 @@ import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import { BaseNode } from "@/components/flow/base-node";
 import {
-	EditableHandle,
-	EditableHandleDialog,
+  EditableHandle,
+  EditableHandleDialog,
 } from "@/components/flow/editable-handle";
 import { LabeledHandle } from "@/components/flow/labeled-handle";
 import {
-	NodeHeader,
-	NodeHeaderAction,
-	NodeHeaderActions,
-	NodeHeaderIcon,
-	NodeHeaderTitle,
+  NodeHeader,
+  NodeHeaderAction,
+  NodeHeaderActions,
+  NodeHeaderIcon,
+  NodeHeaderTitle,
 } from "@/components/flow/node-header";
 import { NodeHeaderStatus } from "@/components/flow/node-header-status";
 import { type Model, ModelSelector } from "@/components/ui/model-selector";
@@ -28,175 +28,175 @@ import { Bot, Plus, Trash } from "lucide-react";
 import { useCallback } from "react";
 
 export type GenerateTextData = {
-	status: "processing" | "error" | "success" | "idle" | undefined;
-	config: {
-		model: Model;
-		description?: string;
-		value?: string;
-		agent?: string;
-		agentName?: string;
-	};
-	dynamicHandles: {
-		tools: {
-			id: string;
-			name: string;
-			description?: string;
-		}[];
-	};
+  status: "processing" | "error" | "success" | "idle" | undefined;
+  config: {
+    model: Model;
+    description?: string;
+    value?: string;
+    agent?: string;
+    agentName?: string;
+  };
+  dynamicHandles: {
+    tools: {
+      id: string;
+      name: string;
+      description?: string;
+    }[];
+  };
 };
 
 export type GenerateTextNode = Node<GenerateTextData, "generate-text">;
 
 interface GenerateTextNodeProps extends NodeProps<GenerateTextNode> {
-	disableModelSelector?: boolean;
-	onModelChange: (model: Model) => void;
-	onCreateTool: (name: string, description?: string) => boolean;
-	onRemoveTool: (handleId: string) => void;
-	onUpdateTool: (
-		toolId: string,
-		newName: string,
-		newDescription?: string,
-	) => boolean;
-	onDeleteNode: () => void;
+  disableModelSelector?: boolean;
+  onModelChange: (model: Model) => void;
+  onCreateTool: (name: string, description?: string) => boolean;
+  onRemoveTool: (handleId: string) => void;
+  onUpdateTool: (
+    toolId: string,
+    newName: string,
+    newDescription?: string,
+  ) => boolean;
+  onDeleteNode: () => void;
 }
 
 export function GenerateTextNode({
-	id,
-	selected,
-	deletable,
-	disableModelSelector,
-	data,
-	onModelChange,
-	onCreateTool,
-	onRemoveTool,
-	onUpdateTool,
-	onDeleteNode,
+  id,
+  selected,
+  deletable,
+  disableModelSelector,
+  data,
+  onModelChange,
+  onCreateTool,
+  onRemoveTool,
+  onUpdateTool,
+  onDeleteNode,
 }: GenerateTextNodeProps) {
-	const updateNodeInternals = useUpdateNodeInternals();
+  const updateNodeInternals = useUpdateNodeInternals();
 
-	const handleModelChange = useCallback(
-		(value: string) => {
-			onModelChange?.(value as Model);
-		},
-		[onModelChange],
-	);
+  const handleModelChange = useCallback(
+    (value: string) => {
+      onModelChange?.(value as Model);
+    },
+    [onModelChange],
+  );
 
-	const handleCreateTool = useCallback(
-		(name: string, description?: string) => {
-			if (!onCreateTool) {
-				return false;
-			}
-			const result = onCreateTool(name, description);
-			if (result) {
-				updateNodeInternals(id);
-			}
-			return result;
-		},
-		[onCreateTool, id, updateNodeInternals],
-	);
+  const handleCreateTool = useCallback(
+    (name: string, description?: string) => {
+      if (!onCreateTool) {
+        return false;
+      }
+      const result = onCreateTool(name, description);
+      if (result) {
+        updateNodeInternals(id);
+      }
+      return result;
+    },
+    [onCreateTool, id, updateNodeInternals],
+  );
 
-	const removeHandle = useCallback(
-		(handleId: string) => {
-			onRemoveTool?.(handleId);
-			updateNodeInternals(id);
-		},
-		[onRemoveTool, id, updateNodeInternals],
-	);
+  const removeHandle = useCallback(
+    (handleId: string) => {
+      onRemoveTool?.(handleId);
+      updateNodeInternals(id);
+    },
+    [onRemoveTool, id, updateNodeInternals],
+  );
 
-	return (
-		<BaseNode
-			selected={selected}
-			className={cn("w-[350px] p-0 hover:ring-orange-500", {
-				"border-orange-500": data.status === "processing",
-				"border-red-500": data.status === "error",
-			})}
-		>
-			<NodeHeader className="m-0">
-				<NodeHeaderIcon>
-					<Bot />
-				</NodeHeaderIcon>
-				<NodeHeaderTitle>
-					{data.config?.agent || "Generate Text"}
-				</NodeHeaderTitle>
-				<NodeHeaderActions>
-					<NodeHeaderStatus status={data.status} />
-					{deletable && (
-						<NodeHeaderAction
-							onClick={onDeleteNode}
-							variant="ghost"
-							label="Delete node"
-						>
-							<Trash />
-						</NodeHeaderAction>
-					)}
-				</NodeHeaderActions>
-			</NodeHeader>
-			<Separator />
-			<div className="p-4 flex flex-col gap-4">
-				<div className="text-sm text-muted-foreground">
-					{data.config?.description || data.config?.value || "Agent task"}
-				</div>
-			</div>
-			<div className="grid grid-cols-[2fr,1fr] gap-2 pt-2 text-sm">
-				<div className="flex flex-col gap-2 min-w-0">
-					<LabeledHandle
-						id="system"
-						title="System"
-						type="target"
-						position={Position.Left}
-					/>
-					<LabeledHandle
-						id="prompt"
-						title="Prompt"
-						type="target"
-						position={Position.Left}
-						className="col-span-2"
-					/>
-				</div>
-				<div className="justify-self-end">
-					<LabeledHandle
-						id="result"
-						title="Result"
-						type="source"
-						position={Position.Right}
-					/>
-				</div>
-			</div>
-			<div className="border-t border-border mt-2">
-				<div>
-					<div className="flex items-center justify-between py-2 px-4 bg-muted">
-						<span className="text-sm font-medium">Tool outputs</span>
-						<EditableHandleDialog
-							variant="create"
-							onSave={handleCreateTool}
-							align="end"
-							showDescription
-						>
-							<Button variant="outline" size="sm" className="h-7 px-2">
-								<Plus className="h-4 w-4 mr-1" />
-								New tool output
-							</Button>
-						</EditableHandleDialog>
-					</div>
-					<div className="flex flex-col">
-						{data.dynamicHandles.tools.map((tool) => (
-							<EditableHandle
-								key={tool.id}
-								nodeId={id}
-								handleId={tool.id}
-								name={tool.name}
-								description={tool.description}
-								type="source"
-								position={Position.Right}
-								wrapperClassName="w-full"
-								onUpdateTool={onUpdateTool}
-								onDelete={removeHandle}
-								showDescription
-							/>
-						))}
-					</div>
-				</div>
-			</div>
-		</BaseNode>
-	);
+  return (
+    <BaseNode
+      selected={selected}
+      className={cn("w-[350px] p-0 hover:ring-orange-500", {
+        "border-orange-500": data.status === "processing",
+        "border-red-500": data.status === "error",
+      })}
+    >
+      <NodeHeader className="m-0">
+        <NodeHeaderIcon>
+          <Bot />
+        </NodeHeaderIcon>
+        <NodeHeaderTitle>
+          {data.config?.agent || "Generate Text"}
+        </NodeHeaderTitle>
+        <NodeHeaderActions>
+          <NodeHeaderStatus status={data.status} />
+          {deletable && (
+            <NodeHeaderAction
+              onClick={onDeleteNode}
+              variant="ghost"
+              label="Delete node"
+            >
+              <Trash />
+            </NodeHeaderAction>
+          )}
+        </NodeHeaderActions>
+      </NodeHeader>
+      <Separator />
+      <div className="p-4 flex flex-col gap-4">
+        <div className="text-sm text-muted-foreground">
+          {data.config?.description || data.config?.value || "Agent task"}
+        </div>
+      </div>
+      <div className="grid grid-cols-[2fr,1fr] gap-2 pt-2 text-sm">
+        <div className="flex flex-col gap-2 min-w-0">
+          <LabeledHandle
+            id="system"
+            title="System"
+            type="target"
+            position={Position.Left}
+          />
+          <LabeledHandle
+            id="prompt"
+            title="Prompt"
+            type="target"
+            position={Position.Left}
+            className="col-span-2"
+          />
+        </div>
+        <div className="justify-self-end">
+          <LabeledHandle
+            id="result"
+            title="Result"
+            type="source"
+            position={Position.Right}
+          />
+        </div>
+      </div>
+      <div className="border-t border-border mt-2">
+        <div>
+          <div className="flex items-center justify-between py-2 px-4 bg-muted">
+            <span className="text-sm font-medium">Tool outputs</span>
+            <EditableHandleDialog
+              variant="create"
+              onSave={handleCreateTool}
+              align="end"
+              showDescription
+            >
+              <Button variant="outline" size="sm" className="h-7 px-2">
+                <Plus className="size-4 mr-1" />
+                New tool output
+              </Button>
+            </EditableHandleDialog>
+          </div>
+          <div className="flex flex-col">
+            {data.dynamicHandles.tools.map((tool) => (
+              <EditableHandle
+                key={tool.id}
+                nodeId={id}
+                handleId={tool.id}
+                name={tool.name}
+                description={tool.description}
+                type="source"
+                position={Position.Right}
+                wrapperClassName="w-full"
+                onUpdateTool={onUpdateTool}
+                onDelete={removeHandle}
+                showDescription
+              />
+            ))}
+          </div>
+        </div>
+      </div>
+    </BaseNode>
+  );
 }
