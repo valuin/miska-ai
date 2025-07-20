@@ -45,18 +45,18 @@ export function StatusEdge({
         };
       case "running":
         return {
-          start: "#059669",
-          mid: "#10b981",
-          end: "#059669",
-          bg: "bg-emerald-500",
+          start: "#ea580c",
+          mid: "#f97316",
+          end: "#ea580c",
+          bg: "bg-orange-500",
           text: "text-white",
         };
       case "completed":
         return {
-          start: "#0284c7",
-          mid: "#0ea5e9",
-          end: "#0284c7",
-          bg: "bg-sky-500",
+          start: "#16a34a",
+          mid: "#22c55e",
+          end: "#16a34a",
+          bg: "bg-green-500",
           text: "text-white",
         };
       default: // idle
@@ -113,7 +113,7 @@ export function StatusEdge({
         strokeWidth={45}
         strokeLinecap="butt"
         strokeLinejoin="round"
-        filter={status === "running" ? `url(#glow-${id})` : "none"}
+        filter={status === "running" ? `none` : "none"}
         className={cn(
           status === "running" && "animate-pulse",
           status === "completed" && "opacity-80"

@@ -6,6 +6,11 @@ export type WorkflowNode = {
     type: "human-input" | "agent-task";
     agent: string;
     description: string;
+    config?: {
+      model?: string;
+      value?: string;
+    };
+    userInput?: string; // Add this line for human input
   };
 };
 

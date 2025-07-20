@@ -1,6 +1,7 @@
 import React from "react";
 import { toast } from "sonner";
 import type { WorkflowData, WorkflowNodeProgress } from "@/lib/types/workflow";
+import { useWorkflow } from "./use-workflow"; // Import useWorkflow
 
 export function useWorkflowExecution(
   workflow: WorkflowData | null,
@@ -36,6 +37,21 @@ export function useWorkflowExecution(
     });
 
     try {
+      const { nodeUserInputs } = useWorkflow.getState(); // Get user inputs from Zustand store
+
+      const nodesWithUserInput = workflow.schema.nodes.map(node => {
+        if (nodeUserInputs[node.id]) {
+          return {
+            ...node,
+            data: {
+              ...node.data,
+              userInput: nodeUserInputs[node.id],
+            },
+          };
+        }
+        return node;
+      });
+
       const response = await fetch("/api/workflows/run", {
         method: "POST",
         headers: {
@@ -43,7 +59,10 @@ export function useWorkflowExecution(
         },
         body: JSON.stringify({
           workflowId: workflow.id,
-          workflowSchema: workflow.schema,
+          workflowSchema: {
+            ...workflow.schema,
+            nodes: nodesWithUserInput, // Send nodes with user input
+          },
           inputQuery,
           workflowContext: {
             name: workflow.name,

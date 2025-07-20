@@ -12,13 +12,15 @@ import { Input } from "@/components/ui/input";
 
 type HumanInputNotchProps = {
   activeNode: { id: string; description: string } | null;
-  onSubmit: (value: string) => void;
   onClose: () => void;
 };
 
-export const HumanInputNotch = ({ activeNode, onSubmit, onClose }: HumanInputNotchProps) => {
+import { useWorkflow } from "@/hooks/use-workflow"; // Import useWorkflow
+
+export const HumanInputNotch = ({ activeNode, onClose }: HumanInputNotchProps) => {
   const [inputValue, setInputValue] = useState("");
   const [isOpen, setIsOpen] = useState(false);
+  const { updateNodeUserInput } = useWorkflow(); // Get the action from the store
 
   useEffect(() => {
     setIsOpen(!!activeNode);
@@ -29,7 +31,7 @@ export const HumanInputNotch = ({ activeNode, onSubmit, onClose }: HumanInputNot
 
   const handleSubmit = () => {
     if (!inputValue.trim() || !activeNode) return;
-    onSubmit(inputValue);
+    updateNodeUserInput(activeNode.id, inputValue); // Use the Zustand action
     setInputValue("");
     onClose();
   };
@@ -41,14 +43,23 @@ export const HumanInputNotch = ({ activeNode, onSubmit, onClose }: HumanInputNot
     }
   };
 
+  const isEmpty = !inputValue.trim();
+  
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleSubmit();
+    }
+  };
+
   return (
     <Disclosure
       open={isOpen}
       onOpenChange={handleOpenChange}
-      className='w-full rounded-md border border-border bg-background'
+      className={`w-full rounded-md border border-border bg-background`}
     >
       <DisclosureTrigger className="w-full">
-        <div className='p-4 text-center text-muted-foreground'>
+        <div className={`p-4 text-center pointer-events-none text-muted-foreground`}>
           <p>{activeNode ? `${activeNode.description}` : "Click a human input node to provide input."}</p>
         </div>
       </DisclosureTrigger>
@@ -63,18 +74,16 @@ export const HumanInputNotch = ({ activeNode, onSubmit, onClose }: HumanInputNot
                 placeholder="Type your response..."
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    handleSubmit();
-                  }
-                }}
-                className="flex-1"
+                onKeyDown={handleKeyDown}
+                className={`flex-1 ${isEmpty ? 'border-red-300 focus:ring-red-500' : ''}`}
                 autoFocus
+                required
               />
               <Button
                 onClick={handleSubmit}
                 size="icon"
                 disabled={!inputValue.trim()}
+                variant={isEmpty ? "destructive" : "default"}
               >
                 <Send className="size-4" />
               </Button>

@@ -12,7 +12,8 @@ import type {
   WorkflowOutputProps,
 } from "@/lib/types/workflow";
 import { useWorkflowUiState } from "@/lib/store/workflow-ui-store";
-import { HumanInputNotch } from "./human-input-notch";
+import { HumanInputNotch } from "../workflow-v2/human-input-notch";
+import { useWorkflow } from "@/hooks/use-workflow";
 
 export function WorkflowDetails({
   workflow,
@@ -21,11 +22,22 @@ export function WorkflowDetails({
   onRunWorkflow,
   isExecuting,
 }: WorkflowDetailsProps) {
-  const { activeHumanInputNode, setActiveHumanInputNode } = useWorkflowUiState();
+  const { activeHumanInputNode, setActiveHumanInputNode } =
+    useWorkflowUiState();
+  const { validateInputsBeforeExecution, nodeUserInputs } = useWorkflow();
 
   const handleHumanInputSubmit = (value: string) => {
     setInputQuery(value);
     setActiveHumanInputNode(null);
+  };
+
+  const isRunDisabled = () => {
+    if (isExecuting || !!activeHumanInputNode) {
+      return true;
+    }
+    const validation = validateInputsBeforeExecution();
+    console.log("Validation result:", validation);
+    return !validation.isValid;
   };
 
   return (
@@ -39,14 +51,13 @@ export function WorkflowDetails({
       <div className="mb-4">
         <HumanInputNotch
           activeNode={activeHumanInputNode}
-          onSubmit={handleHumanInputSubmit}
           onClose={() => setActiveHumanInputNode(null)}
         />
       </div>
       <Button
         onClick={onRunWorkflow}
         className={`w-full ${isExecuting ? "bg-transparent text-white" : ""}`}
-        disabled={isExecuting || !!activeHumanInputNode}
+        disabled={isRunDisabled()}
       >
         {isExecuting ? (
           <>

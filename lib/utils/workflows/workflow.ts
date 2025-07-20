@@ -1,10 +1,10 @@
 import { nanoid } from "nanoid";
 import dagre from "@dagrejs/dagre";
-import type { GenerateTextNodeController } from "@/components/flow/generate-text-node-controller";
-import type { PromptCrafterNodeController } from "@/components/flow/prompt-crafter-node-controller";
-import type { StatusEdgeController } from "@/components/flow/status-edge-controller";
-import type { TextInputNodeController } from "@/components/flow/text-input-node-controller";
-import type { VisualizeTextNodeController } from "@/components/flow/visualize-text-node-controller";
+import type { GenerateTextNodeController } from "@/components/workflow-v2/generate-text-node-controller";
+import type { PromptCrafterNodeController } from "@/components/workflow-v2/prompt-crafter-node-controller";
+import type { StatusEdgeController } from "@/components/workflow-v2/status-edge-controller";
+import type { TextInputNodeController } from "@/components/workflow-v2/text-input-node-controller";
+import type { VisualizeTextNodeController } from "@/components/workflow-v2/visualize-text-node-controller";
 
 type Dependency = {
   node: string;

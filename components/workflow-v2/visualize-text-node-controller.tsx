@@ -1,47 +1,38 @@
 "use client";
 
-import { TextInputNode } from "@/components/flow/text-input-node";
+import { VisualizeTextNode } from "@/components/workflow-v2/visualize-text-node";
 import { useWorkflow } from "@/hooks/use-workflow";
 import type { NodeExecutionState } from "@/lib/utils/workflows/workflow-execution-engine";
 import type { NodeProps } from "@xyflow/react";
 import { useCallback } from "react";
 
-export type TextInputNodeController = Omit<TextInputNode, "data"> & {
-  type: "text-input";
-  data: Omit<TextInputNode["data"], "status"> & {
+export type VisualizeTextNodeController = Omit<VisualizeTextNode, "data"> & {
+  type: "visualize-text";
+  data: {
     executionState?: NodeExecutionState;
   };
 };
 
-export function TextInputNodeController({
+export function VisualizeTextNodeController({
   id,
   data,
   ...props
-}: NodeProps<TextInputNodeController>) {
-  const updateNode = useWorkflow((state) => state.updateNode);
+}: NodeProps<VisualizeTextNodeController>) {
   const deleteNode = useWorkflow((state) => state.deleteNode);
-
-  const handleTextChange = useCallback(
-    (value: string) => {
-      updateNode(id, "text-input", { config: { value } });
-    },
-    [id, updateNode]
-  );
 
   const handleDeleteNode = useCallback(() => {
     deleteNode(id);
   }, [id, deleteNode]);
 
   return (
-    <TextInputNode
+    <VisualizeTextNode
       id={id}
       data={{
+        input: data.executionState?.targets?.input,
         status: data.executionState?.status,
-        config: data.config,
       }}
-      {...props}
-      onTextChange={handleTextChange}
       onDeleteNode={handleDeleteNode}
+      {...props}
     />
   );
 }

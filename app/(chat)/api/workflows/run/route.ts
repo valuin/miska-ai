@@ -41,8 +41,6 @@ const agentMap: Record<string, Agent<any>> = {
   communicationAgent: communicationAgent as Agent<any>,
 };
 
-// Remove the deterministic node type to agent mapping entirely
-// Agent selection is now fully dynamic based on node.data.agent
 
 export async function POST(req: Request) {
   const encoder = new TextEncoder();
@@ -96,11 +94,10 @@ export async function POST(req: Request) {
         // Transform nodes to their executable types (generate-text or text-input)
         const transformedNodes = workflowSchema.nodes.map((node: WorkflowNode) => {
           if (node.type === 'workflowNode') {
-            let newType = 'generate-text';
             const agent = node.data.agent || 'normalAgent';
-            if (agent === 'human' || agent === 'user') {
-              newType = 'text-input';
-            }
+            // Determine the new type based on the agent
+            const newType = (agent === 'human' || agent === 'user') ? 'text-input' : 'generate-text';
+            
             return {
               ...node,
               type: newType,
@@ -118,8 +115,25 @@ export async function POST(req: Request) {
         for (const node of executableNodes) {
           const agentName = node.data.agent || "normalAgent";
           const agentDescription = node.data.description || node.data.config?.value || `Execute ${node.type} node`;
+
+          // If it's a text-input node and has user input, use that as the output
+          if (node.data.type === "human-input" && node.data.userInput) {
+            const output = node.data.userInput;
+            console.log(`Human input node ${node.id} received input:`, output);
+
+            const completedEvent = {
+              type: "node_completed",
+              nodeId: node.id,
+              agentName,
+              description: agentDescription,
+              output
+            };
+            controller.enqueue(encoder.encode(`data: ${JSON.stringify(completedEvent)}\n\n`));
+            currentInput = output;
+            continue; // Skip agent execution for human input nodes
+          }
           
-          // For text-input nodes, use the config value as the prompt, but still execute
+          // For other nodes or text-input without user input, use the config value as the prompt
           let nodePrompt = agentDescription;
           if (node.type === "text-input" && node.data.config?.value) {
             nodePrompt = node.data.config.value;
@@ -149,7 +163,16 @@ export async function POST(req: Request) {
           controller.enqueue(encoder.encode(`data: ${JSON.stringify(startedEvent)}\n\n`));
 
           try {
-            const systemPrompt = `You are running in a predefined workflow. Do not ask clarifying questions or use the options tool. Execute the task as described.`;
+            const workflowOverview = workflowSchema.nodes.map((node: WorkflowNode) => {
+              return `Node ID: ${node.id}, Type: ${node.type}, Description: ${node.data.description || 'N/A'}`;
+            }).join('\n');
+
+            const systemPrompt = `You are running in a predefined workflow. Do not ask clarifying questions or use the options tool. Execute the task as described.
+Workflow Name: ${workflowSchema.name}
+Workflow Description: ${workflowSchema.description || "No description provided."}
+
+Workflow Overview:
+${workflowOverview}`;
             const result = await agent.generate([
               { role: "system", content: systemPrompt },
               {

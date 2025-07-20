@@ -49,9 +49,10 @@ export function useWorkflowData(
             const description = node.data.description || "";
             // Use text-input for human input, generate-text for agent tasks
             let newType = "generate-text";
-            const agent = node.data.agent || "normalAgent";
-            if (agent === "human" || agent === "user") {
-              newType = "text-input";
+            let agent = node.data.agent || "normalAgent";
+            if (node.data.type === "human-input" || agent === "human" || agent === "user") {
+              newType = "generate-text";
+              agent = "human";
             }
 
             return {
@@ -60,7 +61,7 @@ export function useWorkflowData(
               position: node.position,
               data: {
                 config: {
-                  agent: node.data.agent || "normalAgent",
+                  agent: agent,
                   type: node.data.type || "agent-task",
                   description: node.data.description || "Agent task",
                   // model: "llama-3.1-8b-instant",

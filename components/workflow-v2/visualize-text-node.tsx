@@ -2,15 +2,15 @@ import { type Node, type NodeProps, Position } from "@xyflow/react";
 
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
-import { LabeledHandle } from "@/components/flow/labeled-handle";
+import { LabeledHandle } from "@/components/workflow-v2/labeled-handle";
 import {
   NodeHeader,
   NodeHeaderAction,
   NodeHeaderActions,
   NodeHeaderIcon,
   NodeHeaderTitle,
-} from "@/components/flow/node-header";
-import { ResizableNode } from "@/components/flow/resizable-node";
+} from "@/components/workflow-v2/node-header";
+import { ResizableNode } from "@/components/workflow-v2/resizable-node";
 import { MarkdownContent } from "@/components/ui/markdown-content";
 import { Eye, Trash } from "lucide-react";
 

@@ -5,7 +5,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { BaseHandle } from "@/components/flow/base-handle";
+import { BaseHandle } from "@/components/workflow-v2/base-handle";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Edit2, Trash } from "lucide-react";
@@ -129,7 +129,7 @@ type EditableHandleProps = HandleProps &
     onUpdateTool: (
       handleId: string,
       newName: string,
-      newDescription?: string,
+      newDescription?: string
     ) => boolean;
     onDelete: (handleId: string) => void;
     showDescription?: boolean;
@@ -151,7 +151,7 @@ const EditableHandle = forwardRef<HTMLDivElement, EditableHandleProps>(
       showDescription = false,
       ...handleProps
     },
-    ref,
+    ref
   ) => {
     const [isEditing, setIsEditing] = useState(label.length === 0);
 
@@ -161,7 +161,7 @@ const EditableHandle = forwardRef<HTMLDivElement, EditableHandleProps>(
           resetEditing();
         }
       },
-      [isEditing, nodeId],
+      [isEditing, nodeId]
     );
 
     useOnSelectionChange({
@@ -203,7 +203,7 @@ const EditableHandle = forwardRef<HTMLDivElement, EditableHandleProps>(
             <span
               className={cn(
                 "text-foreground truncate whitespace-nowrap",
-                labelClassName,
+                labelClassName
               )}
             >
               {label}
@@ -244,7 +244,7 @@ const EditableHandle = forwardRef<HTMLDivElement, EditableHandleProps>(
         </div>
       </div>
     );
-  },
+  }
 );
 
 EditableHandle.displayName = "EditableHandle";

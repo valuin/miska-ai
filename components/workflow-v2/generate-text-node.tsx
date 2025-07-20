@@ -1,31 +1,20 @@
-
-import { type Node, type NodeProps, Position } from "@xyflow/react";
-
+import { type NodeProps, Position } from "@xyflow/react";
 import {
   NodeHeader,
   NodeHeaderAction,
   NodeHeaderActions,
   NodeHeaderIcon,
   NodeHeaderTitle,
-} from "@/components/flow/node-header";
+} from "@/components/workflow-v2/node-header";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
-import { BaseNode } from "@/components/flow/base-node";
-import { LabeledHandle } from "@/components/flow/labeled-handle";
-import { NodeHeaderStatus } from "@/components/flow/node-header-status";
-import { Bot, Trash, User } from "lucide-react";
+import { BaseNode } from "@/components/workflow-v2/base-node";
+import { LabeledHandle } from "@/components/workflow-v2/labeled-handle";
+import { NodeHeaderStatus } from "@/components/workflow-v2/node-header-status";
+import { AlertTriangle, Bot, Trash, User } from "lucide-react";
 import { useWorkflowUiState } from "@/lib/store/workflow-ui-store";
-
-export type GenerateTextData = {
-  status: "running" | "error" | "completed" | "idle" | undefined;
-  config: {
-    agent: string;
-    type: "human-input" | "agent-task";
-    description: string;
-  };
-};
-
-export type GenerateTextNode = Node<GenerateTextData, "generate-text">;
+import { useWorkflow } from "@/hooks/use-workflow";
+import type { GenerateTextNode } from "@/hooks/workflow/types";
 
 interface GenerateTextNodeProps extends NodeProps<GenerateTextNode> {
   onDeleteNode: () => void;
@@ -38,10 +27,13 @@ export function GenerateTextNode({
   data,
   onDeleteNode,
 }: GenerateTextNodeProps) {
-  const { setActiveHumanInputNode, activeHumanInputNode } = useWorkflowUiState();
+  const { setActiveHumanInputNode, activeHumanInputNode } =
+    useWorkflowUiState();
+  const { nodeUserInputs } = useWorkflow();
 
   const isHumanInput = data.config.type === "human-input";
   const isActive = activeHumanInputNode?.id === id;
+  const isInputMissing = isHumanInput && !nodeUserInputs[id]?.trim();
 
   const handleNodeClick = () => {
     if (isHumanInput) {
@@ -59,7 +51,7 @@ export function GenerateTextNode({
         "hover:ring-orange-500": isHumanInput,
         "ring-2 ring-orange-500": isActive,
         "border-orange-500": data.status === "running",
-        "border-red-500": data.status === "error",
+        "border-red-500": data.status === "error" || isInputMissing,
       })}
     >
       <div className="flex flex-col gap-2 min-w-0">
@@ -76,10 +68,18 @@ export function GenerateTextNode({
           {data.config.type === "human-input" ? <User /> : <Bot />}
         </NodeHeaderIcon>
         <NodeHeaderTitle>
-          {data.config.type === "human-input" ? "Human Input" : (data.config?.agent || "Generate Text")}
+          {data.config.type === "human-input"
+            ? "Human Input"
+            : data.config?.agent || "Generate Text"}
         </NodeHeaderTitle>
         <NodeHeaderActions>
           <NodeHeaderStatus status={data.status} />
+          {isInputMissing && (
+            <div className="flex items-center gap-1 text-red-500">
+              <AlertTriangle className="size-4" />
+              <span className="text-xs">Input Required</span>
+            </div>
+          )}
           {deletable && (
             <NodeHeaderAction
               onClick={onDeleteNode}
@@ -90,24 +90,24 @@ export function GenerateTextNode({
             </NodeHeaderAction>
           )}
         </NodeHeaderActions>
-        </NodeHeader>
-        <Separator />
-        <div className="p-4 flex flex-col gap-4">
-          <div className="text-sm text-muted-foreground">
-            {data.config.type === "human-input"
-              ? (data.config?.description || "Human input required")
-              : (data.config?.description || "Agent task")}
-          </div>
+      </NodeHeader>
+      <Separator />
+      <div className="p-4 flex flex-col gap-4">
+        <div className="text-sm text-muted-foreground">
+          {data.config.type === "human-input"
+            ? data.config?.description || "Human input required"
+            : data.config?.description || "Agent task"}
         </div>
+      </div>
 
-        <div className="flex justify-center">
-          <LabeledHandle
-            id="result"
-            title="Result"
-            type="source"
-            position={Position.Bottom}
-          />
-        </div>
-      </BaseNode>
-    );
-  }
+      <div className="flex justify-center">
+        <LabeledHandle
+          id="result"
+          title="Result"
+          type="source"
+          position={Position.Bottom}
+        />
+      </div>
+    </BaseNode>
+  );
+}

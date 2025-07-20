@@ -1,7 +1,7 @@
-import type { GenerateTextNodeController } from '@/components/flow/generate-text-node-controller';
-import type { PromptCrafterNodeController } from '@/components/flow/prompt-crafter-node-controller';
-import type { TextInputNodeController } from '@/components/flow/text-input-node-controller';
-import type { VisualizeTextNodeController } from '@/components/flow/visualize-text-node-controller';
+import type { GenerateTextNodeController } from '@/components/workflow-v2/generate-text-node-controller';
+import type { PromptCrafterNodeController } from '@/components/workflow-v2/prompt-crafter-node-controller';
+import type { TextInputNodeController } from '@/components/workflow-v2/text-input-node-controller';
+import type { VisualizeTextNodeController } from '@/components/workflow-v2/visualize-text-node-controller';
 import type { FlowNode } from '@/lib/utils/workflows/workflow';
 import { nanoid } from 'nanoid';
 
@@ -17,6 +17,9 @@ export const nodeFactory = {
     position,
     data: {
       config: {
+        agent: 'normalAgent',
+        type: 'agent-task',
+        description: 'Generate Text',
         model: 'llama-3.1-8b-instant',
       },
       dynamicHandles: {

@@ -1,6 +1,6 @@
 "use client";
 
-import { PromptCrafterNode } from "@/components/flow/prompt-crafter-node";
+import { PromptCrafterNode } from "@/components/workflow-v2/prompt-crafter-node";
 import { useWorkflow } from "@/hooks/use-workflow";
 import type { NodeExecutionState } from "@/lib/utils/workflows/workflow-execution-engine";
 import type { NodeProps } from "@xyflow/react";

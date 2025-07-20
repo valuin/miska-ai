@@ -1,37 +1,46 @@
 "use client";
 
-import { GenerateTextNode } from "@/components/flow/generate-text-node";
+import { TextInputNode } from "@/components/workflow-v2/text-input-node";
 import { useWorkflow } from "@/hooks/use-workflow";
 import type { NodeExecutionState } from "@/lib/utils/workflows/workflow-execution-engine";
 import type { NodeProps } from "@xyflow/react";
 import { useCallback } from "react";
 
-export type GenerateTextNodeController = Omit<GenerateTextNode, "data"> & {
-  type: "generate-text";
-  data: Omit<GenerateTextNode["data"], "status"> & {
+export type TextInputNodeController = Omit<TextInputNode, "data"> & {
+  type: "text-input";
+  data: Omit<TextInputNode["data"], "status"> & {
     executionState?: NodeExecutionState;
   };
 };
 
-export function GenerateTextNodeController({
+export function TextInputNodeController({
   id,
   data,
   ...props
-}: NodeProps<GenerateTextNodeController>) {
+}: NodeProps<TextInputNodeController>) {
+  const updateNode = useWorkflow((state) => state.updateNode);
   const deleteNode = useWorkflow((state) => state.deleteNode);
+
+  const handleTextChange = useCallback(
+    (value: string) => {
+      updateNode(id, "text-input", { config: { value } });
+    },
+    [id, updateNode]
+  );
 
   const handleDeleteNode = useCallback(() => {
     deleteNode(id);
   }, [id, deleteNode]);
 
   return (
-    <GenerateTextNode
+    <TextInputNode
       id={id}
       data={{
         status: data.executionState?.status,
         config: data.config,
       }}
       {...props}
+      onTextChange={handleTextChange}
       onDeleteNode={handleDeleteNode}
     />
   );

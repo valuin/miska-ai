@@ -1,23 +1,24 @@
 "use client";
 
-import { VisualizeTextNode } from "@/components/flow/visualize-text-node";
+import { GenerateTextNode } from "@/components/workflow-v2/generate-text-node";
 import { useWorkflow } from "@/hooks/use-workflow";
+import type { GenerateTextData } from "@/hooks/workflow/types";
 import type { NodeExecutionState } from "@/lib/utils/workflows/workflow-execution-engine";
-import type { NodeProps } from "@xyflow/react";
+import type { Node, NodeProps } from "@xyflow/react";
 import { useCallback } from "react";
 
-export type VisualizeTextNodeController = Omit<VisualizeTextNode, "data"> & {
-  type: "visualize-text";
-  data: {
+export type GenerateTextNodeController = Node<
+  Omit<GenerateTextData, "status"> & {
     executionState?: NodeExecutionState;
-  };
-};
+  },
+  "generate-text"
+>;
 
-export function VisualizeTextNodeController({
+export function GenerateTextNodeController({
   id,
   data,
   ...props
-}: NodeProps<VisualizeTextNodeController>) {
+}: NodeProps<GenerateTextNodeController>) {
   const deleteNode = useWorkflow((state) => state.deleteNode);
 
   const handleDeleteNode = useCallback(() => {
@@ -25,14 +26,14 @@ export function VisualizeTextNodeController({
   }, [id, deleteNode]);
 
   return (
-    <VisualizeTextNode
+    <GenerateTextNode
       id={id}
       data={{
-        input: data.executionState?.targets?.input,
         status: data.executionState?.status,
+        config: data.config,
       }}
-      onDeleteNode={handleDeleteNode}
       {...props}
+      onDeleteNode={handleDeleteNode}
     />
   );
 }

@@ -16,20 +16,20 @@ import {
 } from "@/components/ui/popover";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
-import { BaseNode } from "@/components/flow/base-node";
+import { BaseNode } from "@/components/workflow-v2/base-node";
 import {
   EditableHandle,
   EditableHandleDialog,
-} from "@/components/flow/editable-handle";
-import { LabeledHandle } from "@/components/flow/labeled-handle";
+} from "@/components/workflow-v2/editable-handle";
+import { LabeledHandle } from "@/components/workflow-v2/labeled-handle";
 import {
   NodeHeader,
   NodeHeaderAction,
   NodeHeaderActions,
   NodeHeaderIcon,
   NodeHeaderTitle,
-} from "@/components/flow/node-header";
-import { NodeHeaderStatus } from "@/components/flow/node-header-status";
+} from "@/components/workflow-v2/node-header";
+import { NodeHeaderStatus } from "@/components/workflow-v2/node-header-status";
 import { StreamLanguage } from "@codemirror/language";
 import type { EditorView } from "@codemirror/view";
 import { tags as t } from "@lezer/highlight";
@@ -45,7 +45,7 @@ import { BetweenVerticalEnd, PencilRuler, Plus, Trash } from "lucide-react";
 import { useCallback, useMemo, useRef, useState } from "react";
 
 type PromptCrafterData = {
-  status: "processing" | "error" | "success" | "idle" | undefined;
+  status: "running" | "error" | "completed" | "idle" | undefined;
   config: {
     template: string;
   };
@@ -125,7 +125,7 @@ export function PromptCrafterNode({
       }
       return result;
     },
-    [onCreateInput, id, updateNodeInternals],
+    [onCreateInput, id, updateNodeInternals]
   );
 
   const handleRemoveInput = useCallback(
@@ -133,7 +133,7 @@ export function PromptCrafterNode({
       onRemoveInput(handleId);
       updateNodeInternals(id);
     },
-    [onRemoveInput, id, updateNodeInternals],
+    [onRemoveInput, id, updateNodeInternals]
   );
 
   const handleUpdateInputName = useCallback(
@@ -144,7 +144,7 @@ export function PromptCrafterNode({
       }
       return result;
     },
-    [onUpdateInputName, id, updateNodeInternals],
+    [onUpdateInputName, id, updateNodeInternals]
   );
 
   const insertInputAtCursor = useCallback((inputName: string) => {
@@ -165,7 +165,7 @@ export function PromptCrafterNode({
   // Create language with current inputs
   const extensions = useMemo(() => {
     const validLabels = (data.dynamicHandles["template-tags"] || []).map(
-      (input) => input.name,
+      (input) => input.name
     );
     return [createPromptLanguage(validLabels)];
   }, [data.dynamicHandles["template-tags"]]);
@@ -174,7 +174,7 @@ export function PromptCrafterNode({
     <BaseNode
       selected={selected}
       className={cn("w-[350px] p-0 hover:ring-orange-500", {
-        "border-orange-500": data.status === "processing",
+        "border-orange-500": data.status === "running",
         "border-red-500": data.status === "error",
       })}
     >
@@ -222,7 +222,7 @@ export function PromptCrafterNode({
                           >
                             {input.name}
                           </CommandItem>
-                        ),
+                        )
                     )}
                   </CommandGroup>
                 </CommandList>
