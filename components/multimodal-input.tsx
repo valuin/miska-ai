@@ -2,7 +2,7 @@
 
 import type { Attachment, UIMessage } from "ai";
 import cx from "classnames";
-import React, {
+import {
   useRef,
   useEffect,
   useState,
@@ -91,16 +91,16 @@ export function FileUploadSection({
 
           if (saveResponse.ok) {
             toast.success(
-              `Document "${file.name}" uploaded and saved to vault.`
+              `Document "${file.name}" uploaded and saved to vault.`,
             );
           } else {
             toast.error(
-              `Document "${file.name}" uploaded, but failed to save to vault.`
+              `Document "${file.name}" uploaded, but failed to save to vault.`,
             );
           }
         } catch (error) {
           toast.error(
-            `Document "${file.name}" uploaded, but failed to save to vault.`
+            `Document "${file.name}" uploaded, but failed to save to vault.`,
           );
         }
       } else if (processResult.success) {
@@ -132,7 +132,7 @@ export function FileUploadSection({
         const uploadPromises = files.map((file) => uploadFile(file));
         const uploadedAttachments = await Promise.all(uploadPromises);
         const successfullyUploadedAttachments = uploadedAttachments.filter(
-          (attachment) => attachment !== undefined
+          (attachment) => attachment !== undefined,
         );
 
         setAttachments((currentAttachments) => [
@@ -148,7 +148,7 @@ export function FileUploadSection({
             .filter(Boolean);
           // Use window.dispatchEvent to notify VaultFilesSection
           window.dispatchEvent(
-            new CustomEvent("vault-autoselect", { detail: uploadedNames })
+            new CustomEvent("vault-autoselect", { detail: uploadedNames }),
           );
         }
       } catch (error) {
@@ -157,12 +157,12 @@ export function FileUploadSection({
         setUploadQueue([]);
       }
     },
-    []
+    [],
   );
 
   const unattachFile = (name: string) => {
     setAttachments((currentAttachments) =>
-      currentAttachments.filter((a) => a.name !== name)
+      currentAttachments.filter((a) => a.name !== name),
     );
   };
 
@@ -309,7 +309,7 @@ function PureMultimodalInput({
 
   const [localStorageInput, setLocalStorageInput] = useLocalStorage(
     "input",
-    ""
+    "",
   );
 
   useEffect(() => {
@@ -439,7 +439,7 @@ function PureMultimodalInput({
         handleInput={handleInput}
         className={cx(
           "min-h-[24px] max-h-[calc(75dvh)] overflow-hidden resize-none rounded-2xl !text-base bg-muted dark:border-zinc-700 p-4",
-          className
+          className,
         )}
         submitForm={submitForm}
       />
@@ -465,15 +465,17 @@ function VaultFilesSection({
   const { selectedVaultFileNames, setSelectedVaultFileNames } =
     useVaultFilesStore();
   const [selectedVaultFiles, setSelectedVaultFiles] = useState<string[]>(
-    selectedVaultFileNames
+    selectedVaultFileNames,
   );
 
   // Listen for auto-select events from FileUploadSection
-  React.useEffect(() => {
+  useEffect(() => {
     const handler = (e: Event) => {
       const detail = (e as CustomEvent<string[]>).detail;
       if (Array.isArray(detail) && detail.length > 0) {
-        setSelectedVaultFiles((prev) => Array.from(new Set([...prev, ...detail])));
+        setSelectedVaultFiles((prev) =>
+          Array.from(new Set([...prev, ...detail])),
+        );
       }
     };
     window.addEventListener("vault-autoselect", handler);
@@ -492,8 +494,8 @@ function VaultFilesSection({
       // Filter out duplicates based on name
       const uniqueDocuments = Array.from(
         new Map(
-          (data.documents as UserUpload[]).map((doc) => [doc.filename, doc])
-        ).values()
+          (data.documents as UserUpload[]).map((doc) => [doc.filename, doc]),
+        ).values(),
       );
       setVaultFiles(uniqueDocuments || []);
     } catch (error) {
@@ -513,7 +515,7 @@ function VaultFilesSection({
           name: file?.filename || "",
           contentType: "",
         };
-      })
+      }),
     );
     setSelectedVaultFileNames(selectedVaultFiles);
   }, [
@@ -551,7 +553,7 @@ export const MultimodalInput = memo(
       return false;
 
     return true;
-  }
+  },
 );
 
 function PureAttachmentsButton({

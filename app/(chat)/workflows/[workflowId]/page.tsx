@@ -230,7 +230,7 @@ export default function WorkflowDetailPage() {
       </div>
 
       <div className="md:w-1/3 flex flex-col gap-4">
-        <div className="border border-border rounded-lg p-4 flex-grow">
+        <div className="border border-border rounded-lg p-4 grow">
           <h2 className="text-xl font-semibold mb-4">Workflow Details</h2>
           <p className="text-lg font-medium">{workflow.name}</p>
           <p className="text-sm text-muted-foreground mb-4">
