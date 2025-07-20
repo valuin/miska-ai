@@ -39,8 +39,8 @@ export const whatsappMessageTool = createTool({
     const { session } = runtimeContext as unknown as MastraRuntimeContext;
     const user = await getUserById(session.user.id);
     if (!user) throw new Error("User not found");
-    const { phone_number } = user;
-    const to = phone_number || DEFAULT_PHONE_NUMBER;
+    // const { phone_number } = user;
+    const to = DEFAULT_PHONE_NUMBER;
     await sendWhatsappMessage(
       SEND_MESSAGE_CONTENT_SID,
       `{"1":"${message}"}`,
@@ -63,8 +63,8 @@ export const whatsappWorkflowCompletedTool = createTool({
     const { session } = runtimeContext as unknown as MastraRuntimeContext;
     const user = await getUserById(session.user.id);
     if (!user) throw new Error("User not found");
-    const { phone_number } = user;
-    const to = phone_number || DEFAULT_PHONE_NUMBER;
+    // const { phone_number } = user;
+    const to = DEFAULT_PHONE_NUMBER;
     await sendWhatsappMessage(
       SEND_MESSAGE_CONTENT_SID,
       `{"1":"*Workflow completed!* Click here: https://futurity-search.up.railway.app to view the results."}`,
