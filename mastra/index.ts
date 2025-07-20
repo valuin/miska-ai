@@ -1,5 +1,7 @@
 import { communicationAgent } from "./agents/communication-agent";
 import { documentAgent } from "./agents/document-agent";
+import { gmailAgent } from "./agents/gmail-agent";
+import { driveAgent } from "./agents/drive-agent";
 import { Mastra } from "@mastra/core/mastra";
 import { Memory } from "@mastra/memory";
 import { normalAgent } from "./agents/normal-agent";
@@ -31,6 +33,8 @@ export const agents = {
   workflowCreatorAgent,
   documentAgent,
   communicationAgent,
+  gmailAgent,
+  driveAgent,
 };
 
 export const mastra = new Mastra({

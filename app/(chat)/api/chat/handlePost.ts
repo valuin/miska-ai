@@ -97,8 +97,6 @@ export async function handlePost(request: Request) {
     return new ChatSDKError("bad_request:api").toResponse();
   }
 
-  console.log("Request body:", requestBody);
-
   try {
     const { id, message, selectedVisibilityType } = requestBody;
     const selectedVaultFileNames = message.selectedVaultFileNames ?? [];
@@ -163,6 +161,7 @@ export async function handlePost(request: Request) {
       onError: () => "Oops, an error occurred!",
     });
     const streamContext = getStreamContext();
+
     if (streamContext) {
       return new Response(
         await streamContext.resumableStream(streamId, () => stream),

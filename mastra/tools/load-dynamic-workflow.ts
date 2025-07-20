@@ -1,15 +1,8 @@
 import { createWorkflow, createStep } from "@mastra/core/workflows";
 import { z } from "zod";
-import type { RuntimeContext } from "@mastra/core/di";
+import type { AGENT_TYPES } from "../agents/agent-router";
 import type { MastraRuntimeContext } from "@/mastra";
-
-const AGENT_TYPES = [
-  "researchAgent",
-  "ragChatAgent",
-  "documentAgent",
-  "normalAgent",
-  "communicationAgent",
-] as const;
+import type { RuntimeContext } from "@mastra/core/di";
 
 export type WorkflowNode = {
   id: string;

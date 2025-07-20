@@ -1,5 +1,5 @@
 import { generateUUID } from "@/lib/utils";
-import { getAgentType } from "@/mastra/agents/agent-router";
+import { AGENT_NAMES, getAgentType } from "@/mastra/agents/agent-router";
 import { mastra, type MastraRuntimeContext } from "@/mastra";
 import { workflowModifierAgent } from "@/mastra/tools/utility-tools";
 import { saveMessages } from "@/lib/db/queries";
@@ -69,14 +69,7 @@ export async function streamWithMastraAgent(
   }
 
   if (selectedAgent !== "normalAgent") {
-    const agentMap = {
-      researchAgent: "Initiating Research Agent...",
-      ragChatAgent: "Initiating Vault Search Agent...",
-      workflowCreatorAgent: "Initiating Workflow Agent...",
-      documentAgent: "Initiating Document Agent...",
-      communicationAgent: "Initiating Communication Agent...",
-    };
-    const agentChoice = agentMap[selectedAgent];
+    const agentChoice = `Initiating ${AGENT_NAMES[selectedAgent]}...`;
     if (!agentChoice) return;
     responsePipe.writeMessageAnnotation({
       type: "agent-choice",

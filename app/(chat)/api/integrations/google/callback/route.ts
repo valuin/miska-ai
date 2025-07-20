@@ -65,6 +65,12 @@ export async function GET(req: NextRequest) {
     { enabled: true, authenticated: true },
   );
 
-  await saveUpdatedCredentials(user_integration.id, tokens);
+  const googleTokens = {
+    access_token: tokens.access_token,
+    refresh_token: tokens.refresh_token,
+    expires_at: new Date(Date.now() + tokens.expires_in * 1000).toISOString(),
+  };
+
+  await saveUpdatedCredentials(user_integration.id, googleTokens);
   return Response.redirect(final_redirect_url);
 }

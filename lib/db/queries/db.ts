@@ -8,13 +8,15 @@ const client = postgres(process.env.POSTGRES_URL!);
 export const db = drizzle(client, { schema: { ...schema } });
 
 export const GOOGLE_SLUGS = {
-  drive: "google_drive",
-  sheets: "google_sheets",
-  docs: "google_docs",
-  slides: "google_slides",
-  calendar: "google_calendar",
-  gmail: "google_gmail",
+  drive: "google_drive" as const,
+  sheets: "google_sheets" as const,
+  docs: "google_docs" as const,
+  slides: "google_slides" as const,
+  calendar: "google_calendar" as const,
+  gmail: "google_gmail" as const,
 };
+
+export type GoogleSlug = (typeof GOOGLE_SLUGS)[keyof typeof GOOGLE_SLUGS];
 
 async function seedIntegrations() {
   await db

@@ -1,6 +1,6 @@
 "use client";
 
-import { agents } from "@/mastra/client";
+import { AGENT_TYPES } from "@/mastra/agents/agent-router";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -116,7 +116,7 @@ export function NodeBuilder() {
               <SelectValue placeholder="Choose an agent" />
             </SelectTrigger>
             <SelectContent>
-              {agents.map((agent) => (
+              {AGENT_TYPES.map((agent) => (
                 <SelectItem key={agent} value={agent}>
                   {agent}
                 </SelectItem>

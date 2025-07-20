@@ -4,6 +4,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Button } from "./ui/button";
 import { ClarificationMessage, WorkflowMessage } from "./workflow";
 import { cn, sanitizeText } from "@/lib/utils";
+import { DefaultToolResult } from "./default-tool-result";
 import { DocumentPreview } from "./document-preview";
 import { DocumentToolCall, DocumentToolResult } from "./document";
 import { Markdown } from "./markdown";
@@ -265,9 +266,7 @@ const PurePreviewMessage = ({
                           onSendToAgent={handleSendUploads}
                         />
                       ) : (
-                        <div>
-                          {toolName}
-                        </div>
+                        <div>{toolName}</div>
                       )}
                     </div>
                   );
@@ -284,8 +283,8 @@ const PurePreviewMessage = ({
                         new Set(
                           result.results
                             .map((r: any) => String(r.filename))
-                            .filter(Boolean)
-                        )
+                            .filter(Boolean),
+                        ),
                       ) as string[];
                     }
                     return (
@@ -347,9 +346,10 @@ const PurePreviewMessage = ({
                           isReadonly={isReadonly}
                         />
                       ) : (
-                        <div>
-                          {toolName} {JSON.stringify(result, null, 2)}
-                        </div>
+                        <DefaultToolResult
+                          toolName={toolName}
+                          result={result}
+                        />
                       )}
                     </div>
                   );

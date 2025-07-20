@@ -1,7 +1,7 @@
 import { authCredentials, integrations, userIntegrations } from "../schema";
 import { db } from "./db";
 import { encrypt, decrypt } from "@/lib/encryption";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 
 const DEFAULT_ENABLED_INTEGRATIONS = ["vault_search", "internet_search"];
 
@@ -29,6 +29,26 @@ export async function getIntegrationBySlug(slug: string) {
     .limit(1);
 
   return integration[0];
+}
+
+export async function getUserIntegrationIdBySlug(
+  user_id: string,
+  slug: string,
+) {
+  const [res] = await db
+    .select({
+      id: userIntegrations.id,
+    })
+    .from(integrations)
+    .leftJoin(
+      userIntegrations,
+      eq(integrations.id, userIntegrations.integration_id),
+    )
+    .where(
+      and(eq(userIntegrations.user_id, user_id), eq(integrations.slug, slug)),
+    );
+
+  return res?.id;
 }
 
 export async function getUserIntegrations(

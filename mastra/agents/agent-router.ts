@@ -4,18 +4,34 @@ import { openai } from "@ai-sdk/openai";
 import { z } from "zod";
 import type { Message } from "ai";
 
+export const AGENT_NAMES = {
+  documentAgent: "Document Agent",
+  normalAgent: "Normal Agent",
+  ragChatAgent: "Vault Search Agent",
+  researchAgent: "Research Agent",
+  workflowCreatorAgent: "Workflow Agent",
+  communicationAgent: "Communication Agent",
+  gmailAgent: "Gmail Agent",
+  driveAgent: "Drive Agent",
+} as const;
+
+export const AGENT_TYPES = [
+  "documentAgent",
+  "normalAgent",
+  "ragChatAgent",
+  "researchAgent",
+  "workflowCreatorAgent",
+  "communicationAgent",
+  "gmailAgent",
+  "driveAgent",
+] as const;
+
 const agentTypeSchema = z.object({
   reasoning: z
     .string()
     .describe("The reasoning for the agent type (~20 words)")
     .max(200),
-  agentType: z.enum([
-    "researchAgent",
-    "ragChatAgent",
-    "workflowCreatorAgent",
-    "normalAgent",
-    "documentAgent",
-  ] as const),
+  agentType: z.enum(AGENT_TYPES),
 });
 type AgentType = z.infer<typeof agentTypeSchema>["agentType"];
 
@@ -44,6 +60,10 @@ export const agentRouter = new Agent({
     - This agent is used to create, update, and request suggestions for new documents (not vault-related).
   - communicationAgent
     - This agent is used to communicate with the user via WhatsApp.
+  - gmailAgent
+    - This agent is used to interact with the user's Gmail account.
+  - driveAgent
+    - This agent is used to interact with the user's Google Drive account.
   `,
   model: openai(BASE_MODEL),
 });
