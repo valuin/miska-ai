@@ -31,8 +31,7 @@ CREATE TABLE IF NOT EXISTS "auth_credentials" (
 --> statement-breakpoint
 ALTER TABLE "Stream" DROP CONSTRAINT "Stream_id_pk";--> statement-breakpoint
 ALTER TABLE "Stream" ADD PRIMARY KEY ("id");--> statement-breakpoint
-ALTER TABLE "User" ADD COLUMN "phone_number" varchar(15);--> statement-breakpoint
-ALTER TABLE "User" ADD COLUMN "whatsapp_confirmed" boolean DEFAULT false NOT NULL;--> statement-breakpoint
+
 DO $$ BEGIN
  ALTER TABLE "user_integrations" ADD CONSTRAINT "user_integrations_user_id_User_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."User"("id") ON DELETE no action ON UPDATE no action;
 EXCEPTION
