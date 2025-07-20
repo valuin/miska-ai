@@ -14,3 +14,25 @@ export const DUMMY_PASSWORD = generateDummyPassword();
 export const LARGE_MODEL = "gpt-o4-mini";
 export const BASE_MODEL = "gpt-4.1-mini";
 export const TINY_MODEL = "gpt-4.1-nano";
+
+export const AGENT_NAMES = {
+  documentAgent: "Document Agent",
+  normalAgent: "Normal Agent",
+  ragChatAgent: "Vault Search Agent",
+  researchAgent: "Research Agent",
+  workflowCreatorAgent: "Workflow Agent",
+  communicationAgent: "Communication Agent",
+  gmailAgent: "Gmail Agent",
+  driveAgent: "Drive Agent",
+} as const;
+
+export const AGENT_TYPES = [
+  "documentAgent",
+  "normalAgent",
+  "ragChatAgent",
+  "researchAgent",
+  "workflowCreatorAgent",
+  "communicationAgent",
+  "gmailAgent",
+  "driveAgent",
+] as const;

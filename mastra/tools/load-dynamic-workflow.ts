@@ -1,6 +1,6 @@
 import { createWorkflow, createStep } from "@mastra/core/workflows";
 import { z } from "zod";
-import type { AGENT_TYPES } from "../agents/agent-router";
+import type { AGENT_TYPES } from "@/lib/constants";
 import type { MastraRuntimeContext } from "@/mastra";
 import type { RuntimeContext } from "@mastra/core/di";
 

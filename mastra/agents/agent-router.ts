@@ -1,30 +1,9 @@
 import { Agent } from "@mastra/core";
+import { AGENT_TYPES } from "@/lib/constants";
 import { BASE_MODEL } from "@/lib/constants";
 import { openai } from "@ai-sdk/openai";
 import { z } from "zod";
 import type { Message } from "ai";
-
-export const AGENT_NAMES = {
-  documentAgent: "Document Agent",
-  normalAgent: "Normal Agent",
-  ragChatAgent: "Vault Search Agent",
-  researchAgent: "Research Agent",
-  workflowCreatorAgent: "Workflow Agent",
-  communicationAgent: "Communication Agent",
-  gmailAgent: "Gmail Agent",
-  driveAgent: "Drive Agent",
-} as const;
-
-export const AGENT_TYPES = [
-  "documentAgent",
-  "normalAgent",
-  "ragChatAgent",
-  "researchAgent",
-  "workflowCreatorAgent",
-  "communicationAgent",
-  "gmailAgent",
-  "driveAgent",
-] as const;
 
 const agentTypeSchema = z.object({
   reasoning: z

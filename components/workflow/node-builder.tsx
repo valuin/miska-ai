@@ -1,6 +1,6 @@
 "use client";
 
-import { AGENT_TYPES } from "@/mastra/agents/agent-router";
+import { AGENT_TYPES } from "@/lib/constants";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
