@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 
 export type StatusEdge = EdgeProps & {
   data: {
-    error?: boolean;
+    status?: "idle" | "running" | "completed" | "error" | undefined;
   };
 };
 
@@ -31,31 +31,115 @@ export function StatusEdge({
     targetPosition,
   });
 
+  const status = data?.status || "idle";
+  
+  const getStatusColors = () => {
+    switch (status) {
+      case "error":
+        return {
+          start: "#dc2626",
+          mid: "#ef4444",
+          end: "#dc2626",
+          bg: "bg-red-500",
+          text: "text-white",
+        };
+      case "running":
+        return {
+          start: "#059669",
+          mid: "#10b981",
+          end: "#059669",
+          bg: "bg-emerald-500",
+          text: "text-white",
+        };
+      case "completed":
+        return {
+          start: "#0284c7",
+          mid: "#0ea5e9",
+          end: "#0284c7",
+          bg: "bg-sky-500",
+          text: "text-white",
+        };
+      default: // idle
+        return {
+          start: "#6b7280",
+          mid: "#9ca3af",
+          end: "#6b7280",
+          bg: "bg-gray-500",
+          text: "text-white",
+        };
+    }
+  };
+
+  const colors = getStatusColors();
+
   return (
     <>
-      <BaseEdge
-        id={id}
-        path={edgePath}
-        markerEnd={markerEnd}
+      <defs>
+        <linearGradient id={`gradient-${id}`} x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stopColor={colors.start} />
+          <stop offset="25%" stopColor={colors.mid} />
+          <stop offset="50%" stopColor={colors.mid} />
+          <stop offset="75%" stopColor={colors.mid} />
+          <stop offset="100%" stopColor={colors.end} />
+        </linearGradient>
+        
+        <linearGradient id={`horizontal-gradient-${id}`} x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stopColor={colors.start} />
+          <stop offset="50%" stopColor={colors.mid} />
+          <stop offset="100%" stopColor={colors.end} />
+        </linearGradient>
+        
+        <pattern id={`pipes-${id}`} patternUnits="userSpaceOnUse" width="60" height="10">
+          <rect width="60" height="3" fill={`url(#horizontal-gradient-${id})`} />
+          <rect y="1.5" width="60" height="3" fill={`url(#horizontal-gradient-${id})`} opacity="0.8" />
+          <rect y="3" width="60" height="3" fill={`url(#horizontal-gradient-${id})`} opacity="0.6" />
+        </pattern>
+
+        {status === "running" && (
+          <filter id={`glow-${id}`}>
+            <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+            <feMerge>
+              <feMergeNode in="coloredBlur"/>
+              <feMergeNode in="SourceGraphic"/>
+            </feMerge>
+          </filter>
+        )}
+      </defs>
+      
+      <path
+        d={edgePath}
+        fill="none"
+        stroke={`url(#pipes-${id})`}
+        strokeWidth={45}
+        strokeLinecap="butt"
+        strokeLinejoin="round"
+        filter={status === "running" ? `url(#glow-${id})` : "none"}
+        className={cn(
+          status === "running" && "animate-pulse",
+          status === "completed" && "opacity-80"
+        )}
         style={{
-          ...style,
-          strokeWidth: 2,
-          stroke: data?.error ? "#ef4444" : "#64748b",
+          animationDuration: status === "running" ? "1.5s" : undefined,
         }}
       />
-      {data?.error && (
+    
+      {status !== "idle" && (
         <EdgeLabelRenderer>
           <div
             className={cn(
-              "absolute px-2 py-1 text-xs font-medium rounded-md bg-red-500 text-white",
-              "transform -translate-x-1/2 -translate-y-1/2 pointer-events-none"
+              "absolute px-2 py-1 text-xs font-medium rounded-md pointer-events-none",
+              "transform -translate-x-1/2 -translate-y-1/2",
+              colors.bg,
+              colors.text
             )}
             style={{
               left: labelX,
               top: labelY,
             }}
           >
-            Error
+            {status === "error" && "Error"}
+            {status === "running" && "Running"}
+            {status === "completed" && "Completed"}
           </div>
         </EdgeLabelRenderer>
       )}

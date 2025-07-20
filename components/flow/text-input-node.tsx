@@ -14,7 +14,7 @@ import { type Node, type NodeProps, Position } from "@xyflow/react";
 import { PenLine, Trash } from "lucide-react";
 
 export type TextInputData = {
-	status: "processing" | "error" | "success" | "idle" | undefined;
+	status: "idle" | "running" | "completed" | "error" | undefined;
 	config: {
 		value: string;
 	};
@@ -40,7 +40,7 @@ export function TextInputNode({
 			id={id}
 			selected={selected}
 			className={cn("flex flex-col h-full", {
-				"border-orange-500": data.status === "processing",
+				"border-orange-500": data.status === "running",
 				"border-red-500": data.status === "error",
 			})}
 		>

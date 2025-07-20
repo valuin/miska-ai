@@ -8,6 +8,7 @@ export type StatusEdgeController = Omit<StatusEdge, "data"> & {
   type: "status";
   data: {
     executionState?: EdgeExecutionState;
+    status?: "idle" | "running" | "completed" | "error";
   };
 };
 
@@ -19,6 +20,7 @@ export function StatusEdgeController({
     <StatusEdge
       {...props}
       data={{
+        status: data.executionState?.status || "idle",
         error: !!data.executionState?.error,
       }}
     />

@@ -1,3 +1,4 @@
+
 import { type Node, type NodeProps, Position } from "@xyflow/react";
 
 import {
@@ -16,7 +17,7 @@ import { Bot, Trash, User } from "lucide-react";
 import { useWorkflowUiState } from "@/lib/store/workflow-ui-store";
 
 export type GenerateTextData = {
-  status: "processing" | "error" | "success" | "idle" | undefined;
+  status: "running" | "error" | "completed" | "idle" | undefined;
   config: {
     agent: string;
     type: "human-input" | "agent-task";
@@ -57,7 +58,7 @@ export function GenerateTextNode({
       className={cn("w-[600px] p-0", {
         "hover:ring-orange-500": isHumanInput,
         "ring-2 ring-orange-500": isActive,
-        "border-orange-500": data.status === "processing",
+        "border-orange-500": data.status === "running",
         "border-red-500": data.status === "error",
       })}
     >
@@ -89,24 +90,24 @@ export function GenerateTextNode({
             </NodeHeaderAction>
           )}
         </NodeHeaderActions>
-      </NodeHeader>
-      <Separator />
-      <div className="p-4 flex flex-col gap-4">
-        <div className="text-sm text-muted-foreground">
-          {data.config.type === "human-input"
-            ? (data.config?.description || "Human input required")
-            : (data.config?.description || "Agent task")}
+        </NodeHeader>
+        <Separator />
+        <div className="p-4 flex flex-col gap-4">
+          <div className="text-sm text-muted-foreground">
+            {data.config.type === "human-input"
+              ? (data.config?.description || "Human input required")
+              : (data.config?.description || "Agent task")}
+          </div>
         </div>
-      </div>
 
-      <div className="flex justify-center">
-        <LabeledHandle
-          id="result"
-          title="Result"
-          type="source"
-          position={Position.Bottom}
-        />
-      </div>
-    </BaseNode>
-  );
-}
+        <div className="flex justify-center">
+          <LabeledHandle
+            id="result"
+            title="Result"
+            type="source"
+            position={Position.Bottom}
+          />
+        </div>
+      </BaseNode>
+    );
+  }

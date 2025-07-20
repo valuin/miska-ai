@@ -31,7 +31,10 @@ const edgeTypes: EdgeTypes = {
   status: StatusEdgeController,
 };
 
-export function Flow({ onPaneClick }: { onPaneClick?: () => void }) {
+import type { WorkflowNodeProgress } from "@/lib/types/workflow";
+import { useEffect } from "react";
+
+export function Flow({ onPaneClick, workflowProgress }: { onPaneClick?: () => void; workflowProgress: Map<string, WorkflowNodeProgress> }) {
   const store = useWorkflow(
     (store) => ({
       nodes: store.nodes,
@@ -42,9 +45,14 @@ export function Flow({ onPaneClick }: { onPaneClick?: () => void }) {
       startExecution: store.startExecution,
       createNode: store.createNode,
       workflowExecutionState: store.workflowExecutionState,
+      updateNodeExecutionStates: store.updateNodeExecutionStates, // Get the new action
     }),
     shallow,
   );
+
+  useEffect(() => {
+    store.updateNodeExecutionStates(workflowProgress);
+  }, [workflowProgress, store.updateNodeExecutionStates]);
 
   const { screenToFlowPosition } = useReactFlow();
 

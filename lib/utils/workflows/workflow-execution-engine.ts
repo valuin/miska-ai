@@ -22,7 +22,7 @@ export type NodeProcessor = (
 
 // Node Execution State
 
-export type NodeExecutionStatus = 'success' | 'error' | 'processing' | 'idle';
+export type NodeExecutionStatus = 'completed' | 'error' | 'running' | 'idle';
 
 export type NodeExecutionState = {
   timestamp: string;
@@ -30,11 +30,14 @@ export type NodeExecutionState = {
   sources?: Record<string, string>;
   status: NodeExecutionStatus;
   error?: MissingConnectionError | ProcessingNodeError;
+  output?: string;
+  description?: string;
 };
 
 // Edge Execution State
 
 export type EdgeExecutionState = {
+  status?: NodeExecutionStatus;
   error?: MultipleSourcesError | CycleError;
 };
 
@@ -78,8 +81,8 @@ export const createWorkflowExecutionEngine = (context: ExecutionContext) => {
       }
 
       const sourceNodeResult =
-        sourceNode.data.executionState.sources[edge.sourceHandle];
-      targetsData[edge.targetHandle] = sourceNodeResult;
+        sourceNode.data.executionState.sources[edge.sourceHandleId!];
+      targetsData[edge.targetHandleId!] = sourceNodeResult;
     }
 
     return targetsData;
@@ -93,7 +96,7 @@ export const createWorkflowExecutionEngine = (context: ExecutionContext) => {
 
     // If this node is processing, the whole branch is processing
     if (processingNodes.has(nodeId)) {
-      return 'processing';
+      return 'running';
     }
 
     // If this node has failed, the branch has failed
@@ -107,7 +110,7 @@ export const createWorkflowExecutionEngine = (context: ExecutionContext) => {
     // If this node has no dependencies, check its own status
     if (dependencies.length === 0) {
       if (completedNodes.has(nodeId) && node.data.executionState?.sources) {
-        return 'success';
+        return 'completed';
       }
       return 'idle';
     }
@@ -115,15 +118,15 @@ export const createWorkflowExecutionEngine = (context: ExecutionContext) => {
     // Check status of all dependencies recursively
     for (const dep of dependencies) {
       const depStatus = checkBranchNodeStatus(dep.node);
-      // If any dependency is processing or has error, propagate that status
-      if (depStatus === 'processing' || depStatus === 'error') {
+      // If any dependency is running or has error, propagate that status
+      if (depStatus === 'running' || depStatus === 'error') {
         return depStatus;
       }
     }
 
     // If we got here and the node is complete with data, the branch is successful
     if (completedNodes.has(nodeId) && node.data.executionState?.sources) {
-      return 'success';
+      return 'completed';
     }
 
     return 'idle';
@@ -140,7 +143,7 @@ export const createWorkflowExecutionEngine = (context: ExecutionContext) => {
 
     // Get all edges that connect to this handle
     const incomingEdges = context.workflow.edges.filter(
-      (edge) => edge.target === nodeId && edge.targetHandle === handleId,
+      (edge) => edge.target === nodeId && edge.targetHandleId === handleId,
     );
 
     // For each incoming edge, check the status of its source node and all its descendants
@@ -174,10 +177,10 @@ export const createWorkflowExecutionEngine = (context: ExecutionContext) => {
 
       // Node can process if ALL branches are complete and NONE are processing
       const allBranchesComplete = branchStatuses.every(
-        (status) => status === 'success',
+        (status) => status === 'completed',
       );
       const hasProcessingBranch = branchStatuses.some(
-        (status) => status === 'processing',
+        (status) => status === 'running',
       );
 
       return allBranchesComplete && !hasProcessingBranch;
@@ -207,7 +210,7 @@ export const createWorkflowExecutionEngine = (context: ExecutionContext) => {
 
       context.updateNodeExecutionState(nodeId, {
         timestamp: new Date().toISOString(),
-        status: 'processing',
+        status: 'running',
         targets: targetsData,
       });
 
@@ -217,7 +220,7 @@ export const createWorkflowExecutionEngine = (context: ExecutionContext) => {
         timestamp: new Date().toISOString(),
         targets: targetsData,
         sources: result,
-        status: 'success',
+        status: 'completed',
       });
 
       completedNodes.add(nodeId);

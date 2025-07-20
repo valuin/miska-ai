@@ -19,6 +19,7 @@ import type { Connection, EdgeChange, NodeChange } from "@xyflow/react";
 import { nanoid } from "nanoid";
 import { getLayoutedElements } from "@/lib/utils/workflows/workflow";
 import { createWithEqualityFn } from "zustand/traditional";
+import type { WorkflowNodeProgress } from "@/lib/types/workflow";
 
 export interface WorkflowState {
   nodes: FlowNode[];
@@ -74,6 +75,8 @@ export interface WorkflowState {
   }>;
   // Initialize workflow with nodes and edges
   initializeWorkflow: (nodes: FlowNode[], edges: FlowEdge[]) => void;
+  updateNodeExecutionStates: (workflowProgress: Map<string, WorkflowNodeProgress>) => void;
+  updateEdgeStatusFromNodes: () => void;
 }
 
 const useWorkflow = createWithEqualityFn<WorkflowState>((set, get) => ({
@@ -92,6 +95,72 @@ const useWorkflow = createWithEqualityFn<WorkflowState>((set, get) => ({
     );
     set({ nodes: layoutedNodes, edges: layoutedEdges });
     get().validateWorkflow();
+  },
+  updateNodeExecutionStates: (workflowProgress: Map<string, WorkflowNodeProgress>) => {
+    set((state) => ({
+      nodes: state.nodes.map((node) => {
+        const progress = workflowProgress.get(node.id);
+        if (progress) {
+          return {
+            ...node,
+            data: {
+              ...node.data,
+              executionState: {
+                ...(node.data.executionState || {}), // Initialize if undefined
+                status: progress.status,
+                output: progress.output,
+                error: progress.error as any, // Cast to any to resolve type error temporarily
+                description: progress.description,
+                timestamp: node.data.executionState?.timestamp || new Date().toISOString(), // Use existing timestamp or generate new
+              },
+            },
+          } as FlowNode;
+        }
+        return node;
+      }),
+    }));
+    
+    // Update edge status based on connected node states
+    get().updateEdgeStatusFromNodes();
+  },
+  updateEdgeStatusFromNodes: () => {
+    set((state) => ({
+      edges: state.edges.map((edge) => {
+        const sourceNode = state.nodes.find((n) => n.id === edge.source);
+        const targetNode = state.nodes.find((n) => n.id === edge.target);
+        
+        if (sourceNode?.data.executionState || targetNode?.data.executionState) {
+          let edgeStatus: "idle" | "running" | "completed" | "error" = "idle";
+          
+          // Edge status logic:
+          // - If either source or target has error, edge has error
+          // - If source is completed and target is completed, edge is completed
+          // - If source is running or completed and target is running, edge is running
+          // - If source is completed and target is idle, edge shows completed
+          const sourceStatus = sourceNode?.data.executionState?.status || "idle";
+          const targetStatus = targetNode?.data.executionState?.status || "idle";
+          
+          if (sourceStatus === "error" || targetStatus === "error") {
+            edgeStatus = "error";
+          } else if (sourceStatus === "completed" && targetStatus === "completed") {
+            edgeStatus = "completed";
+          } else if ((sourceStatus === "running" || sourceStatus === "completed") && targetStatus === "running") {
+            edgeStatus = "running";
+          } else if (sourceStatus === "completed") {
+            edgeStatus = "completed";
+          }
+          
+          return {
+            ...edge,
+            data: {
+              ...edge.data,
+              status: edgeStatus,
+            },
+          };
+        }
+        return edge;
+      }),
+    }));
   },
   validateWorkflow: () => {
     const { nodes, edges } = get();
@@ -136,14 +205,54 @@ const useWorkflow = createWithEqualityFn<WorkflowState>((set, get) => ({
     return workflow;
   },
   onNodesChange: (changes) => {
-    set({
-      nodes: applyNodeChanges<FlowNode>(changes, get().nodes),
+    // Apply changes while preserving execution state
+    const currentNodes = get().nodes;
+    const updatedNodes = applyNodeChanges<FlowNode>(changes, currentNodes);
+    
+    // Ensure execution state is preserved during position/selection changes
+    const nodesWithPreservedState = updatedNodes.map((updatedNode) => {
+      const originalNode = currentNodes.find((n) => n.id === updatedNode.id);
+      if (originalNode && originalNode.data.executionState && updatedNode.data.executionState !== originalNode.data.executionState) {
+        return {
+          ...updatedNode,
+          data: {
+            ...updatedNode.data,
+            executionState: originalNode.data.executionState,
+          },
+        } as FlowNode;
+      }
+      return updatedNode;
     });
+    
+    set({
+      nodes: nodesWithPreservedState,
+      edges: [...get().edges], // Force new array reference for edges
+    });
+    get().updateEdgeStatusFromNodes(); // Re-evaluate edge status after node changes
     get().validateWorkflow();
   },
   onEdgesChange: (changes) => {
+    // Apply changes while preserving execution state
+    const currentEdges = get().edges;
+    const updatedEdges = applyEdgeChanges(changes, currentEdges);
+    
+    // Ensure execution state is preserved during edge changes
+    const edgesWithPreservedState = updatedEdges.map((updatedEdge) => {
+      const originalEdge = currentEdges.find((e) => e.id === updatedEdge.id);
+      if (originalEdge && originalEdge.data?.executionState && updatedEdge.data?.executionState !== originalEdge.data?.executionState) {
+        return {
+          ...updatedEdge,
+          data: {
+            ...updatedEdge.data,
+            executionState: originalEdge.data.executionState,
+          },
+        };
+      }
+      return updatedEdge;
+    });
+    
     set({
-      edges: applyEdgeChanges(changes, get().edges),
+      edges: edgesWithPreservedState,
     });
     get().validateWorkflow();
   },
@@ -228,10 +337,10 @@ const useWorkflow = createWithEqualityFn<WorkflowState>((set, get) => ({
     }));
   },
   updateNodeExecutionState: (nodeId, state) => {
-    set((currentState) => ({
-      nodes: currentState.nodes.map((node) => {
+    set((currentState) => {
+      const updatedNodes = currentState.nodes.map((node) => {
         if (node.id === nodeId) {
-          return {
+          const newNode = {
             ...node,
             data: {
               ...node.data,
@@ -241,10 +350,12 @@ const useWorkflow = createWithEqualityFn<WorkflowState>((set, get) => ({
               },
             },
           } as FlowNode;
+          return newNode;
         }
         return node;
-      }),
-    }));
+      });
+      return { nodes: updatedNodes };
+    });
   },
   updateEdgeExecutionState: (edgeId, state) => {
     set((currentState) => ({
@@ -361,18 +472,9 @@ const useWorkflow = createWithEqualityFn<WorkflowState>((set, get) => ({
     }
 
     // Reset execution state for all nodes
-    set((state) => ({
-      nodes: state.nodes.map((node) => ({
-        ...node,
-        data: {
-          ...node.data,
-          executionState: {
-            status: "idle",
-            timestamp: new Date().toISOString(),
-          },
-        },
-      })) as FlowNode[],
-    }));
+    // Do not reset node execution state to idle here.
+    // The SSE updates will set the correct status.
+    // If a reset is needed, it should be an explicit action.
 
     const workflow = get().validateWorkflow();
 

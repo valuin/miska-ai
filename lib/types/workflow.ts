@@ -32,7 +32,7 @@ export interface WorkflowData {
 }
 
 export type WorkflowNodeProgress = {
-  status: "pending" | "running" | "completed" | "error";
+  status: "idle" | "running" | "completed" | "error";
   output?: string;
   error?: string;
   description?: string;

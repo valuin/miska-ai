@@ -37,7 +37,7 @@ export default function WorkflowDetailPage() {
       onConnect: store.onConnect,
       startExecution: store.startExecution,
       createNode: store.createNode,
-      workflowExecutionState: store.workflowExecutionState,
+      updateEdgeExecutionState: store.updateEdgeExecutionState,
       initializeWorkflow: store.initializeWorkflow,
     }),
     shallow
@@ -55,7 +55,8 @@ export default function WorkflowDetailPage() {
     inputQuery,
     setIsExecuting,
     setNodeResults,
-    setWorkflowProgress
+    setWorkflowProgress,
+    store.updateEdgeExecutionState
   );
 
   if (loading) {
@@ -78,7 +79,7 @@ export default function WorkflowDetailPage() {
     <div className="grid grid-cols-3 h-full p-4 gap-4">
       <div className="col-span-2 size-full border border-border rounded-lg">
         <ReactFlowProvider>
-          <Flow onPaneClick={() => setActiveHumanInputNode(null)} />
+          <Flow onPaneClick={() => setActiveHumanInputNode(null)} workflowProgress={workflowProgress} />
         </ReactFlowProvider>
       </div>
 
@@ -92,7 +93,6 @@ export default function WorkflowDetailPage() {
         />
 
         <NodeOutput nodeResults={nodeResults} />
-
         <WorkflowOutput nodeResults={nodeResults} workflow={workflow} />
       </div>
     </div>

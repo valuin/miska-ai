@@ -5,12 +5,12 @@ import { Badge } from "@/components/ui/badge";
 export const NodeHeaderStatus = ({
 	status,
 }: {
-	status?: "idle" | "processing" | "success" | "error";
+	status?: "idle" | "running" | "completed" | "error";
 }) => {
 	const statusColors = {
 		idle: "bg-muted text-muted-foreground",
-		processing: "bg-orange-500 text-white",
-		success: "bg-green-500 text-white",
+		running: "bg-orange-500 text-white",
+		completed: "bg-green-500 text-white",
 		error: "bg-red-500 text-white",
 	};
 	return (
