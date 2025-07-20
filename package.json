@@ -89,6 +89,7 @@
     "lucide-react": "^0.525.0",
     "marked": "^16.1.0",
     "mastra": "^0.10.6",
+    "motion": "^12.23.6",
     "nanoid": "^5.0.8",
     "next": "15.3.0-canary.31",
     "next-auth": "5.0.0-beta.25",

@@ -13,6 +13,7 @@ import { BaseNode } from "@/components/flow/base-node";
 import { LabeledHandle } from "@/components/flow/labeled-handle";
 import { NodeHeaderStatus } from "@/components/flow/node-header-status";
 import { Bot, Trash, User } from "lucide-react";
+import { useWorkflowUiState } from "@/lib/store/workflow-ui-store";
 
 export type GenerateTextData = {
   status: "processing" | "error" | "success" | "idle" | undefined;
@@ -36,10 +37,26 @@ export function GenerateTextNode({
   data,
   onDeleteNode,
 }: GenerateTextNodeProps) {
+  const { setActiveHumanInputNode, activeHumanInputNode } = useWorkflowUiState();
+
+  const isHumanInput = data.config.type === "human-input";
+  const isActive = activeHumanInputNode?.id === id;
+
+  const handleNodeClick = () => {
+    if (isHumanInput) {
+      setActiveHumanInputNode({ id, description: data.config.description });
+    } else {
+      setActiveHumanInputNode(null);
+    }
+  };
+
   return (
     <BaseNode
       selected={selected}
-      className={cn("w-[600px] p-0 hover:ring-orange-500", {
+      onClick={handleNodeClick}
+      className={cn("w-[600px] p-0", {
+        "hover:ring-orange-500": isHumanInput,
+        "ring-2 ring-orange-500": isActive,
         "border-orange-500": data.status === "processing",
         "border-red-500": data.status === "error",
       })}
@@ -58,7 +75,7 @@ export function GenerateTextNode({
           {data.config.type === "human-input" ? <User /> : <Bot />}
         </NodeHeaderIcon>
         <NodeHeaderTitle>
-          {data.config?.description || "Generate Text"}
+          {data.config.type === "human-input" ? "Human Input" : (data.config?.agent || "Generate Text")}
         </NodeHeaderTitle>
         <NodeHeaderActions>
           <NodeHeaderStatus status={data.status} />
@@ -76,7 +93,9 @@ export function GenerateTextNode({
       <Separator />
       <div className="p-4 flex flex-col gap-4">
         <div className="text-sm text-muted-foreground">
-          {data.config?.description || "Agent task"}
+          {data.config.type === "human-input"
+            ? (data.config?.description || "Human input required")
+            : (data.config?.description || "Agent task")}
         </div>
       </div>
 

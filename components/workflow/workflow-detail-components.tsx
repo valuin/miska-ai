@@ -1,5 +1,4 @@
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Play, ChevronDown } from "lucide-react";
 import {
   Collapsible,
@@ -12,6 +11,8 @@ import type {
   NodeOutputProps,
   WorkflowOutputProps,
 } from "@/lib/types/workflow";
+import { useWorkflowUiState } from "@/lib/store/workflow-ui-store";
+import { HumanInputNotch } from "./human-input-notch";
 
 export function WorkflowDetails({
   workflow,
@@ -20,6 +21,13 @@ export function WorkflowDetails({
   onRunWorkflow,
   isExecuting,
 }: WorkflowDetailsProps) {
+  const { activeHumanInputNode, setActiveHumanInputNode } = useWorkflowUiState();
+
+  const handleHumanInputSubmit = (value: string) => {
+    setInputQuery(value);
+    setActiveHumanInputNode(null);
+  };
+
   return (
     <div className="border border-border rounded-lg p-4">
       <h2 className="text-xl font-semibold mb-4">Workflow Details</h2>
@@ -27,48 +35,18 @@ export function WorkflowDetails({
       <p className="text-sm text-muted-foreground mb-4">
         {workflow.description || "No description."}
       </p>
-
-      <Collapsible className="w-full mb-4">
-        <CollapsibleTrigger asChild>
-          <Button variant="outline" className="w-full justify-between mb-2">
-            <span>Workflow Structure ({workflow.schema.nodes.length} nodes)</span>
-            <ChevronDown className="size-4" />
-          </Button>
-        </CollapsibleTrigger>
-        <CollapsibleContent className="space-y-2">
-          <div className="text-sm text-muted-foreground">
-            <p className="font-medium mb-2">Nodes:</p>
-            <ul className="space-y-1">
-              {workflow.schema.nodes.map((node, index) => (
-                <li key={node.id} className="flex items-start">
-                  <span className="mr-2 text-xs bg-primary/20 px-1 rounded">{index + 1}</span>
-                  <span>{node.data.description || "Unnamed node"}</span>
-                </li>
-              ))}
-            </ul>
-            <p className="font-medium mt-3 mb-1">Connections:</p>
-            <ul className="space-y-1">
-              {workflow.schema.edges.map((edge, index) => (
-                <li key={edge.id} className="text-xs">
-                  <span className="text-primary">→</span> {edge.source} → {edge.target}
-                </li>
-              ))}
-            </ul>
-          </div>
-        </CollapsibleContent>
-      </Collapsible>
-
-      <h3 className="text-lg font-semibold mb-2">Input Query</h3>
-      <Input
-        placeholder="Enter your query here..."
-        value={inputQuery}
-        onChange={(e) => setInputQuery(e.target.value)}
-        className="mb-4"
-      />
+      <h3 className="text-lg font-semibold mb-2">Input</h3>
+      <div className="mb-4">
+        <HumanInputNotch
+          activeNode={activeHumanInputNode}
+          onSubmit={handleHumanInputSubmit}
+          onClose={() => setActiveHumanInputNode(null)}
+        />
+      </div>
       <Button
         onClick={onRunWorkflow}
         className={`w-full ${isExecuting ? "bg-transparent text-white" : ""}`}
-        disabled={isExecuting}
+        disabled={isExecuting || !!activeHumanInputNode}
       >
         {isExecuting ? (
           <>

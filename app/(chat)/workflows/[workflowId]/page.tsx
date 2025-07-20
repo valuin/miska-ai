@@ -14,9 +14,11 @@ import {
 } from "@/components/workflow/workflow-detail-components";
 import { shallow } from "zustand/shallow";
 import type { WorkflowData, WorkflowNodeProgress } from "@/lib/types/workflow";
+import { useWorkflowUiState } from "@/lib/store/workflow-ui-store";
 
 export default function WorkflowDetailPage() {
   const { workflowId } = useParams();
+  const { setActiveHumanInputNode } = useWorkflowUiState();
   const [workflow, setWorkflow] = useState<WorkflowData | null>(null);
   const [loading, setLoading] = useState(true);
   const [inputQuery, setInputQuery] = useState("");
@@ -76,7 +78,7 @@ export default function WorkflowDetailPage() {
     <div className="grid grid-cols-3 h-full p-4 gap-4">
       <div className="col-span-2 size-full border border-border rounded-lg">
         <ReactFlowProvider>
-          <Flow />
+          <Flow onPaneClick={() => setActiveHumanInputNode(null)} />
         </ReactFlowProvider>
       </div>
 

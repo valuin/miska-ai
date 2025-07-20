@@ -31,7 +31,7 @@ const edgeTypes: EdgeTypes = {
   status: StatusEdgeController,
 };
 
-export function Flow() {
+export function Flow({ onPaneClick }: { onPaneClick?: () => void }) {
   const store = useWorkflow(
     (store) => ({
       nodes: store.nodes,
@@ -91,6 +91,7 @@ export function Flow() {
       edgeTypes={edgeTypes}
       onDragOver={onDragOver}
       onDrop={onDrop}
+      onPaneClick={onPaneClick}
       fitView
     >
       <Background />
