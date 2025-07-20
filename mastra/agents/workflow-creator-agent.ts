@@ -70,7 +70,7 @@ export const workflowCreatorAgent = new Agent({
   `,
   model: openai(BASE_MODEL), // DO NOT CHANGE THIS TO REASONING !!!!
   tools: {
-    "create-workflow-tool": workflowTool,
-    // "clarification-tool": clarificationTool, # uncomment this when we're ready
+    workflowTool,
+    // clarificationTool, # uncomment this when we're ready
   },
 });

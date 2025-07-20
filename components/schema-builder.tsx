@@ -42,7 +42,7 @@ const edgeTypes = {
 type SchemaVisualizerProps = {
   nodes?: any[];
   edges?: any[];
-  height?: string;
+  height?: number;
   workflowProgress?: Map<
     string,
     {
@@ -57,7 +57,7 @@ type SchemaVisualizerProps = {
 function SchemaVisualizerInner({
   nodes: propNodes,
   edges: propEdges,
-  height = "h-[600px]",
+  height = 600,
   workflowProgress,
 }: SchemaVisualizerProps) {
   const [nodes, setNodes, onNodesChange] = useNodesState(
@@ -171,7 +171,8 @@ function SchemaVisualizerInner({
   return (
     <main className="flex-1 flex items-stretch">
       <div
-        className={`w-full ${height} border border-border rounded-lg bg-background`}
+        style={{ height: `${height}px` }}
+        className={`w-full border border-border rounded-lg bg-background`}
         ref={reactFlowWrapper}
       >
         <ReactFlow

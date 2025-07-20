@@ -11,14 +11,15 @@ import type { UseChatHelpers } from "@ai-sdk/react";
 export const WorkflowMessage = ({ result }: { result: CreatedWorkflow }) => {
   const { name, description } = result;
   const { nodes, edges } = extractWorkflowGraph(result.nodes);
+  const height = nodes.length > 0 ? 100 + nodes.length * 50 : 200;
 
   return (
-    <div className="w-full min-h-[400px] min-w-[320px]">
+    <div className="w-full min-w-[320px]" style={{ height: height + 50 }}>
       <h2 className="text-lg font-bold">{name}</h2>
       <p className="text-sm text-muted-foreground">{description}</p>
 
       {nodes.length > 0 ? (
-        <SchemaVisualizer nodes={nodes} edges={edges} />
+        <SchemaVisualizer nodes={nodes} edges={edges} height={height} />
       ) : (
         <div className="text-muted-foreground text-sm">No workflow data.</div>
       )}

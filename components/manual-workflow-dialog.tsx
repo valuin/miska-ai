@@ -302,7 +302,7 @@ export function ManualWorkflowDialog({
             <SchemaVisualizer
               nodes={nodes}
               edges={edges}
-              height="h-[62.5vh]"
+              height={62.5}
               workflowProgress={workflowProgress}
             />
           </div>

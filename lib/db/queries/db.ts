@@ -1,28 +1,55 @@
-import { drizzle } from 'drizzle-orm/postgres-js';
-import postgres from 'postgres';
-
-import * as chatSchema from '../schema/ai/chat.schema';
-import * as documentVaultSchema from '../schema/ai/document-vault.schema';
-import * as documentSchema from '../schema/ai/document.schema';
-import * as messageSchema from '../schema/ai/message.schema';
-import * as streamSchema from '../schema/ai/stream.schema';
-import * as suggestionSchema from '../schema/ai/suggestion.schema';
-import * as uploadSchema from '../schema/ai/upload.schema';
-import * as voteSchema from '../schema/ai/vote.schema';
-import * as workflowSchema from '../schema/ai/workflow.schema';
+import { drizzle } from "drizzle-orm/postgres-js";
+import { integrations } from "../schema";
+import * as schema from "../schema";
+import postgres from "postgres";
 
 // biome-ignore lint: Forbidden non-null assertion.
 const client = postgres(process.env.POSTGRES_URL!);
-export const db = drizzle(client, {
-  schema: {
-    ...chatSchema,
-    ...documentVaultSchema,
-    ...documentSchema,
-    ...messageSchema,
-    ...streamSchema,
-    ...suggestionSchema,
-    ...uploadSchema,
-    ...voteSchema,
-    ...workflowSchema,
-  },
-});
+export const db = drizzle(client, { schema: { ...schema } });
+
+async function seedIntegrations() {
+  await db
+    .insert(integrations)
+    .values([
+      {
+        name: "Vault Search",
+        slug: "vault_search",
+        requires_auth: false,
+        description: "Search through your uploaded documents",
+        icon: "vault.svg",
+      },
+      {
+        name: "Internet Search",
+        slug: "internet_search",
+        requires_auth: false,
+        icon: "search.svg",
+        description: "Search the internet for accurate, up-to-date information",
+      },
+      {
+        name: "WhatsApp",
+        slug: "whatsapp",
+        auth_type: "sms",
+        requires_auth: true,
+        icon: "whatsapp.svg",
+        description: "Send and receive messages on WhatsApp",
+      },
+      {
+        name: "Google Drive",
+        slug: "google_drive",
+        auth_type: "oauth2",
+        requires_auth: true,
+        icon: "drive.svg",
+        description: "Integration with Google Drive - view and edit your files",
+      },
+    ])
+    .onConflictDoNothing();
+}
+
+seedIntegrations()
+  .then(() => {
+    console.log("✅ Seeded integrations");
+  })
+  .catch((err) => {
+    console.error(err);
+    process.exit(1);
+  });

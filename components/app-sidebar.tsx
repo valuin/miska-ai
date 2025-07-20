@@ -5,6 +5,7 @@ import type { User } from "next-auth";
 import { Bot, LineChart, RepeatIcon } from "lucide-react";
 import { SidebarHistory } from "@/components/sidebar-history";
 import { SidebarUserNav } from "@/components/sidebar-user-nav";
+import Integrations from "./integrations";
 import {
   Sidebar,
   SidebarContent,
@@ -80,6 +81,7 @@ export function AppSidebar({ user }: { user: User | undefined }) {
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
+        <Integrations />
         <SidebarHistory user={user} />
       </SidebarContent>
       <SidebarFooter>{user && <SidebarUserNav user={user} />}</SidebarFooter>
