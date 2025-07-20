@@ -11,10 +11,10 @@ export function Spinner({ className, size = "md", ...props }: SpinnerProps) {
     <div
       className={cn(
         "relative inline-block",
-        size === "sm" && "h-3 w-3",
-        size === "md" && "h-4 w-4",
-        size === "lg" && "h-6 w-6",
-        className
+        size === "sm" && "size-3",
+        size === "md" && "size-4",
+        size === "lg" && "size-6",
+        className,
       )}
       {...props}
     >

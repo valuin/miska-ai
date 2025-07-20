@@ -16,7 +16,7 @@ export function DefaultToolResult({
         className="text-sm text-gray-500 rounded-lg flex items-center gap-2 w-fit"
         onClick={() => setIsOpen(!isOpen)}
       >
-        Used {toolName} <ChevronDown className="w-4 h-4" />
+        Used {toolName} <ChevronDown className="size-4" />
       </button>
       {isOpen && (
         <div className="text-sm text-gray-500">

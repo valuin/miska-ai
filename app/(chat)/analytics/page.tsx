@@ -1,8 +1,8 @@
-import { ChartBarInteractive } from '@/components/analytics/bar-chart';
-import { AgentUsageChart } from '@/components/analytics/agent-usage-chart';
-import { StatCard } from '@/components/analytics/stat-card';
-import { ToolUsageChart } from '@/components/analytics/tool-usage-chart';
-import { MessageCircle, Clock, Zap } from 'lucide-react';
+import { ChartBarInteractive } from "@/components/analytics/bar-chart";
+import { AgentUsageChart } from "@/components/analytics/agent-usage-chart";
+import { StatCard } from "@/components/analytics/stat-card";
+import { ToolUsageChart } from "@/components/analytics/tool-usage-chart";
+import { MessageCircle, Clock, Zap } from "lucide-react";
 
 export default function AnalyticsPage() {
   return (
@@ -12,19 +12,19 @@ export default function AnalyticsPage() {
           title="Total Messages"
           value="1,234"
           subtitle="in the last 7 days"
-          icon={<MessageCircle className="h-6 w-6 text-white" />}
+          icon={<MessageCircle className="size-6 text-white" />}
         />
         <StatCard
           title="Average Time Spent"
           value="2m 34s"
           subtitle="in chat"
-          icon={<Clock className="h-6 w-6 text-white" />}
+          icon={<Clock className="size-6 text-white" />}
         />
         <StatCard
           title="Projected Time Savings"
           value="12 hours"
           subtitle="this month"
-          icon={<Zap className="h-6 w-6 text-white" />}
+          icon={<Zap className="size-6 text-white" />}
         />
       </div>
       <ChartBarInteractive />
@@ -37,7 +37,7 @@ export default function AnalyticsPage() {
           title="AI Summary"
           value="Agents optimized workflows"
           subtitle="AI agents handled 80% of repetitive tasks, reducing manual effort and increasing response speed. Usage metrics show a 12% boost in efficiency and higher user satisfaction."
-          icon={<Zap className="h-6 w-6 text-white" />}
+          icon={<Zap className="size-6 text-white" />}
         />
       </div>
     </div>

@@ -1,14 +1,18 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
-import SchemaVisualizer from '@/components/schema-builder';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { toast } from 'sonner';
-import { Play, ChevronDown } from 'lucide-react';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { Spinner } from '@/components/ui/spinner';
+import { useEffect, useState } from "react";
+import { useParams } from "next/navigation";
+import SchemaVisualizer from "@/components/schema-builder";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { toast } from "sonner";
+import { Play, ChevronDown } from "lucide-react";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import { Spinner } from "@/components/ui/spinner";
 
 interface WorkflowData {
   id: string;
@@ -29,10 +33,20 @@ export default function WorkflowDetailPage() {
   const { workflowId } = useParams();
   const [workflow, setWorkflow] = useState<WorkflowData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [inputQuery, setInputQuery] = useState('');
+  const [inputQuery, setInputQuery] = useState("");
   const [nodeResults, setNodeResults] = useState<any[]>([]);
   const [isExecuting, setIsExecuting] = useState(false);
-  const [workflowProgress, setWorkflowProgress] = useState<Map<string, { status: 'pending' | 'running' | 'completed' | 'error', output?: string, error?: string, description?: string }>>(new Map());
+  const [workflowProgress, setWorkflowProgress] = useState<
+    Map<
+      string,
+      {
+        status: "pending" | "running" | "completed" | "error";
+        output?: string;
+        error?: string;
+        description?: string;
+      }
+    >
+  >(new Map());
 
   useEffect(() => {
     if (workflowId) {
@@ -44,11 +58,15 @@ export default function WorkflowDetailPage() {
             setWorkflow(data.workflow);
           } else {
             const errorData = await response.json();
-            toast.error(`Failed to fetch workflow: ${errorData.error || response.statusText}`);
+            toast.error(
+              `Failed to fetch workflow: ${errorData.error || response.statusText}`,
+            );
           }
         } catch (error) {
-          console.error('Error fetching workflow:', error);
-          toast.error('An unexpected error occurred while fetching the workflow.');
+          console.error("Error fetching workflow:", error);
+          toast.error(
+            "An unexpected error occurred while fetching the workflow.",
+          );
         } finally {
           setLoading(false);
         }
@@ -59,7 +77,7 @@ export default function WorkflowDetailPage() {
 
   const handleRunWorkflow = async () => {
     if (!workflow) {
-      toast.error('Workflow not loaded.');
+      toast.error("Workflow not loaded.");
       return;
     }
 
@@ -67,15 +85,15 @@ export default function WorkflowDetailPage() {
     setNodeResults([]);
     setWorkflowProgress(new Map());
     const runningToast = toast.info(`Running workflow: ${workflow.name}`, {
-      description: 'Please wait, this may take a moment...',
+      description: "Please wait, this may take a moment...",
       duration: Number.POSITIVE_INFINITY,
     });
 
     try {
-      const response = await fetch('/api/workflows/run', {
-        method: 'POST',
+      const response = await fetch("/api/workflows/run", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           workflowId: workflow.id,
@@ -86,7 +104,10 @@ export default function WorkflowDetailPage() {
 
       if (!response.ok) {
         const errorData = await response.json();
-        toast.error(`Workflow execution failed: ${errorData.error || response.statusText}`, { id: runningToast });
+        toast.error(
+          `Workflow execution failed: ${errorData.error || response.statusText}`,
+          { id: runningToast },
+        );
         setIsExecuting(false);
         return;
       }
@@ -94,43 +115,47 @@ export default function WorkflowDetailPage() {
       // Handle SSE stream
       const reader = response.body?.getReader();
       const decoder = new TextDecoder();
-      
+
       if (!reader) {
-        throw new Error('No response body');
+        throw new Error("No response body");
       }
 
       const newNodeResults: any[] = [];
-      
+
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
 
         const chunk = decoder.decode(value);
-        const lines = chunk.split('\n').filter(line => line.trim() !== '');
+        const lines = chunk.split("\n").filter((line) => line.trim() !== "");
 
         for (const line of lines) {
-          if (line.startsWith('data: ')) {
+          if (line.startsWith("data: ")) {
             try {
               const data = JSON.parse(line.slice(6));
-              
+
               switch (data.type) {
-                case 'workflow_started':
+                case "workflow_started":
                   toast.info(data.message, { id: runningToast });
                   break;
-                  
-                case 'node_started':
-                  setWorkflowProgress(prev => new Map(prev).set(data.nodeId, {
-                    status: 'running',
-                    description: data.description
-                  }));
+
+                case "node_started":
+                  setWorkflowProgress((prev) =>
+                    new Map(prev).set(data.nodeId, {
+                      status: "running",
+                      description: data.description,
+                    }),
+                  );
                   break;
-                  
-                case 'node_completed':
-                  setWorkflowProgress(prev => new Map(prev).set(data.nodeId, {
-                    status: 'completed',
-                    output: data.output,
-                    description: data.description
-                  }));
+
+                case "node_completed":
+                  setWorkflowProgress((prev) =>
+                    new Map(prev).set(data.nodeId, {
+                      status: "completed",
+                      output: data.output,
+                      description: data.description,
+                    }),
+                  );
                   newNodeResults.push({
                     nodeId: data.nodeId,
                     agentName: data.agentName,
@@ -138,26 +163,30 @@ export default function WorkflowDetailPage() {
                     output: data.output,
                   });
                   break;
-                  
-                case 'node_error':
-                  setWorkflowProgress(prev => new Map(prev).set(data.nodeId, {
-                    status: 'error',
-                    error: data.error,
-                    description: data.description
-                  }));
+
+                case "node_error":
+                  setWorkflowProgress((prev) =>
+                    new Map(prev).set(data.nodeId, {
+                      status: "error",
+                      error: data.error,
+                      description: data.description,
+                    }),
+                  );
                   toast.error(`Error: ${data.error}`, { id: runningToast });
                   break;
-                  
-                case 'workflow_completed':
-                  toast.success('Workflow execution completed!', { id: runningToast });
+
+                case "workflow_completed":
+                  toast.success("Workflow execution completed!", {
+                    id: runningToast,
+                  });
                   break;
-                  
-                case 'error':
+
+                case "error":
                   toast.error(data.message, { id: runningToast });
                   break;
               }
             } catch (parseError) {
-              console.error('Error parsing SSE data:', parseError);
+              console.error("Error parsing SSE data:", parseError);
             }
           }
         }
@@ -166,8 +195,10 @@ export default function WorkflowDetailPage() {
       setNodeResults(newNodeResults);
       setIsExecuting(false);
     } catch (error) {
-      console.error('Error running workflow:', error);
-      toast.error('An unexpected error occurred during workflow execution.', { id: runningToast });
+      console.error("Error running workflow:", error);
+      toast.error("An unexpected error occurred during workflow execution.", {
+        id: runningToast,
+      });
       setIsExecuting(false);
     }
   };
@@ -191,10 +222,9 @@ export default function WorkflowDetailPage() {
   return (
     <div className="flex flex-col md:flex-row h-full p-4 gap-4">
       <div className="md:w-2/3 border border-border rounded-lg">
-        <SchemaVisualizer 
-          height="h-screen" 
-          nodes={workflow.schema.nodes} 
-          edges={workflow.schema.edges} 
+        <SchemaVisualizer
+          nodes={workflow.schema.nodes}
+          edges={workflow.schema.edges}
           workflowProgress={workflowProgress}
         />
       </div>
@@ -203,7 +233,9 @@ export default function WorkflowDetailPage() {
         <div className="border border-border rounded-lg p-4 flex-grow">
           <h2 className="text-xl font-semibold mb-4">Workflow Details</h2>
           <p className="text-lg font-medium">{workflow.name}</p>
-          <p className="text-sm text-muted-foreground mb-4">{workflow.description || 'No description.'}</p>
+          <p className="text-sm text-muted-foreground mb-4">
+            {workflow.description || "No description."}
+          </p>
 
           <h3 className="text-lg font-semibold mb-2">Input Query</h3>
           <Input
@@ -212,29 +244,29 @@ export default function WorkflowDetailPage() {
             onChange={(e) => setInputQuery(e.target.value)}
             className="mb-4"
           />
-            <Button
+          <Button
             onClick={handleRunWorkflow}
-            className={`w-full ${isExecuting ? 'bg-transparent text-white' : ''}`}
+            className={`w-full ${isExecuting ? "bg-transparent text-white" : ""}`}
             disabled={isExecuting}
-            >
+          >
             {isExecuting ? (
               <>
-              <Spinner size="lg" className="mr-2" />
-              Running Workflow
+                <Spinner size="lg" className="mr-2" />
+                Running Workflow
               </>
             ) : (
               <>
-              <Play className="mr-2 size-4" />
-              Run Workflow
+                <Play className="mr-2 size-4" />
+                Run Workflow
               </>
             )}
-            </Button>
+          </Button>
 
           {nodeResults.map((result, index) => (
             <Collapsible key={result.nodeId} className="w-full mt-4">
               <CollapsibleTrigger asChild>
                 <Button variant="outline" className="w-full justify-between">
-                  Node #{index + 1} Output <ChevronDown className="h-4 w-4" />
+                  Node #{index + 1} Output <ChevronDown className="size-4" />
                 </Button>
               </CollapsibleTrigger>
               <CollapsibleContent className="mt-2 p-2 border border-border rounded-lg bg-gray-50 dark:bg-gray-900 overflow-auto max-h-60">
@@ -245,20 +277,21 @@ export default function WorkflowDetailPage() {
             </Collapsible>
           ))}
 
-          {nodeResults.length > 0 && workflow?.schema.nodes.length === nodeResults.length && (
-            <Collapsible className="w-full mt-4">
-              <CollapsibleTrigger asChild>
-                <Button variant="outline" className="w-full justify-between">
-                  Final Workflow Output <ChevronDown className="h-4 w-4" />
-                </Button>
-              </CollapsibleTrigger>
-              <CollapsibleContent className="mt-2 p-2 border border-border rounded-lg bg-gray-50 dark:bg-gray-900 overflow-auto max-h-60">
-                <pre className="text-sm whitespace-pre-wrap break-all">
-                  {JSON.stringify(nodeResults, null, 2)}
-                </pre>
-              </CollapsibleContent>
-            </Collapsible>
-          )}
+          {nodeResults.length > 0 &&
+            workflow?.schema.nodes.length === nodeResults.length && (
+              <Collapsible className="w-full mt-4">
+                <CollapsibleTrigger asChild>
+                  <Button variant="outline" className="w-full justify-between">
+                    Final Workflow Output <ChevronDown className="size-4" />
+                  </Button>
+                </CollapsibleTrigger>
+                <CollapsibleContent className="mt-2 p-2 border border-border rounded-lg bg-gray-50 dark:bg-gray-900 overflow-auto max-h-60">
+                  <pre className="text-sm whitespace-pre-wrap break-all">
+                    {JSON.stringify(nodeResults, null, 2)}
+                  </pre>
+                </CollapsibleContent>
+              </Collapsible>
+            )}
         </div>
       </div>
     </div>

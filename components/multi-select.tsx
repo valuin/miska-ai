@@ -44,7 +44,7 @@ const multiSelectVariants = cva(
     defaultVariants: {
       variant: "default",
     },
-  }
+  },
 );
 
 /**
@@ -137,7 +137,7 @@ export const MultiSelect = React.forwardRef<
       onOpen,
       ...props
     },
-    ref
+    ref,
   ) => {
     const [selectedValues, setSelectedValues] =
       React.useState<string[]>(defaultValue);
@@ -173,7 +173,7 @@ export const MultiSelect = React.forwardRef<
     }, [isPopoverOpen, onOpen]);
 
     const handleInputKeyDown = (
-      event: React.KeyboardEvent<HTMLInputElement>
+      event: React.KeyboardEvent<HTMLInputElement>,
     ) => {
       if (event.key === "Enter") {
         setIsPopoverOpen(true);
@@ -231,7 +231,7 @@ export const MultiSelect = React.forwardRef<
             onClick={handleTogglePopover}
             className={cn(
               "flex w-full p-1 rounded-md border min-h-10 h-auto items-center justify-between bg-inherit hover:bg-inherit [&_svg]:pointer-events-auto",
-              className
+              className,
             )}
           >
             {selectedValues.length > 0 ? (
@@ -245,16 +245,16 @@ export const MultiSelect = React.forwardRef<
                         key={value}
                         className={cn(
                           isAnimating ? "animate-bounce" : "",
-                          multiSelectVariants({ variant })
+                          multiSelectVariants({ variant }),
                         )}
                         style={{ animationDuration: `${animation}s` }}
                       >
                         {IconComponent && (
-                          <IconComponent className="h-4 w-4 mr-2" />
+                          <IconComponent className="size-4 mr-2" />
                         )}
                         {option?.label}
                         <XCircle
-                          className="ml-2 h-4 w-4 cursor-pointer hover:text-red-500"
+                          className="ml-2 size-4 cursor-pointer hover:text-red-500"
                           onClick={(event) => {
                             event.stopPropagation();
                             toggleOption(value);
@@ -268,13 +268,13 @@ export const MultiSelect = React.forwardRef<
                       className={cn(
                         "bg-transparent text-foreground border-foreground/1 hover:bg-transparent",
                         isAnimating ? "animate-bounce" : "",
-                        multiSelectVariants({ variant })
+                        multiSelectVariants({ variant }),
                       )}
                       style={{ animationDuration: `${animation}s` }}
                     >
                       {`+ ${selectedValues.length - maxCount} more`}
                       <XCircle
-                        className="ml-2 h-4 w-4 cursor-pointer hover:text-red-500"
+                        className="ml-2 size-4 cursor-pointer hover:text-red-500"
                         onClick={(event) => {
                           event.stopPropagation();
                           clearExtraOptions();
@@ -328,13 +328,13 @@ export const MultiSelect = React.forwardRef<
                 >
                   <div
                     className={cn(
-                      "mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary",
+                      "mr-2 flex size-4 items-center justify-center rounded-sm border border-primary",
                       selectedValues.length === options.length
                         ? "bg-primary text-primary-foreground"
-                        : "opacity-50 [&_svg]:invisible"
+                        : "opacity-50 [&_svg]:invisible",
                     )}
                   >
-                    <CheckIcon className="h-4 w-4" />
+                    <CheckIcon className="size-4" />
                   </div>
                   <span>(Select All)</span>
                 </CommandItem>
@@ -348,16 +348,16 @@ export const MultiSelect = React.forwardRef<
                     >
                       <div
                         className={cn(
-                          "mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary",
+                          "mr-2 flex size-4 items-center justify-center rounded-sm border border-primary",
                           isSelected
                             ? "bg-primary text-primary-foreground"
-                            : "opacity-50 [&_svg]:invisible"
+                            : "opacity-50 [&_svg]:invisible",
                         )}
                       >
-                        <CheckIcon className="h-4 w-4" />
+                        <CheckIcon className="size-4" />
                       </div>
                       {option.icon && (
-                        <option.icon className="mr-2 h-4 w-4 text-muted-foreground" />
+                        <option.icon className="mr-2 size-4 text-muted-foreground" />
                       )}
                       <span>{option.label}</span>
                     </CommandItem>
@@ -395,15 +395,15 @@ export const MultiSelect = React.forwardRef<
         {animation > 0 && selectedValues.length > 0 && (
           <WandSparkles
             className={cn(
-              "cursor-pointer my-2 text-foreground bg-background w-3 h-3",
-              isAnimating ? "" : "text-muted-foreground"
+              "cursor-pointer my-2 text-foreground bg-background size-3",
+              isAnimating ? "" : "text-muted-foreground",
             )}
             onClick={() => setIsAnimating(!isAnimating)}
           />
         )}
       </Popover>
     );
-  }
+  },
 );
 
 MultiSelect.displayName = "MultiSelect";

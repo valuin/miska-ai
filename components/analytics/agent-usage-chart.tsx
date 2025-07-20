@@ -84,7 +84,7 @@ export function AgentUsageChart() {
           {chartData.map((item) => (
             <div key={item.agent} className="flex items-center gap-2">
               <span
-                className="inline-block w-3 h-3 rounded-full"
+                className="inline-block size-3 rounded-full"
                 style={{ backgroundColor: item.fill }}
               />
               <span className="text-xs">

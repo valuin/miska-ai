@@ -57,7 +57,7 @@ type SchemaVisualizerProps = {
 function SchemaVisualizerInner({
   nodes: propNodes,
   edges: propEdges,
-  height = 600,
+  height = 0,
   workflowProgress,
 }: SchemaVisualizerProps) {
   const [nodes, setNodes, onNodesChange] = useNodesState(
@@ -171,7 +171,7 @@ function SchemaVisualizerInner({
   return (
     <main className="flex-1 flex items-stretch">
       <div
-        style={{ height: `${height}px` }}
+        style={{ height: height ? `${height}px` : "100%" }}
         className={`w-full border border-border rounded-lg bg-background`}
         ref={reactFlowWrapper}
       >

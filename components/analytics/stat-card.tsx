@@ -34,9 +34,9 @@ export function StatCard({
                 }`}
               >
                 {trendDirection === "up" ? (
-                  <TrendingUp className="mr-1 h-3 w-3" />
+                  <TrendingUp className="mr-1 size-3" />
                 ) : (
-                  <TrendingDown className="mr-1 h-3 w-3" />
+                  <TrendingDown className="mr-1 size-3" />
                 )}
                 {trend}
               </span>
@@ -44,7 +44,7 @@ export function StatCard({
             <span className="text-xs text-muted-foreground">{subtitle}</span>
           </div>
         </div>
-        <div className="flex h-12 w-12 items-center justify-center rounded-md bg-gray-950">
+        <div className="flex size-12 items-center justify-center rounded-md bg-gray-950">
           {icon}
         </div>
       </CardContent>
