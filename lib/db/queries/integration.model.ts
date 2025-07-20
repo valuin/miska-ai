@@ -1,6 +1,7 @@
-import { eq } from "drizzle-orm";
-import { integrations, userIntegrations } from "../schema";
+import { authCredentials, integrations, userIntegrations } from "../schema";
 import { db } from "./db";
+import { encrypt, decrypt } from "@/lib/encryption";
+import { eq } from "drizzle-orm";
 
 const DEFAULT_ENABLED_INTEGRATIONS = ["vault_search", "internet_search"];
 
@@ -13,6 +14,7 @@ export type UserIntegration = {
   requires_auth: boolean;
   authenticated: boolean;
   enabled: boolean;
+  redirect_url: string | null;
 };
 
 export async function getIntegrations() {
@@ -20,11 +22,13 @@ export async function getIntegrations() {
 }
 
 export async function getIntegrationBySlug(slug: string) {
-  return await db
+  const integration = await db
     .select()
     .from(integrations)
     .where(eq(integrations.slug, slug))
     .limit(1);
+
+  return integration[0];
 }
 
 export async function getUserIntegrations(
@@ -40,6 +44,7 @@ export async function getUserIntegrations(
       requires_auth: integrations.requires_auth,
       enabled: userIntegrations.enabled,
       authenticated: userIntegrations.authenticated,
+      redirect_url: integrations.redirect_url,
     })
     .from(integrations)
     .innerJoin(
@@ -78,8 +83,9 @@ export async function setupUserIntegrations(
         icon: integration.icon,
         description: integration.description,
         requires_auth: integration.requires_auth,
-        authenticated: userIntegration.authenticated,
         enabled: userIntegration.enabled,
+        authenticated: userIntegration.authenticated,
+        redirect_url: integration.redirect_url,
       };
     })
     .filter(Boolean) as UserIntegration[];
@@ -90,4 +96,68 @@ export async function toggleIntegration(id: string, enabled: boolean) {
     .update(userIntegrations)
     .set({ enabled })
     .where(eq(userIntegrations.integration_id, id));
+}
+
+export async function updateUserIntegration(
+  user_id: string,
+  integration_id: string,
+  data: Partial<UserIntegration>,
+) {
+  const user_integration = await db
+    .insert(userIntegrations)
+    .values({
+      user_id,
+      integration_id,
+      ...data,
+    })
+    .onConflictDoUpdate({
+      target: [userIntegrations.user_id, userIntegrations.integration_id],
+      set: { ...data },
+    })
+    .returning()
+    .then((res) => res[0]);
+
+  return user_integration;
+}
+
+export async function getValidCredentials(userIntegrationId: string) {
+  const rows = await db
+    .select()
+    .from(authCredentials)
+    .where(eq(authCredentials.user_integration_id, userIntegrationId));
+
+  const now = new Date();
+  const credentials: Record<string, string> = {};
+
+  for (const row of rows) {
+    if (row.expires_at && row.expires_at < now) continue;
+    credentials[row.key] = decrypt(row.value_encrypted);
+  }
+
+  return credentials;
+}
+
+export async function saveUpdatedCredentials(
+  userIntegrationId: string,
+  updated: Record<string, string>,
+) {
+  const values = Object.entries(updated).map(([key, value]) => ({
+    user_integration_id: userIntegrationId,
+    key,
+    value_encrypted: encrypt(String(value)),
+    expires_at: key === "expires_at" ? new Date(value) : null,
+  }));
+
+  for (const v of values) {
+    await db
+      .insert(authCredentials)
+      .values(v)
+      .onConflictDoUpdate({
+        target: [authCredentials.user_integration_id, authCredentials.key],
+        set: {
+          value_encrypted: v.value_encrypted,
+          expires_at: v.expires_at,
+        },
+      });
+  }
 }

@@ -1,5 +1,6 @@
 import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
 import Image from "next/image";
 import type { UserIntegrationResponse } from "@/app/(chat)/api/integrations/route";
 
@@ -33,51 +34,65 @@ export default function Integrations() {
     queryFn: fetchIntegrations,
   });
 
+  const router = useRouter();
+
   return (
-    <div className="flex flex-col gap-1 shadow-inner shadow-black/90 m-4 py-3 px-2 rounded-lg">
-      <p className="text-sm font-semibold px-2">Integrations</p>
-      {isLoading && (
-        <p className="text-xs text-muted-foreground px-2">Loading...</p>
-      )}
-      {integrations?.map((integration) => (
-        <button
-          key={integration.id}
-          type="button"
-          className="w-full flex items-center gap-2 hover:bg-muted/50 rounded-md px-2 py-1 hover:scale-[102%] transition-all duration-100"
-          onClick={async () => {
-            if (integration.requires_auth && !integration.authenticated) {
-              // TODO: Open auth modal
-            } else {
-              const toggle = !integration.enabled;
-              await toggleIntegration(integration.id, toggle);
-              refetch().then(() => {
-                toast.success(`${toggle ? "Enabled" : "Disabled"} integration`);
-              });
-            }
-          }}
-        >
-          <Image
-            src={`/integrations/${integration.icon}`}
-            className="size-3"
-            alt={integration.name}
-            width={20}
-            height={20}
-          />
-          <div className="text-left">
-            <p className="text-xs">{integration.name}</p>
-            {integration.requires_auth && !integration.authenticated && (
-              <p className="text-[8px] text-muted-foreground">
-                Authenticate now!
-              </p>
-            )}
-          </div>
-          {integration.enabled ? (
-            <div className="ml-auto bg-green-500 rounded-full size-2 animate-pulse border border-green-500/50" />
-          ) : (
-            <div className="ml-auto bg-red-500 rounded-full size-2 animate-pulse border border-red-500/50" />
-          )}
-        </button>
-      ))}
+    <div className="h-48 m-4">
+      <div className="flex flex-col gap-1 shadow-inner shadow-black/90 py-3 px-2 rounded-lg h-full overflow-y-scroll">
+        <p className="text-sm font-semibold px-2">Integrations</p>
+        {isLoading && (
+          <p className="text-xs text-muted-foreground px-2">Loading...</p>
+        )}
+        {integrations
+          ?.sort((a, b) => {
+            if (a.enabled && !b.enabled) return -1;
+            if (!a.enabled && b.enabled) return 1;
+            return a.name.localeCompare(b.name);
+          })
+          ?.map((integration) => (
+            <button
+              key={integration.id}
+              type="button"
+              className="w-full flex items-center gap-2 hover:bg-muted/50 rounded-md px-2 py-1 hover:scale-[102%] transition-all duration-100"
+              onClick={async () => {
+                if (integration.requires_auth && !integration.authenticated) {
+                  if (integration.redirect_url) {
+                    router.push(integration.redirect_url);
+                  }
+                } else {
+                  const toggle = !integration.enabled;
+                  await toggleIntegration(integration.id, toggle);
+                  refetch().then(() => {
+                    toast.success(
+                      `${toggle ? "Enabled" : "Disabled"} integration`,
+                    );
+                  });
+                }
+              }}
+            >
+              <Image
+                src={`/integrations/${integration.icon}`}
+                className="size-3"
+                alt={integration.name}
+                width={20}
+                height={20}
+              />
+              <div className="text-left group">
+                <p className="text-xs">{integration.name}</p>
+                {integration.requires_auth && !integration.authenticated && (
+                  <p className="text-[8px] text-muted-foreground transition-opacity duration-100">
+                    Authenticate to get started!
+                  </p>
+                )}
+              </div>
+              {integration.enabled ? (
+                <div className="ml-auto bg-green-500 rounded-full size-2 animate-pulse border border-green-500/50" />
+              ) : (
+                <div className="ml-auto bg-red-500 rounded-full size-2 animate-pulse border border-red-500/50" />
+              )}
+            </button>
+          ))}
+      </div>
     </div>
   );
 }

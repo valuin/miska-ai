@@ -7,6 +7,15 @@ import postgres from "postgres";
 const client = postgres(process.env.POSTGRES_URL!);
 export const db = drizzle(client, { schema: { ...schema } });
 
+export const GOOGLE_SLUGS = {
+  drive: "google_drive",
+  sheets: "google_sheets",
+  docs: "google_docs",
+  slides: "google_slides",
+  calendar: "google_calendar",
+  gmail: "google_gmail",
+};
+
 async function seedIntegrations() {
   await db
     .insert(integrations)
@@ -35,11 +44,57 @@ async function seedIntegrations() {
       },
       {
         name: "Google Drive",
-        slug: "google_drive",
+        slug: GOOGLE_SLUGS.drive,
         auth_type: "oauth2",
         requires_auth: true,
         icon: "drive.svg",
-        description: "Integration with Google Drive - view and edit your files",
+        description: "View and search your Google Drive files",
+        redirect_url: `/api/integrations/google/login?scope=${GOOGLE_SLUGS.drive}`,
+      },
+      {
+        name: "Google Docs",
+        slug: GOOGLE_SLUGS.docs,
+        auth_type: "oauth2",
+        requires_auth: true,
+        icon: "docs.svg",
+        description: "Search, edit, and create Google Docs",
+        redirect_url: `/api/integrations/google/login?scope=${GOOGLE_SLUGS.docs}`,
+      },
+      {
+        name: "Google Sheets",
+        slug: GOOGLE_SLUGS.sheets,
+        auth_type: "oauth2",
+        requires_auth: true,
+        icon: "sheets.svg",
+        description: "Search, edit, and create Google Sheets",
+        redirect_url: `/api/integrations/google/login?scope=${GOOGLE_SLUGS.sheets}`,
+      },
+      {
+        name: "Google Slides",
+        slug: GOOGLE_SLUGS.slides,
+        auth_type: "oauth2",
+        requires_auth: true,
+        icon: "slides.svg",
+        description: "Search, edit, and create Google Slides",
+        redirect_url: `/api/integrations/google/login?scope=${GOOGLE_SLUGS.slides}`,
+      },
+      {
+        name: "Google Calendar",
+        slug: GOOGLE_SLUGS.calendar,
+        auth_type: "oauth2",
+        requires_auth: true,
+        icon: "calendar.svg",
+        description: "Manage your Google Calendar",
+        redirect_url: `/api/integrations/google/login?scope=${GOOGLE_SLUGS.calendar}`,
+      },
+      {
+        name: "Google Gmail",
+        slug: GOOGLE_SLUGS.gmail,
+        auth_type: "oauth2",
+        requires_auth: true,
+        icon: "gmail.svg",
+        description: "Search and send emails with your Gmail",
+        redirect_url: `/api/integrations/google/login?scope=${GOOGLE_SLUGS.gmail}`,
       },
     ])
     .onConflictDoNothing();

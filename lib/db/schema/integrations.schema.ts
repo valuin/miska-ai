@@ -8,4 +8,5 @@ export const integrations = pgTable("integrations", {
   icon: text("icon").notNull().default(""),
   description: text("description").notNull(),
   requires_auth: boolean("requires_auth").notNull().default(false),
+  redirect_url: text("redirect_url"),
 });
