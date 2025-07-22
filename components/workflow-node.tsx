@@ -1,8 +1,14 @@
 import { memo } from "react";
-import { Handle, Position, type NodeProps, type Node, useUpdateNodeInternals } from "@xyflow/react";
+import {
+  Handle,
+  Position,
+  type NodeProps,
+  type Node,
+  useUpdateNodeInternals,
+} from "@xyflow/react";
 import { cn } from "@/lib/utils";
 import { Textarea } from "@/components/ui/textarea";
-import { useReactFlow } from '@xyflow/react';
+import { useReactFlow } from "@xyflow/react";
 import { Loader2, CheckCircle2, AlertCircle, Clock } from "lucide-react";
 import Badge from "@/components/badge";
 
@@ -14,7 +20,7 @@ interface WorkflowNodeData extends Record<string, unknown> {
   selected?: boolean;
   humanFeedback?: string;
   progress?: {
-    status: 'pending' | 'running' | 'completed' | 'error';
+    status: "pending" | "running" | "completed" | "error";
     output?: string;
     error?: string;
     description?: string;
@@ -34,9 +40,11 @@ function WorkflowNode({ id, data, selected }: NodeProps<WorkflowNodeType>) {
   const { setNodes } = useReactFlow();
   const updateNodeInternals = useUpdateNodeInternals();
 
-  const handleHumanFeedbackChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+  const handleHumanFeedbackChange = (
+    e: React.ChangeEvent<HTMLTextAreaElement>,
+  ) => {
     const newFeedback = e.target.value;
-    
+
     setNodes((nodes) =>
       nodes.map((node) => {
         if (node.id === id) {
@@ -49,23 +57,33 @@ function WorkflowNode({ id, data, selected }: NodeProps<WorkflowNodeType>) {
           };
         }
         return node;
-      })
+      }),
     );
-    
+
     updateNodeInternals(id);
   };
 
   const getStatusBadge = () => {
     if (!data.progress) return null;
-    
+
     switch (data.progress.status) {
-      case 'running':
-        return <Badge icon={(props) => <Loader2 {...props} className={`${props.className} animate-spin`} />} text="Running" />;
-      case 'completed':
+      case "running":
+        return (
+          <Badge
+            icon={(props) => (
+              <Loader2
+                {...props}
+                className={`${props.className} animate-spin`}
+              />
+            )}
+            text="Running"
+          />
+        );
+      case "completed":
         return <Badge icon={CheckCircle2} text="Completed" />;
-      case 'error':
+      case "error":
         return <Badge icon={AlertCircle} text="Error" />;
-      case 'pending':
+      case "pending":
         return <Badge icon={Clock} text="Pending" />;
       default:
         return null;
@@ -85,11 +103,11 @@ function WorkflowNode({ id, data, selected }: NodeProps<WorkflowNodeType>) {
         </div>
         {getStatusBadge()}
       </div>
-      
+
       <div className="text-base font-medium text-center mb-2">
         {data.description}
       </div>
-      
+
       <div>
         {data.agent && (
           <span className="text-xs text-muted-foreground mt-1">
@@ -97,14 +115,13 @@ function WorkflowNode({ id, data, selected }: NodeProps<WorkflowNodeType>) {
           </span>
         )}
       </div>
-      
+
       {data.tool && (
         <div className="text-xs text-muted-foreground mt-1 italic">
           Tool: {data.tool}
         </div>
       )}
-      
-      
+
       {data.type === "human-input" && (
         <div className="w-full mt-3">
           <Textarea
@@ -116,7 +133,7 @@ function WorkflowNode({ id, data, selected }: NodeProps<WorkflowNodeType>) {
           />
         </div>
       )}
-      
+
       <Handle type="target" position={Position.Top} />
       <Handle type="source" position={Position.Bottom} />
     </div>

@@ -1,7 +1,7 @@
+import { AGENT_TYPES } from "@/lib/constants";
+import { createMastraWorkflowFromJson } from "./load-dynamic-workflow";
 import { createTool } from "@mastra/core/tools";
 import { z } from "zod";
-import { createMastraWorkflowFromJson } from "./load-dynamic-workflow";
-import { AGENT_TYPES } from "@/lib/constants";
 
 const agentEnum = z.enum(AGENT_TYPES);
 
@@ -56,7 +56,9 @@ export const workflowTool = createTool({
     steps: z.array(
       z.object({
         type: z.enum(["human-input", "agent-task"]),
-        description: z.string(),
+        description: z
+          .string()
+          .describe("Description of the step, no more than ten words"),
         agent: agentEnum.optional(),
       }),
     ),

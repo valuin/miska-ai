@@ -8,7 +8,7 @@ export const isTestEnvironment = Boolean(
 
 export const guestRegex = /^guest-\d+$/;
 
-export const LARGE_MODEL = "gpt-o4-mini";
+export const LARGE_MODEL = "gpt-4o-mini";
 export const BASE_MODEL = "gpt-4.1-mini";
 export const TINY_MODEL = "gpt-4.1-nano";
 
