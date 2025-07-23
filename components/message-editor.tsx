@@ -1,6 +1,6 @@
 'use client';
 
-import { ChatRequestOptions, type Message } from 'ai';
+import type { Message } from 'ai';
 import { Button } from './ui/button';
 import {
   type Dispatch,

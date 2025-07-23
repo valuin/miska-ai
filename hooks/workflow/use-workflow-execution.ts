@@ -4,7 +4,6 @@ import { SSEWorkflowExecutionClient } from '@/lib/utils/workflows/sse-workflow-e
 import type { WorkflowError } from '@/lib/utils/workflows/workflow';
 import { validateHumanInputs } from '@/lib/validation/workflow-validation';
 import type { GenerateTextNode } from './types';
-import type { WorkflowNodeProgress } from '@/lib/types/workflow';
 
 export const useWorkflowExecution = () => {
   const [workflowExecutionState, setWorkflowExecutionState] = useState({

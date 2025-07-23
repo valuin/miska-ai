@@ -37,7 +37,7 @@ export function TextInputNodeController({
       id={id}
       data={{
         status: data.executionState?.status,
-        config: data.config,
+        config: data.config || {},
       }}
       {...props}
       onTextChange={handleTextChange}

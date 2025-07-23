@@ -7,9 +7,7 @@ import {
   type NodeTypes,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { Background, Panel, ReactFlow, useReactFlow } from '@xyflow/react';
-import { Button } from '@/components/ui/button';
-import { ErrorIndicator } from '@/components/error-indicator';
+import { Background, ReactFlow, useReactFlow } from '@xyflow/react';
 import { GenerateTextNodeController } from '@/components/workflow-v2/generate-text-node-controller';
 import { PromptCrafterNodeController } from '@/components/workflow-v2/prompt-crafter-node-controller';
 import { shallow } from 'zustand/shallow';
@@ -51,7 +49,7 @@ export function Flow({
       startExecution: store.startExecution,
       createNode: store.createNode,
       workflowExecutionState: store.workflowExecutionState,
-      updateNodeExecutionStates: store.updateNodeExecutionStates, // Get the new action
+      updateNodeExecutionStates: store.updateNodeExecutionStates,
     }),
     shallow,
   );
@@ -86,12 +84,6 @@ export function Flow({
     });
 
     store.createNode(type, position);
-  };
-
-  const onStartExecution = async () => {
-    const result = await store.startExecution();
-    if (result.status === 'error') {
-    }
   };
 
   return (

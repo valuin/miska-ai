@@ -33,6 +33,7 @@ export interface WorkflowSlice {
     edgeId: string,
     state: Partial<EdgeExecutionState> | undefined,
   ) => void;
+  resetWorkflow: () => void;
 }
 
 export const createWorkflowSlice: StateCreator<
@@ -62,6 +63,14 @@ export const createWorkflowSlice: StateCreator<
       workflowDescription: description,
     });
     get().validateWorkflow();
+  },
+  resetWorkflow: () => {
+    set({
+      nodes: [],
+      edges: [],
+      workflowName: '',
+      workflowDescription: '',
+    });
   },
   updateNodeExecutionStates: (
     workflowProgress: Map<string, WorkflowNodeProgress>,

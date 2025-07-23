@@ -32,14 +32,16 @@
         "noAutofocus": "off",
         "useFocusableInteractive": "off",
         "useAriaPropsForRole": "off",
-        "useKeyWithClickEvents": "off"
+        "useKeyWithClickEvents": "off",
+        "noStaticElementInteractions": "off"
       },
       "complexity": {
         "noUselessStringConcat": "warn",
         "noForEach": "off",
         "noUselessSwitchCase": "off",
         "noUselessThisAlias": "off",
-        "noBannedTypes": "off"
+        "noBannedTypes": "off",
+        "noStaticOnlyClass": "off"
       },
       "correctness": {
         "noUnusedImports": "warn",
@@ -56,14 +58,17 @@
         "useDefaultParameterLast": "warn",
         "useExponentiationOperator": "off",
         "noUnusedTemplateLiteral": "off",
-        "noUselessElse": "off"
+        "noUselessElse": "off",
+        "noNonNullAssertion": "off"
       },
       "suspicious": {
         "noExplicitAny": "off",
-        "noArrayIndexKey": "off"
+        "noArrayIndexKey": "off",
+        "noRedeclare": "off"
       },
       "nursery": {
-        "recommended": true
+        "recommended": true,
+        "useUniqueElementIds": "off"
       }
     }
   },

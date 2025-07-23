@@ -52,7 +52,6 @@ const HighlightedPre = memo(
           {tokens.map((line, lineIndex) => (
             <span
               key={`line-${
-                // biome-ignore lint/suspicious/noArrayIndexKey: Needed for react key
                 lineIndex
               }`}
             >
@@ -65,7 +64,6 @@ const HighlightedPre = memo(
                 return (
                   <span
                     key={`token-${
-                      // biome-ignore lint/suspicious/noArrayIndexKey: Needed for react key
                       tokenIndex
                     }`}
                     style={style}
@@ -319,7 +317,6 @@ export const MarkdownContent = memo(
         content={block}
         className={className}
         key={`${id}-block_${
-          // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
           index
         }`}
       />

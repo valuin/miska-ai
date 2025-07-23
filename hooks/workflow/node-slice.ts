@@ -138,8 +138,7 @@ export const createNodeSlice: StateCreator<WorkflowState, [], [], NodeSlice> = (
     const nodesWithPreservedState: FlowNode[] = updatedNodes.map((updatedNode: FlowNode) => {
       const originalNode: FlowNode | undefined = currentNodes.find((n: FlowNode) => n.id === updatedNode.id);
       if (
-        originalNode &&
-        originalNode.data.executionState &&
+        originalNode?.data.executionState &&
         updatedNode.data.executionState !== originalNode.data.executionState
       ) {
         return {
@@ -165,8 +164,7 @@ export const createNodeSlice: StateCreator<WorkflowState, [], [], NodeSlice> = (
     const edgesWithPreservedState: FlowEdge[] = updatedEdges.map((updatedEdge: FlowEdge) => {
       const originalEdge: FlowEdge | undefined = currentEdges.find((e: FlowEdge) => e.id === updatedEdge.id);
       if (
-        originalEdge &&
-        originalEdge.data?.executionState &&
+        originalEdge?.data?.executionState &&
         updatedEdge.data?.executionState !== originalEdge.data?.executionState
       ) {
         return {

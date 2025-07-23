@@ -96,7 +96,7 @@ export function useWorkflowExecution(
       const newNodeResults: any[] = [];
 
       const processEvent = (data: any) => {
-        let connectedEdges; // Declare once here
+        let connectedEdges: any[] = [];
         switch (data.type) {
           case 'workflow_started':
             toast.info(data.message, { id: runningToast });

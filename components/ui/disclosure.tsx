@@ -4,9 +4,9 @@ import {
   AnimatePresence,
   motion,
   MotionConfig,
-  Transition,
-  Variant,
-  Variants,
+  type Transition,
+  type Variant,
+  type Variants,
 } from 'motion/react';
 import { createContext, useContext, useState, useId, useEffect } from 'react';
 import { cn } from '@/lib/utils';

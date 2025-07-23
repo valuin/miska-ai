@@ -1,6 +1,6 @@
 'use client';
 
-import { BaseEdge, EdgeLabelRenderer, getBezierPath } from '@xyflow/react';
+import { EdgeLabelRenderer, getBezierPath } from '@xyflow/react';
 import type { EdgeProps } from '@xyflow/react';
 import { cn } from '@/lib/utils';
 

@@ -10,16 +10,15 @@ import { toast } from "sonner";
 import { useState } from "react";
 import { useWorkflow } from "@/hooks/use-workflow";
 import { Dropzone, DropzoneContent, DropzoneEmptyState } from "@/components/ui/dropzone";
-import { Progress } from "@/components/ui/progress";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"; // Added Select components
-import { z } from "zod"; // Added zod
-import { AGENT_TYPES } from "@/lib/constants"; // Added AGENT_TYPES
+} from "@/components/ui/select";
+import { z } from "zod";
+import { AGENT_TYPES } from "@/lib/constants";
 
 export const WorkflowDetails = () => {
   const [prompt, setPrompt] = useState("");
@@ -129,14 +128,6 @@ export const WorkflowDetails = () => {
         <Button onClick={handleGenerate} className="w-full">
           {showGenerationProgress ? "Generating..." : "Generate Workflow"}
         </Button>
-        {showGenerationProgress && (
-          <div className="space-y-2">
-            <Progress value={generationProgress} />
-            <p className="text-sm text-muted-foreground">
-              {generationMessage}
-            </p>
-          </div>
-        )}
       </CardContent>
     </Card>
   );

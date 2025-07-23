@@ -19,10 +19,11 @@ import {
   StepperDescription,
   StepperSeparator,
 } from '@/components/ui/stepper';
+import { Progress } from '@/components/ui/progress';
 import { useWorkflow } from '@/hooks/use-workflow';
 import { useQueryClient } from '@tanstack/react-query';
 import { ReactFlowProvider } from '@xyflow/react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { v4 as uuidv4 } from 'uuid';
 import { z } from 'zod';
@@ -31,7 +32,7 @@ import {
   NodeBuilder,
   WorkflowDetails,
   WorkflowReview,
-} from './workflow-details';
+} from './workflow-create-steps';
 import { GenerateWorkflow } from './generate-workflow';
 
 const steps = [
@@ -62,6 +63,9 @@ export function ManualWorkflowDialog({
     workflowExecutionState,
     workflowName,
     workflowDescription,
+    generationProgress,
+    generationMessage,
+    showGenerationProgress,
   } = useWorkflow((state) => ({
     nodes: state.nodes,
     edges: state.edges,
@@ -70,10 +74,21 @@ export function ManualWorkflowDialog({
     workflowExecutionState: state.workflowExecutionState,
     workflowName: state.workflowName,
     workflowDescription: state.workflowDescription,
+    generationProgress: state.generationProgress,
+    generationMessage: state.generationMessage,
+    showGenerationProgress: state.showGenerationProgress,
   }));
 
+  useEffect(() => {
+    if (open) {
+      resetWorkflow();
+      setActiveStep(1); // Reset to the first step
+    }
+  }, [open, resetWorkflow]);
+
   const handleNextStep = () => {
-    if (activeStep === 1) { // Now 'Details' is step 1
+    if (activeStep === 1) {
+      // Now 'Details' is step 1
       const result = workflowDetailSchema.safeParse({
         workflowName,
         workflowDescription,
@@ -184,6 +199,14 @@ export function ManualWorkflowDialog({
               ),
             )}
           </Stepper>
+          {showGenerationProgress && activeStep === 1 && (
+            <div className="space-y-2 ml-4 w-64">
+              <Progress value={generationProgress} />
+              <p className="text-xs text-muted-foreground text-center">
+                {generationMessage}
+              </p>
+            </div>
+          )}
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 flex-1 overflow-auto">

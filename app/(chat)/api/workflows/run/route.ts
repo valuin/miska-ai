@@ -1,6 +1,5 @@
 import { communicationAgent } from '@/mastra/agents/communication-agent';
 import { documentAgent } from '@/mastra/agents/document-agent';
-import { NextResponse } from 'next/server';
 import { normalAgent } from '@/mastra/agents/normal-agent';
 import { ragChatAgent } from '@/mastra/agents/rag-chat-agent';
 import { researchAgent } from '@/mastra/agents/research-agent';

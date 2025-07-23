@@ -8,13 +8,13 @@ import { useWorkflow } from '@/hooks/use-workflow';
 import { useWorkflowData } from '@/hooks/use-workflow-data';
 import { useWorkflowExecution } from '@/hooks/use-workflow-execution';
 import { useWorkflowUiState } from '@/lib/store/workflow-ui-store';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import type { WorkflowData, WorkflowNodeProgress } from '@/lib/types/workflow';
 import {
   WorkflowDetails,
   NodeOutput,
   WorkflowOutput,
-} from '@/components/workflow-detail-component';
+} from '@/components/workflow-detail-sidebar';
 export default function WorkflowDetailPage() {
   const { workflowId } = useParams();
   const { setActiveHumanInputNode } = useWorkflowUiState();
@@ -38,9 +38,17 @@ export default function WorkflowDetailPage() {
       createNode: store.createNode,
       updateEdgeExecutionState: store.updateEdgeExecutionState,
       initializeWorkflow: store.initializeWorkflow,
+      resetWorkflow: store.resetWorkflow,
     }),
     shallow,
   );
+
+  useEffect(() => {
+    // Cleanup function to reset the workflow when the component unmounts
+    return () => {
+      store.resetWorkflow();
+    };
+  }, [store.resetWorkflow]);
 
   useWorkflowData(
     workflowId,

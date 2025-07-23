@@ -24,8 +24,6 @@ export const useWorkflowGeneration = () => {
         formData.append('prompt', prompt);
         formData.append('file', file);
         body = formData;
-        // When sending FormData, do not set Content-Type header manually,
-        // the browser will set it automatically with the correct boundary.
         delete headers['Content-Type'];
       }
 
@@ -51,14 +49,14 @@ export const useWorkflowGeneration = () => {
           try {
             const finalSchema = JSON.parse(fullSchema);
             if (
-              finalSchema &&
-              finalSchema.schema &&
-              finalSchema.schema.nodes &&
+              finalSchema?.schema?.nodes &&
               finalSchema.schema.edges
             ) {
               initializeWorkflow(
                 finalSchema.schema.nodes,
                 finalSchema.schema.edges,
+                finalSchema.schema.name || 'Generated Workflow',
+                finalSchema.schema.description || 'Workflow generated from prompt'
               );
             } else {
               throw new Error('Invalid workflow schema received.');
