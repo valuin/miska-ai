@@ -32,8 +32,7 @@
         "noAutofocus": "off",
         "useFocusableInteractive": "off",
         "useAriaPropsForRole": "off",
-        "useKeyWithClickEvents": "off",
-        "noStaticElementInteractions": "off"
+        "useKeyWithClickEvents": "off"
       },
       "complexity": {
         "noUselessStringConcat": "warn",
@@ -67,8 +66,7 @@
         "noRedeclare": "off"
       },
       "nursery": {
-        "recommended": true,
-        "useUniqueElementIds": "off"
+        "recommended": true
       }
     }
   },

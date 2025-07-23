@@ -1,27 +1,27 @@
-import { Button } from "./ui/button";
-import { InfoIcon } from "lucide-react";
-import { Textarea } from "./ui/textarea";
-import { useState } from "react";
-import Badge from "./badge";
-import type { UseChatHelpers } from "@ai-sdk/react";
+import { Button } from './ui/button';
+import { InfoIcon } from 'lucide-react';
+import { Textarea } from './ui/textarea';
+import { useState } from 'react';
+import Badge from './badge';
+import type { UseChatHelpers } from '@ai-sdk/react';
 
 export const ClarificationMessage = ({
   result,
   append,
 }: {
   result: { questions: string[] };
-  append: UseChatHelpers["append"];
+  append: UseChatHelpers['append'];
 }) => {
   const [answers, setAnswers] = useState<Record<string, string>>({});
 
   const handleSubmit = () => {
-    let content = "";
+    let content = '';
     for (const question of result.questions) {
       if (answers[question]) {
         content += `- ${question}: ${answers[question]}\n`;
       }
     }
-    append({ role: "user", content });
+    append({ role: 'user', content });
   };
 
   return (

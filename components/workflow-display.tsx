@@ -14,7 +14,8 @@ const WorkflowDisplay = ({ result }: { result: WorkflowData }) => {
   useEffect(() => {
     if (result?.schema) {
       const agentTaskNodes = result.schema.nodes.filter(
-        (node: WorkflowNode) => node.data.type === 'agent-task' || node.data.type === 'human-input',
+        (node: WorkflowNode) =>
+          node.data.type === 'agent-task' || node.data.type === 'human-input',
       );
 
       const nodeIds = new Set(agentTaskNodes.map((n) => n.id));
@@ -53,9 +54,7 @@ const WorkflowDisplay = ({ result }: { result: WorkflowData }) => {
   }
 
   return (
-    <div
-      className="relative w-full h-[400px] border rounded-lg"
-    >
+    <div className="relative w-full h-[400px] border rounded-lg">
       <ReactFlowProvider>
         <Flow />
       </ReactFlowProvider>

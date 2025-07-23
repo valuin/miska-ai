@@ -48,15 +48,13 @@ export const useWorkflowGeneration = () => {
         if (done) {
           try {
             const finalSchema = JSON.parse(fullSchema);
-            if (
-              finalSchema?.schema?.nodes &&
-              finalSchema.schema.edges
-            ) {
+            if (finalSchema?.schema?.nodes && finalSchema.schema.edges) {
               initializeWorkflow(
                 finalSchema.schema.nodes,
                 finalSchema.schema.edges,
                 finalSchema.schema.name || 'Generated Workflow',
-                finalSchema.schema.description || 'Workflow generated from prompt'
+                finalSchema.schema.description ||
+                  'Workflow generated from prompt',
               );
             } else {
               throw new Error('Invalid workflow schema received.');

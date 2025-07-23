@@ -211,9 +211,7 @@ export function ManualWorkflowDialog({
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 flex-1 overflow-auto">
           <div className="border rounded-lg overflow-y-auto p-4">
-            {activeStep === 1 && (
-              <WorkflowDetails />
-            )}
+            {activeStep === 1 && <WorkflowDetails />}
             {activeStep === 2 && <NodeBuilder />}
             {activeStep === 3 && <WorkflowReview />}
             {activeStep === 4 && <GenerateWorkflow />}

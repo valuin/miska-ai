@@ -107,4 +107,3 @@ export const HumanInputNotch = ({
     </Disclosure>
   );
 };
-

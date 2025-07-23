@@ -50,11 +50,7 @@ const HighlightedPre = memo(
       <pre {...props} className={cn(DEFAULT_PRE_BLOCK_CLASS, className)}>
         <code className="whitespace-pre-wrap">
           {tokens.map((line, lineIndex) => (
-            <span
-              key={`line-${
-                lineIndex
-              }`}
-            >
+            <span key={`line-${lineIndex}`}>
               {line.map((token, tokenIndex) => {
                 const style =
                   typeof token.htmlStyle === 'string'
@@ -62,12 +58,7 @@ const HighlightedPre = memo(
                     : token.htmlStyle;
 
                 return (
-                  <span
-                    key={`token-${
-                      tokenIndex
-                    }`}
-                    style={style}
-                  >
+                  <span key={`token-${tokenIndex}`} style={style}>
                     {token.content}
                   </span>
                 );
@@ -316,9 +307,7 @@ export const MarkdownContent = memo(
       <MemoizedMarkdownBlock
         content={block}
         className={className}
-        key={`${id}-block_${
-          index
-        }`}
+        key={`${id}-block_${index}`}
       />
     ));
   },

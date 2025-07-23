@@ -63,32 +63,36 @@ interface NodeSliceActions {
   getNodeById: (nodeId: string) => FlowNode;
   createNode: (
     nodeType: FlowNode['type'],
-    position: { x: number; y: number }
+    position: { x: number; y: number },
   ) => FlowNode;
   updateNode: <T extends FlowNode['type']>(
     id: string,
     type: T,
-    data: Partial<FlowNode['data']>
+    data: Partial<FlowNode['data']>,
   ) => void;
   deleteNode: (id: string) => void;
   addDynamicHandle: <T extends FlowNode['type']>(
     nodeId: string,
     type: T,
     handleCategory: string,
-    handle: Omit<DynamicHandle, 'id'>
+    handle: Omit<DynamicHandle, 'id'>,
   ) => string;
   removeDynamicHandle: <T extends FlowNode['type']>(
     nodeId: string,
     type: T,
     handleCategory: string,
-    handleId: string
+    handleId: string,
   ) => void;
 }
 
 type NodeSliceComplete = NodeSliceState & NodeSliceActions;
 
 export const createNodeSlice: StateCreator<WorkflowState, [], [], NodeSlice> = (
-  set: (partial: Partial<WorkflowState> | ((state: WorkflowState) => Partial<WorkflowState>)) => void,
+  set: (
+    partial:
+      | Partial<WorkflowState>
+      | ((state: WorkflowState) => Partial<WorkflowState>),
+  ) => void,
   get: () => WorkflowState,
 ): NodeSliceComplete => ({
   nodes: [],
@@ -102,7 +106,10 @@ export const createNodeSlice: StateCreator<WorkflowState, [], [], NodeSlice> = (
     set({ currentNodeAgent: agent });
   },
   addNode: () => {
-    const { currentNodeAgent, currentNodeDescription }: { currentNodeAgent: string; currentNodeDescription: string } = get();
+    const {
+      currentNodeAgent,
+      currentNodeDescription,
+    }: { currentNodeAgent: string; currentNodeDescription: string } = get();
     const nodeType: FlowNode['type'] =
       currentNodeAgent === 'human' || currentNodeAgent === 'user'
         ? 'text-input'
@@ -133,24 +140,31 @@ export const createNodeSlice: StateCreator<WorkflowState, [], [], NodeSlice> = (
   },
   onNodesChange: (changes: NodeChange<FlowNode>[]) => {
     const currentNodes: FlowNode[] = get().nodes;
-    const updatedNodes: FlowNode[] = applyNodeChanges<FlowNode>(changes, currentNodes);
+    const updatedNodes: FlowNode[] = applyNodeChanges<FlowNode>(
+      changes,
+      currentNodes,
+    );
 
-    const nodesWithPreservedState: FlowNode[] = updatedNodes.map((updatedNode: FlowNode) => {
-      const originalNode: FlowNode | undefined = currentNodes.find((n: FlowNode) => n.id === updatedNode.id);
-      if (
-        originalNode?.data.executionState &&
-        updatedNode.data.executionState !== originalNode.data.executionState
-      ) {
-        return {
-          ...updatedNode,
-          data: {
-            ...updatedNode.data,
-            executionState: originalNode.data.executionState,
-          },
-        } as FlowNode;
-      }
-      return updatedNode;
-    });
+    const nodesWithPreservedState: FlowNode[] = updatedNodes.map(
+      (updatedNode: FlowNode) => {
+        const originalNode: FlowNode | undefined = currentNodes.find(
+          (n: FlowNode) => n.id === updatedNode.id,
+        );
+        if (
+          originalNode?.data.executionState &&
+          updatedNode.data.executionState !== originalNode.data.executionState
+        ) {
+          return {
+            ...updatedNode,
+            data: {
+              ...updatedNode.data,
+              executionState: originalNode.data.executionState,
+            },
+          } as FlowNode;
+        }
+        return updatedNode;
+      },
+    );
 
     set({
       nodes: nodesWithPreservedState,
@@ -161,22 +175,26 @@ export const createNodeSlice: StateCreator<WorkflowState, [], [], NodeSlice> = (
     const currentEdges: FlowEdge[] = get().edges;
     const updatedEdges: FlowEdge[] = applyEdgeChanges(changes, currentEdges);
 
-    const edgesWithPreservedState: FlowEdge[] = updatedEdges.map((updatedEdge: FlowEdge) => {
-      const originalEdge: FlowEdge | undefined = currentEdges.find((e: FlowEdge) => e.id === updatedEdge.id);
-      if (
-        originalEdge?.data?.executionState &&
-        updatedEdge.data?.executionState !== originalEdge.data?.executionState
-      ) {
-        return {
-          ...updatedEdge,
-          data: {
-            ...updatedEdge.data,
-            executionState: originalEdge.data.executionState,
-          },
-        };
-      }
-      return updatedEdge;
-    });
+    const edgesWithPreservedState: FlowEdge[] = updatedEdges.map(
+      (updatedEdge: FlowEdge) => {
+        const originalEdge: FlowEdge | undefined = currentEdges.find(
+          (e: FlowEdge) => e.id === updatedEdge.id,
+        );
+        if (
+          originalEdge?.data?.executionState &&
+          updatedEdge.data?.executionState !== originalEdge.data?.executionState
+        ) {
+          return {
+            ...updatedEdge,
+            data: {
+              ...updatedEdge.data,
+              executionState: originalEdge.data.executionState,
+            },
+          };
+        }
+        return updatedEdge;
+      },
+    );
 
     set({
       edges: edgesWithPreservedState,
@@ -184,7 +202,10 @@ export const createNodeSlice: StateCreator<WorkflowState, [], [], NodeSlice> = (
     get().validateWorkflow();
   },
   onConnect: (connection: Connection) => {
-    const newEdge: FlowEdge[] = addEdge({ ...connection, type: 'status' }, get().edges);
+    const newEdge: FlowEdge[] = addEdge(
+      { ...connection, type: 'status' },
+      get().edges,
+    );
     const sourceNode: FlowNode = get().getNodeById(connection.source!);
     get().validateWorkflow();
   },
