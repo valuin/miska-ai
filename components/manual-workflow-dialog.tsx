@@ -1,7 +1,6 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { z } from "zod";
 import {
   Dialog,
   DialogContent,
@@ -20,16 +19,27 @@ import {
   StepperDescription,
   StepperSeparator,
 } from "@/components/ui/stepper";
-import SchemaVisualizer from "./schema-builder";
-import { v4 as uuidv4 } from "uuid";
-import { toast } from "sonner";
+import { useWorkflow } from "@/hooks/use-workflow";
 import { useQueryClient } from "@tanstack/react-query";
-import { WorkflowDetails } from "./workflow/workflow-details";
-import { NodeBuilder } from "./workflow/node-builder";
-import { WorkflowReview } from "./workflow/workflow-review";
-import { WorkflowProgress } from "./workflow/workflow-progress";
-import { steps } from "./workflow/workflow-steps";
-import { useWorkflowStore } from "@/lib/store/workflow-store";
+import { ReactFlowProvider } from "@xyflow/react";
+import { useState } from "react";
+import { toast } from "sonner";
+import { v4 as uuidv4 } from "uuid";
+import { z } from "zod";
+import { Flow } from "./workflow-detail-flow";
+import {
+  NodeBuilder,
+  WorkflowDetails,
+  WorkflowReview,
+} from "./workflow-details";
+import { GenerateWorkflow } from "./generate-workflow";
+
+const steps = [
+  { id: 1, title: "Generate", description: "Create a workflow from a prompt" },
+  { id: 2, title: "Details", description: "Configure basic settings" },
+  { id: 3, title: "Build", description: "Add and connect nodes" },
+  { id: 4, title: "Review", description: "Review and test" },
+];
 
 const workflowDetailSchema = z.object({
   workflowName: z.string().min(1, "Workflow name is required."),
@@ -42,30 +52,22 @@ export function ManualWorkflowDialog({
   onWorkflowCreated?: () => void;
 }) {
   const queryClient = useQueryClient();
+  const [open, setOpen] = useState(false);
+  const [activeStep, setActiveStep] = useState(1);
+  const [workflowName, setWorkflowName] = useState("");
+  const [workflowDescription, setWorkflowDescription] = useState("");
 
-  // Zustand store
-  const {
-    workflowName,
-    workflowDescription,
-    nodes,
-    edges,
-    workflowProgress,
-    isRunningWorkflow,
-    generationProgress,
-    generationMessage,
-    showGenerationProgress,
-    activeStep,
-    open,
-    setWorkflowProgress,
-    setIsRunningWorkflow,
-    resetWorkflow,
-    setActiveStep,
-    setExecutionMessage,
-    setOpen,
-  } = useWorkflowStore();
+  const { nodes, edges, startExecution, resetWorkflow, workflowExecutionState } =
+    useWorkflow((state) => ({
+      nodes: state.nodes,
+      edges: state.edges,
+      startExecution: state.startExecution,
+      resetWorkflow: state.resetWorkflow,
+      workflowExecutionState: state.workflowExecutionState,
+    }));
 
   const handleNextStep = () => {
-    if (activeStep === 1) {
+    if (activeStep === 2) {
       const result = workflowDetailSchema.safeParse({
         workflowName,
         workflowDescription,
@@ -95,9 +97,7 @@ export function ManualWorkflowDialog({
     try {
       const response = await fetch("/api/workflows", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           schema: workflowData,
           name: workflowName,
@@ -110,10 +110,7 @@ export function ManualWorkflowDialog({
         setOpen(false);
         setActiveStep(1);
         resetWorkflow();
-
-        // Invalidate the workflows query to refresh the list
         queryClient.invalidateQueries({ queryKey: ["workflows"] });
-
         if (onWorkflowCreated) {
           onWorkflowCreated();
         }
@@ -134,127 +131,18 @@ export function ManualWorkflowDialog({
       return;
     }
 
-    setIsRunningWorkflow(true);
-    setExecutionMessage("Starting workflow execution...");
-    setWorkflowProgress(new Map());
-
-    const workflowData = {
-      id: uuidv4(),
-      name: workflowName || "Test Workflow",
-      description: workflowDescription,
-      nodes: nodes,
-      edges: edges,
-    };
-
-    try {
-      const response = await fetch("/api/workflows/run", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          workflowId: workflowData.id,
-          workflowSchema: workflowData,
-          inputQuery: "Execute workflow",
-        }),
-      });
-
-      const reader = response.body?.getReader();
-      const decoder = new TextDecoder();
-
-      if (!reader) {
-        throw new Error("No response body");
-      }
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-
-        const chunk = decoder.decode(value);
-        const lines = chunk.split("\n").filter((line) => line.trim() !== "");
-
-        for (const line of lines) {
-          if (line.startsWith("data: ")) {
-            const data = JSON.parse(line.slice(6));
-
-            switch (data.type) {
-              case "workflow_started":
-                setExecutionMessage(data.message);
-                break;
-
-              case "node_started":
-                setWorkflowProgress(
-                  new Map([
-                    ...Array.from(workflowProgress.entries()),
-                    [
-                      data.nodeId,
-                      {
-                        status: "running",
-                        description: data.description,
-                      },
-                    ],
-                  ]),
-                );
-                setExecutionMessage(`Running ${data.agentName}...`);
-                break;
-
-              case "node_completed":
-                setWorkflowProgress(
-                  new Map([
-                    ...Array.from(workflowProgress.entries()),
-                    [
-                      data.nodeId,
-                      {
-                        status: "completed",
-                        output: data.output,
-                        description: data.description,
-                      },
-                    ],
-                  ]),
-                );
-                setExecutionMessage(`${data.agentName} completed`);
-                break;
-
-              case "node_error":
-                setWorkflowProgress(
-                  new Map([
-                    ...Array.from(workflowProgress.entries()),
-                    [
-                      data.nodeId,
-                      {
-                        status: "error",
-                        error: data.error,
-                        description: data.description,
-                      },
-                    ],
-                  ]),
-                );
-                setExecutionMessage(`Error: ${data.error}`);
-                break;
-
-              case "workflow_completed":
-                setExecutionMessage("Workflow completed successfully");
-                break;
-
-              case "error":
-                setExecutionMessage(data.message);
-                break;
-            }
-          }
-        }
-      }
-
-      setIsRunningWorkflow(false);
-    } catch (error) {
-      setExecutionMessage("Failed to execute workflow");
-      setIsRunningWorkflow(false);
+    const result = await startExecution();
+    if (result.status === "error") {
+      toast.error(result.message);
+    } else {
+      toast.success("Workflow execution started.");
     }
   };
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button>Create Workflow Manually</Button>
+        <Button>Create Workflow</Button>
       </DialogTrigger>
       <DialogContent className="max-w-6xl h-[90vh] flex flex-col">
         <DialogHeader>
@@ -270,41 +158,45 @@ export function ManualWorkflowDialog({
             onValueChange={setActiveStep}
             className="w-full max-w-3xl"
           >
-            {steps.map((step, index) => (
-              <StepperItem key={step.id} step={index + 1} className="mx-4">
-                <StepperTrigger>
-                  <StepperIndicator>{index + 1}</StepperIndicator>
-                  <div>
-                    <StepperTitle>{step.title}</StepperTitle>
-                    <StepperDescription>{step.description}</StepperDescription>
-                  </div>
-                </StepperTrigger>
-                {index < steps.length - 1 && <StepperSeparator />}
-              </StepperItem>
-            ))}
+            {steps.map(
+              (
+                step: { id: number; title: string; description: string },
+                index: number,
+              ) => (
+                <StepperItem key={step.id} step={index + 1} className="mx-4">
+                  <StepperTrigger>
+                    <StepperIndicator>{index + 1}</StepperIndicator>
+                    <div>
+                      <StepperTitle>{step.title}</StepperTitle>
+                      <StepperDescription>{step.description}</StepperDescription>
+                    </div>
+                  </StepperTrigger>
+                  {index < steps.length - 1 && <StepperSeparator />}
+                </StepperItem>
+              ),
+            )}
           </Stepper>
-
-          <WorkflowProgress
-            showGenerationProgress={showGenerationProgress && activeStep === 1}
-            generationProgress={generationProgress}
-            generationMessage={generationMessage}
-          />
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 flex-1 overflow-auto">
           <div className="border rounded-lg overflow-y-auto p-4">
-            {activeStep === 1 && <WorkflowDetails />}
-            {activeStep === 2 && <NodeBuilder />}
-            {activeStep === 3 && <WorkflowReview />}
+            {activeStep === 1 && <GenerateWorkflow />}
+            {activeStep === 2 && (
+              <WorkflowDetails
+                name={workflowName}
+                description={workflowDescription}
+                setName={setWorkflowName}
+                setDescription={setWorkflowDescription}
+              />
+            )}
+            {activeStep === 3 && <NodeBuilder />}
+            {activeStep === 4 && <WorkflowReview />}
           </div>
 
           <div className="border rounded-lg h-full">
-            <SchemaVisualizer
-              nodes={nodes}
-              edges={edges}
-              height={62.5}
-              workflowProgress={workflowProgress}
-            />
+            <ReactFlowProvider>
+              <Flow />
+            </ReactFlowProvider>
           </div>
         </div>
 
@@ -324,10 +216,10 @@ export function ManualWorkflowDialog({
             <>
               <Button
                 onClick={handleRunWorkflow}
-                disabled={isRunningWorkflow || nodes.length === 0}
+                disabled={workflowExecutionState.isRunning || nodes.length === 0}
                 variant="secondary"
               >
-                {isRunningWorkflow ? "Running..." : "Run Workflow"}
+                {workflowExecutionState.isRunning ? "Running..." : "Run Workflow"}
               </Button>
               <Button onClick={handleSaveWorkflow}>Save Workflow</Button>
             </>

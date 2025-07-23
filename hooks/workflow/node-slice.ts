@@ -13,6 +13,7 @@ import type { StateCreator } from "zustand";
 import type { WorkflowState } from "./types";
 
 export interface NodeSlice {
+  resetWorkflow: () => void;
   nodes: FlowNode[];
   edges: FlowEdge[];
   onNodesChange: (changes: NodeChange<FlowNode>[]) => void;
@@ -51,6 +52,12 @@ export const createNodeSlice: StateCreator<
 > = (set, get) => ({
   nodes: [],
   edges: [],
+  resetWorkflow: () => {
+    set({
+      nodes: [],
+      edges: [],
+    });
+  },
   onNodesChange: (changes) => {
     const currentNodes = get().nodes;
     const updatedNodes = applyNodeChanges<FlowNode>(changes, currentNodes);

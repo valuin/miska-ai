@@ -8,7 +8,7 @@ import type { Node, NodeProps } from "@xyflow/react";
 import { useCallback } from "react";
 
 export type GenerateTextNodeController = Node<
-  Omit<GenerateTextData, "status"> & {
+  GenerateTextData & {
     executionState?: NodeExecutionState;
   },
   "generate-text"
@@ -29,8 +29,8 @@ export function GenerateTextNodeController({
     <GenerateTextNode
       id={id}
       data={{
+        ...data,
         status: data.executionState?.status,
-        config: data.config,
       }}
       {...props}
       onDeleteNode={handleDeleteNode}

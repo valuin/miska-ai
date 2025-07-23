@@ -14,8 +14,7 @@ import {
   WorkflowDetails,
   NodeOutput,
   WorkflowOutput,
-} from "@/components/workflow/workflow-detail-components";
-
+} from "@/components/workflow-detail-component";
 export default function WorkflowDetailPage() {
   const { workflowId } = useParams();
   const { setActiveHumanInputNode } = useWorkflowUiState();

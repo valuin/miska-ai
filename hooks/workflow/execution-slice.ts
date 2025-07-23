@@ -1,3 +1,4 @@
+import { parseDataStreamPart } from "ai";
 import { SSEWorkflowExecutionClient } from "@/lib/utils/workflows/sse-workflow-execution-client";
 import {
   type FlowEdge,
@@ -20,6 +21,13 @@ import type {
 import type { WorkflowNodeProgress } from "@/lib/types/workflow";
 
 export interface ExecutionSlice {
+  generationProgress: number;
+  generationMessage: string;
+  showGenerationProgress: boolean;
+  setGenerationProgress: (progress: number) => void;
+  setGenerationMessage: (message: string) => void;
+  setShowGenerationProgress: (show: boolean) => void;
+  generateWorkflow: (prompt: string, file?: File) => Promise<void>;
   workflowExecutionState: {
     isRunning: boolean;
     finishedAt: string | null;
@@ -60,6 +68,132 @@ export const createExecutionSlice: StateCreator<
   [],
   ExecutionSlice
 > = (set, get) => ({
+  generationProgress: 0,
+  generationMessage: "",
+  showGenerationProgress: false,
+  setGenerationProgress: (progress) => set({ generationProgress: progress }),
+  setGenerationMessage: (message) => set({ generationMessage: message }),
+  setShowGenerationProgress: (show) => set({ showGenerationProgress: show }),
+  generateWorkflow: async (prompt, file) => {
+    get().setShowGenerationProgress(true);
+    get().setGenerationMessage("Generating workflow...");
+    get().setGenerationProgress(0);
+
+    const formData = new FormData();
+    formData.append("prompt", prompt);
+    if (file) {
+      formData.append("file", file);
+    }
+
+    try {
+      const response = await fetch("/api/workflows/generate", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.body) {
+        throw new Error("No response body");
+      }
+
+      let fullSchema = "";
+      try {
+        let lineBuffer = ""; // Buffer for incomplete lines
+
+        await response.body.pipeThrough(new TextDecoderStream()).pipeTo(
+          new WritableStream({
+            write(chunk) {
+              lineBuffer += chunk;
+              const lines = lineBuffer.split('\n');
+              lineBuffer = lines.pop() || ''; // Keep the last (potentially incomplete) line
+
+              for (const line of lines) {
+                if (line.trim() === '') continue;
+                try {
+                  const part = parseDataStreamPart(line);
+                  switch (part.type) {
+                    case 'message_annotations':
+                      for (const annotation of part.value) {
+                        if (
+                          annotation &&
+                          typeof annotation === 'object' &&
+                          'type' in annotation &&
+                          annotation.type === 'progress' &&
+                          'message' in annotation &&
+                          typeof annotation.message === 'string' &&
+                          'progress' in annotation &&
+                          typeof annotation.progress === 'number'
+                        ) {
+                          get().setGenerationMessage(annotation.message);
+                          get().setGenerationProgress(annotation.progress);
+                        }
+                      }
+                      break;
+                    case 'data':
+                      for (const data of part.value) {
+                        if (
+                          data &&
+                          typeof data === 'object' &&
+                          'type' in data &&
+                          data.type === 'schema_chunk' &&
+                          'chunk' in data &&
+                          typeof data.chunk === 'string'
+                        ) {
+                          fullSchema += data.chunk;
+                        }
+                      }
+                      break;
+                  }
+                } catch (parseError) {
+                  console.error("Error parsing stream line with parseDataStreamPart:", line, parseError);
+                }
+              }
+            },
+            close() {
+              console.log("Stream closed. Final accumulated fullSchema:", fullSchema);
+              try {
+                const finalSchema = JSON.parse(fullSchema);
+                console.log("Final parsed schema:", finalSchema);
+
+                // The schema is now nested under the `schema` property
+                const workflowSchema = finalSchema.schema;
+
+                get().initializeWorkflow(workflowSchema.nodes, workflowSchema.edges);
+                console.log("Workflow initialized with nodes:", workflowSchema.nodes, "and edges:", workflowSchema.edges);
+                get().setGenerationMessage("Workflow generated successfully!");
+                get().setGenerationProgress(100);
+              } catch (jsonError) {
+                console.error("Error parsing final schema JSON (in close):", jsonError, "Full schema content:", fullSchema);
+                get().setGenerationMessage(`Failed to parse final workflow schema: ${jsonError instanceof Error ? jsonError.message : String(jsonError)}`);
+              }
+            },
+            abort(reason) {
+              console.error("Stream aborted:", reason);
+              get().setGenerationMessage(`Workflow generation aborted: ${reason instanceof Error ? reason.message : String(reason)}`);
+            },
+          })
+        );
+      } catch (error) {
+        console.error("Workflow generation failed in client-side hook:", error);
+        get().setGenerationMessage(`Failed to generate workflow: ${error instanceof Error ? error.message : String(error)}`);
+      }
+      try {
+        const finalSchema = JSON.parse(fullSchema);
+        console.log("Final parsed schema:", finalSchema);
+        get().initializeWorkflow(finalSchema.nodes, finalSchema.edges);
+        console.log("Workflow initialized with nodes:", finalSchema.nodes, "and edges:", finalSchema.edges);
+        get().setGenerationMessage("Workflow generated successfully!");
+        get().setGenerationProgress(100);
+      } catch (jsonError) {
+        console.error("Error parsing final schema JSON:", jsonError, "Full schema content:", fullSchema);
+        get().setGenerationMessage(`Failed to parse final workflow schema: ${jsonError instanceof Error ? jsonError.message : String(jsonError)}`);
+      }
+    } catch (error) {
+      console.error("Workflow generation failed in client-side hook:", error);
+      get().setGenerationMessage(`Failed to generate workflow: ${error instanceof Error ? error.message : String(error)}`);
+    } finally {
+      setTimeout(() => get().setShowGenerationProgress(false), 3000);
+    }
+  },
   workflowExecutionState: {
     isRunning: false,
     finishedAt: null,
@@ -83,6 +217,14 @@ export const createExecutionSlice: StateCreator<
     );
   },
   initializeWorkflow: (initialNodes: FlowNode[], initialEdges: FlowEdge[]) => {
+    console.log("initializeWorkflow called with initialNodes:", initialNodes, "and initialEdges:", initialEdges);
+    console.trace("Call stack for initializeWorkflow:");
+
+    if (!initialNodes || !initialEdges) {
+      console.warn("initializeWorkflow received undefined nodes or edges. Skipping layouting.");
+      return;
+    }
+
     const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(
       initialNodes,
       initialEdges,

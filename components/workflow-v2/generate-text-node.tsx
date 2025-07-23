@@ -31,13 +31,13 @@ export function GenerateTextNode({
     useWorkflowUiState();
   const { nodeUserInputs } = useWorkflow();
 
-  const isHumanInput = data.config.type === "human-input";
+  const isHumanInput = data.type === "human-input";
   const isActive = activeHumanInputNode?.id === id;
   const isInputMissing = isHumanInput && !nodeUserInputs[id]?.trim();
 
   const handleNodeClick = () => {
     if (isHumanInput) {
-      setActiveHumanInputNode({ id, description: data.config.description });
+      setActiveHumanInputNode({ id, description: data.description });
     } else {
       setActiveHumanInputNode(null);
     }
@@ -65,12 +65,12 @@ export function GenerateTextNode({
       </div>
       <NodeHeader className="m-0">
         <NodeHeaderIcon className="mr-2">
-          {data.config.type === "human-input" ? <User /> : <Bot />}
+          {data.type === "human-input" ? <User /> : <Bot />}
         </NodeHeaderIcon>
         <NodeHeaderTitle>
-          {data.config.type === "human-input"
+          {data.type === "human-input"
             ? "Human Input"
-            : data.config?.agent || "Generate Text"}
+            : data.agent || "Generate Text"}
         </NodeHeaderTitle>
         <NodeHeaderActions>
           <NodeHeaderStatus status={data.status} />
@@ -94,9 +94,9 @@ export function GenerateTextNode({
       <Separator />
       <div className="p-4 flex flex-col gap-4">
         <div className="text-sm text-muted-foreground">
-          {data.config.type === "human-input"
-            ? data.config?.description || "Human input required"
-            : data.config?.description || "Agent task"}
+          {data.type === "human-input"
+            ? data.description || "Human input required"
+            : data.description || "Agent task"}
         </div>
       </div>
 

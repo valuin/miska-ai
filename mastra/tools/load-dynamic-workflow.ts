@@ -34,13 +34,17 @@ export function createMastraWorkflowFromJson({
   nodes,
   runtimeContext,
 }: MastraWorkflowConfig) {
-  if (!nodes || nodes.length === 0) {
-    throw new Error("Cannot create a workflow from an empty list of nodes.");
-  }
+  console.log("createMastraWorkflowFromJson called with config:", { id, description, nodes });
+   if (!nodes || nodes.length === 0) {
+     console.error("Error: Nodes array is empty or null.");
+     throw new Error("Cannot create a workflow from an empty list of nodes.");
+   }
 
   const mastraSteps = new Map<string, any>();
+  console.log("Processing nodes to create Mastra steps...");
 
   for (const node of nodes) {
+    console.log("Processing node:", node);
     let step: any;
     const genericSchema = z.object({ payload: z.any() }).passthrough();
 
@@ -78,11 +82,12 @@ export function createMastraWorkflowFromJson({
         throw new Error(`Unsupported node type for node ID "${node.id}".`);
     }
     mastraSteps.set(node.id, step);
-  }
-
-  let workflowBuilder = createWorkflow({
-    id,
-    description,
+    }
+    console.log("Mastra steps created:", mastraSteps);
+ 
+    let workflowBuilder = createWorkflow({
+      id,
+      description,
     inputSchema: z
       .object({ payload: z.any() })
       .describe("Initial payload for the workflow"),
@@ -92,21 +97,24 @@ export function createMastraWorkflowFromJson({
   });
 
   // Chain all the created steps sequentially
+  console.log("Chaining steps into workflow builder...");
   for (const node of nodes) {
     const stepToChain = mastraSteps.get(node.id);
     if (stepToChain) {
+      console.log("Chaining step:", node.id, "type:", node.type);
       if (node.type === "agent-task") {
         workflowBuilder = workflowBuilder.map(async ({ inputData }) => {
           const prompt =
             typeof inputData.payload === "object"
               ? JSON.stringify(inputData.payload)
               : String(inputData.payload);
+          console.log("Agent task input prompt:", prompt);
           return { payload: prompt };
         });
       }
       workflowBuilder = workflowBuilder.then(stepToChain);
     }
   }
-
+  console.log("Steps chained. Committing workflow...");
   return workflowBuilder.commit();
 }

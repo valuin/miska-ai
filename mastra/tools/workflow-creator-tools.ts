@@ -67,15 +67,36 @@ export const workflowTool = createTool({
     id: z.string(),
     name: z.string(),
     description: z.string(),
-    nodes: z.array(
-      z.object({
-        id: z.string(),
-        type: z.enum(["human-input", "agent-task"]),
-        description: z.string(),
-        agent: agentEnum.optional(),
-        next: z.array(z.string()).optional(),
-      }),
-    ),
+    schema: z.object({
+      id: z.string(),
+      name: z.string(),
+      description: z.string(),
+      nodes: z.array(
+        z.object({
+          id: z.string(),
+          data: z.object({
+            type: z.enum(["human-input", "agent-task"]),
+            agent: z.string(),
+            description: z.string(),
+          }),
+          type: z.string(),
+          position: z.object({
+            x: z.number(),
+            y: z.number(),
+          }),
+        }),
+      ),
+      edges: z.array(
+        z.object({
+          id: z.string(),
+          type: z.string(),
+          source: z.string(),
+          target: z.string(),
+        }),
+      ),
+    }),
+    createdAt: z.string(),
+    updatedAt: z.string(),
   }),
   execute: async ({ context, runtimeContext }) => {
     try {
@@ -101,11 +122,39 @@ export const workflowTool = createTool({
         runtimeContext,
       });
 
+      const edges = nodes.flatMap(node =>
+        (node.next || []).map(nextId => ({
+          id: `edge-${node.id}-${nextId}`,
+          type: 'status', // Use the correct edge type
+          source: node.id,
+          target: nextId,
+        }))
+      );
+
+      const formattedNodes = nodes.map((node, index) => ({
+        id: node.id,
+        data: {
+          type: node.type,
+          agent: node.agent || "",
+          description: node.description,
+        },
+        type: node.type === 'human-input' ? 'generate-text' : 'generate-text',
+        position: { x: 250, y: 100 + index * 200 },
+      }));
+
       return {
         id: workflowId,
         name: context.name,
         description: context.description,
-        nodes,
+        schema: {
+          id: workflowId,
+          name: context.name,
+          description: context.description,
+          nodes: formattedNodes,
+          edges,
+        },
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
       };
     } catch (e) {
       console.error("Workflow generation failed:", e);
@@ -113,7 +162,15 @@ export const workflowTool = createTool({
         id: "",
         name: "",
         description: "",
-        nodes: [],
+        schema: {
+          id: "",
+          name: "",
+          description: "",
+          nodes: [],
+          edges: [],
+        },
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
       };
     }
   },

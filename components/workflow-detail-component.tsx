@@ -12,7 +12,7 @@ import type {
   WorkflowOutputProps,
 } from "@/lib/types/workflow";
 import { useWorkflowUiState } from "@/lib/store/workflow-ui-store";
-import { HumanInputNotch } from "../workflow-v2/human-input-notch";
+import { HumanInputNotch } from "@/components/workflow-v2/human-input-notch";
 import { useWorkflow } from "@/hooks/use-workflow";
 
 export function WorkflowDetails({

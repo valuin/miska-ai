@@ -9,7 +9,7 @@ export function validateHumanInputs(
   let isValid = true;
 
   const humanInputNodes = nodes.filter(
-    (node) => node.data.config.type === "human-input"
+    (node) => node.data.type === "human-input"
   );
 
   for (const node of humanInputNodes) {
@@ -17,7 +17,7 @@ export function validateHumanInputs(
     if (!userInput || userInput.trim() === "") {
       const error = {
         nodeId: node.id,
-        message: `Input for "${node.data.config.description}" is required.`,
+        message: `Input for "${node.data.description}" is required.`,
       };
       errors.push(error);
       isValid = false;
