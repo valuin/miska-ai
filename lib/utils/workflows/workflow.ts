@@ -420,6 +420,7 @@ export const getLayoutedElements = (
   edges: FlowEdge[],
   direction = "TB",
 ): { nodes: FlowNode[]; edges: FlowEdge[] } => {
+  console.log("getLayoutedElements called with nodes:", nodes, "and edges:", edges);
   const isHorizontal = direction === "LR";
   dagreGraph.setGraph({ rankdir: direction });
 

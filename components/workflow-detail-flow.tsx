@@ -39,7 +39,7 @@ export function Flow({
   workflowProgress,
 }: {
   onPaneClick?: () => void;
-  workflowProgress: Map<string, WorkflowNodeProgress>;
+  workflowProgress?: Map<string, WorkflowNodeProgress>;
 }) {
   const store = useWorkflow(
     (store) => ({
@@ -57,7 +57,9 @@ export function Flow({
   );
 
   useEffect(() => {
-    store.updateNodeExecutionStates(workflowProgress);
+    if (workflowProgress) {
+      store.updateNodeExecutionStates(workflowProgress);
+    }
   }, [workflowProgress, store.updateNodeExecutionStates]);
 
   const { screenToFlowPosition } = useReactFlow();

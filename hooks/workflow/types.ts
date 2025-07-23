@@ -18,6 +18,14 @@ import type {
 import type { WorkflowNodeProgress } from "@/lib/types/workflow";
 
 export interface WorkflowState {
+  resetWorkflow: () => void;
+  generationProgress: number;
+  generationMessage: string;
+  showGenerationProgress: boolean;
+  setGenerationProgress: (progress: number) => void;
+  setGenerationMessage: (message: string) => void;
+  setShowGenerationProgress: (show: boolean) => void;
+  generateWorkflow: (prompt: string, file?: File) => Promise<void>;
   nodes: FlowNode[];
   edges: FlowEdge[];
   onNodesChange: (changes: NodeChange<FlowNode>[]) => void;
@@ -83,12 +91,10 @@ export interface WorkflowState {
 
 export type GenerateTextData = {
   status: "running" | "error" | "completed" | "idle" | undefined;
-  config: {
-    agent: string;
-    type: "human-input" | "agent-task";
-    description: string;
-    model?: string;
-  };
+  agent: string;
+  type: "human-input" | "agent-task";
+  description: string;
+  model?: string;
   dynamicHandles?: {
     [key: string]: any[];
   };
