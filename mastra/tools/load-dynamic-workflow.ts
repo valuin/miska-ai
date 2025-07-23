@@ -1,12 +1,12 @@
-import { createWorkflow, createStep } from "@mastra/core/workflows";
-import { z } from "zod";
-import type { AGENT_TYPES } from "@/lib/constants";
-import type { MastraRuntimeContext } from "@/mastra";
-import type { RuntimeContext } from "@mastra/core/di";
+import { createWorkflow, createStep } from '@mastra/core/workflows';
+import { z } from 'zod';
+import type { AGENT_TYPES } from '@/lib/constants';
+import type { MastraRuntimeContext } from '@/mastra';
+import type { RuntimeContext } from '@mastra/core/di';
 
 export type WorkflowNode = {
   id: string;
-  type: "human-input" | "agent-task";
+  type: 'human-input' | 'agent-task';
   description: string;
   agent?: (typeof AGENT_TYPES)[number];
   next?: string[];
@@ -34,9 +34,9 @@ export function createMastraWorkflowFromJson({
   nodes,
   runtimeContext,
 }: MastraWorkflowConfig) {
-   if (!nodes || nodes.length === 0) {
-     throw new Error("Cannot create a workflow from an empty list of nodes.");
-   }
+  if (!nodes || nodes.length === 0) {
+    throw new Error('Cannot create a workflow from an empty list of nodes.');
+  }
 
   const mastraSteps = new Map<string, any>();
 
@@ -45,8 +45,8 @@ export function createMastraWorkflowFromJson({
     const genericSchema = z.object({ payload: z.any() }).passthrough();
 
     switch (node.type) {
-      case "agent-task": {
-        const mastra = runtimeContext.get("mastra");
+      case 'agent-task': {
+        const mastra = runtimeContext.get('mastra');
         if (!node.agent || !mastra.getAgent(node.agent)) {
           throw new Error(
             `Agent "${node.agent}" not found in registry for node ID "${node.id}".`,
@@ -57,15 +57,13 @@ export function createMastraWorkflowFromJson({
         break;
       }
 
-      case "human-input": {
+      case 'human-input': {
         step = createStep({
           id: node.id,
           description: node.description,
           inputSchema: genericSchema,
           outputSchema: genericSchema,
           execute: async ({ suspend, inputData }) => {
-              `Workflow suspended for human input at step: ${node.description}`,
-            );
             return suspend({});
           },
         });
@@ -76,27 +74,27 @@ export function createMastraWorkflowFromJson({
         throw new Error(`Unsupported node type for node ID "${node.id}".`);
     }
     mastraSteps.set(node.id, step);
-    }
- 
-    let workflowBuilder = createWorkflow({
-      id,
-      description,
+  }
+
+  let workflowBuilder = createWorkflow({
+    id,
+    description,
     inputSchema: z
       .object({ payload: z.any() })
-      .describe("Initial payload for the workflow"),
+      .describe('Initial payload for the workflow'),
     outputSchema: z
       .object({ payload: z.any() })
-      .describe("Final output of the workflow"),
+      .describe('Final output of the workflow'),
   });
 
   // Chain all the created steps sequentially
   for (const node of nodes) {
     const stepToChain = mastraSteps.get(node.id);
     if (stepToChain) {
-      if (node.type === "agent-task") {
+      if (node.type === 'agent-task') {
         workflowBuilder = workflowBuilder.map(async ({ inputData }) => {
           const prompt =
-            typeof inputData.payload === "object"
+            typeof inputData.payload === 'object'
               ? JSON.stringify(inputData.payload)
               : String(inputData.payload);
           return { payload: prompt };

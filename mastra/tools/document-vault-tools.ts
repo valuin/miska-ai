@@ -28,6 +28,7 @@ export const saveDocumentToVaultTool = createTool({
           'Please use the chat interface to save documents to vault. This tool requires user authentication.',
       };
     } catch (error) {
+      console.error('Error saving document to vault:', error);
       return {
         success: false,
         message: 'Failed to save document to vault',
@@ -78,6 +79,7 @@ export const listVaultDocumentsTool = createTool({
         totalCount: documents.length,
       };
     } catch (error) {
+      console.error(
         '[listVaultDocumentsTool] Error listing vault documents:',
         error,
       );
@@ -140,6 +142,8 @@ export const queryVaultDocumentsTool = createTool({
         value: query,
         model: openai.embedding('text-embedding-3-small'),
       });
+
+      console.log('Vault query debug:', {
         query,
         userId: session.user.id,
         embedding,
@@ -158,6 +162,8 @@ export const queryVaultDocumentsTool = createTool({
           ],
         },
       });
+
+      // console.log('Vault query debug:', {
       //   query,
       //   userId: session.user.id,
       //   embedding,
@@ -183,6 +189,7 @@ export const queryVaultDocumentsTool = createTool({
         totalResults: results.length,
       };
     } catch (error) {
+      console.error('Error querying vault documents:', error);
       return {
         results: [],
         totalResults: 0,
