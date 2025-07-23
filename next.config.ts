@@ -1,7 +1,7 @@
 import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
-  serverExternalPackages: ["@mastra/*"],
+  serverExternalPackages: ['@mastra/*'],
   experimental: {
     ppr: true,
   },

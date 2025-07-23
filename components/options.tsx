@@ -1,5 +1,5 @@
-import type { UseChatHelpers } from "@ai-sdk/react";
-import { Button } from "./ui/button";
+import type { UseChatHelpers } from '@ai-sdk/react';
+import { Button } from './ui/button';
 
 type Option = {
   label: string;
@@ -11,7 +11,7 @@ export default function Options({
   append,
 }: {
   options: Option[];
-  append: UseChatHelpers["append"];
+  append: UseChatHelpers['append'];
 }) {
   return (
     <div className="flex flex-row gap-2 flex-wrap">
@@ -20,7 +20,7 @@ export default function Options({
           key={option.value}
           className="bg-primary text-primary-foreground px-4 py-2 rounded-md"
           onClick={() => {
-            append({ role: "user", content: option.value });
+            append({ role: 'user', content: option.value });
           }}
         >
           {option.label}

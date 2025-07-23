@@ -1,26 +1,26 @@
-import { memo } from "react";
+import { memo } from 'react';
 import {
   Handle,
   Position,
   type NodeProps,
   type Node,
   useUpdateNodeInternals,
-} from "@xyflow/react";
-import { cn } from "@/lib/utils";
-import { Textarea } from "@/components/ui/textarea";
-import { useReactFlow } from "@xyflow/react";
-import { Loader2, CheckCircle2, AlertCircle, Clock } from "lucide-react";
-import Badge from "@/components/badge";
+} from '@xyflow/react';
+import { cn } from '@/lib/utils';
+import { Textarea } from '@/components/ui/textarea';
+import { useReactFlow } from '@xyflow/react';
+import { Loader2, CheckCircle2, AlertCircle, Clock } from 'lucide-react';
+import Badge from '@/components/badge';
 
 interface WorkflowNodeData extends Record<string, unknown> {
-  type: "human-input" | "agent-task";
+  type: 'human-input' | 'agent-task';
   description: string;
   agent?: string;
   tool?: string;
   selected?: boolean;
   humanFeedback?: string;
   progress?: {
-    status: "pending" | "running" | "completed" | "error";
+    status: 'pending' | 'running' | 'completed' | 'error';
     output?: string;
     error?: string;
     description?: string;
@@ -34,7 +34,7 @@ export interface Edge {
   type: string;
 }
 
-type WorkflowNodeType = Node<WorkflowNodeData, "workflowNode">;
+type WorkflowNodeType = Node<WorkflowNodeData, 'workflowNode'>;
 
 function WorkflowNode({ id, data, selected }: NodeProps<WorkflowNodeType>) {
   const { setNodes } = useReactFlow();
@@ -67,7 +67,7 @@ function WorkflowNode({ id, data, selected }: NodeProps<WorkflowNodeType>) {
     if (!data.progress) return null;
 
     switch (data.progress.status) {
-      case "running":
+      case 'running':
         return (
           <Badge
             icon={(props) => (
@@ -79,11 +79,11 @@ function WorkflowNode({ id, data, selected }: NodeProps<WorkflowNodeType>) {
             text="Running"
           />
         );
-      case "completed":
+      case 'completed':
         return <Badge icon={CheckCircle2} text="Completed" />;
-      case "error":
+      case 'error':
         return <Badge icon={AlertCircle} text="Error" />;
-      case "pending":
+      case 'pending':
         return <Badge icon={Clock} text="Pending" />;
       default:
         return null;
@@ -93,13 +93,13 @@ function WorkflowNode({ id, data, selected }: NodeProps<WorkflowNodeType>) {
   return (
     <div
       className={cn(
-        "rounded-xl bg-card shadow w-96 p-4 flex flex-col items-center border mb-6",
-        selected ? "ring-2 ring-primary ring-offset-2" : "",
+        'rounded-xl bg-card shadow w-96 p-4 flex flex-col items-center border mb-6',
+        selected ? 'ring-2 ring-primary ring-offset-2' : '',
       )}
     >
       <div className="flex items-center justify-center w-full mb-2">
         <div className="text-sm uppercase text-muted-foreground font-semibold">
-          {data.type === "human-input" ? "🧍 Human Input" : "🤖 Agent Task"}
+          {data.type === 'human-input' ? '🧍 Human Input' : '🤖 Agent Task'}
         </div>
         {getStatusBadge()}
       </div>
@@ -122,11 +122,11 @@ function WorkflowNode({ id, data, selected }: NodeProps<WorkflowNodeType>) {
         </div>
       )}
 
-      {data.type === "human-input" && (
+      {data.type === 'human-input' && (
         <div className="w-full mt-3">
           <Textarea
             placeholder="Enter human feedback..."
-            value={data.humanFeedback || ""}
+            value={data.humanFeedback || ''}
             onChange={handleHumanFeedbackChange}
             onClick={(e) => e.stopPropagation()}
             className="text-sm"

@@ -1,12 +1,11 @@
-import { communicationAgent } from "@/mastra/agents/communication-agent";
-import { documentAgent } from "@/mastra/agents/document-agent";
-import { NextResponse } from "next/server";
-import { normalAgent } from "@/mastra/agents/normal-agent";
-import { ragChatAgent } from "@/mastra/agents/rag-chat-agent";
-import { researchAgent } from "@/mastra/agents/research-agent";
-import { workflowCreatorAgent } from "@/mastra/agents/workflow-creator-agent";
-import type { Agent } from "@mastra/core/agent";
-
+import { communicationAgent } from '@/mastra/agents/communication-agent';
+import { documentAgent } from '@/mastra/agents/document-agent';
+import { NextResponse } from 'next/server';
+import { normalAgent } from '@/mastra/agents/normal-agent';
+import { ragChatAgent } from '@/mastra/agents/rag-chat-agent';
+import { researchAgent } from '@/mastra/agents/research-agent';
+import { workflowCreatorAgent } from '@/mastra/agents/workflow-creator-agent';
+import type { Agent } from '@mastra/core/agent';
 
 interface WorkflowNode {
   id: string;
@@ -41,16 +40,13 @@ const agentMap: Record<string, Agent<any>> = {
   communicationAgent: communicationAgent as Agent<any>,
 };
 
-
 export async function POST(req: Request) {
   const encoder = new TextEncoder();
-  
+
   const stream = new ReadableStream({
     async start(controller) {
       try {
         const body = await req.json();
-        console.log("Received request body:", body);
-
         const { workflowId, workflowSchema, inputQuery } = body;
 
         if (
@@ -59,139 +55,145 @@ export async function POST(req: Request) {
           inputQuery === null ||
           inputQuery === undefined
         ) {
-          console.error("Missing required fields in request body:", {
-            hasWorkflowId: !!workflowId,
-            hasWorkflowSchema: !!workflowSchema,
-            hasInputQuery: !!inputQuery,
-          });
-          
           const errorData = {
-            type: "error",
-            message: "Missing workflowId, workflowSchema, or inputQuery"
+            type: 'error',
+            message: 'Missing workflowId, workflowSchema, or inputQuery',
           };
-          
-          controller.enqueue(encoder.encode(`data: ${JSON.stringify(errorData)}\n\n`));
+
+          controller.enqueue(
+            encoder.encode(`data: ${JSON.stringify(errorData)}\n\n`),
+          );
           controller.close();
           return;
         }
 
         const nodeResults: any[] = [];
-        const effectiveInput = inputQuery?.trim() || workflowSchema.description || "Execute workflow step";
+        const effectiveInput =
+          inputQuery?.trim() ||
+          workflowSchema.description ||
+          'Execute workflow step';
         let currentInput: any = effectiveInput;
 
-        console.log(
-          `Executing workflow: ${workflowSchema.name} (ID: ${workflowId}) with effective query: "${effectiveInput}"`,
+        const initialEvent = {
+          type: 'workflow_started',
+          message: `Starting workflow: ${workflowSchema.name}`,
+          totalNodes: workflowSchema.nodes.length,
+        };
+        controller.enqueue(
+          encoder.encode(`data: ${JSON.stringify(initialEvent)}\n\n`),
         );
 
-        // Send initial event
-        const initialEvent = {
-          type: "workflow_started",
-          message: `Starting workflow: ${workflowSchema.name}`,
-          totalNodes: workflowSchema.nodes.length
-        };
-        controller.enqueue(encoder.encode(`data: ${JSON.stringify(initialEvent)}\n\n`));
+        const transformedNodes = workflowSchema.nodes.map(
+          (node: WorkflowNode) => {
+            if (node.type === 'workflowNode') {
+              const agent = node.data.agent || 'normalAgent';
+              // Determine the new type based on the agent
+              const newType =
+                agent === 'human' || agent === 'user'
+                  ? 'text-input'
+                  : 'generate-text';
 
-        // Transform nodes to their executable types (generate-text or text-input)
-        const transformedNodes = workflowSchema.nodes.map((node: WorkflowNode) => {
-          if (node.type === 'workflowNode') {
-            const agent = node.data.agent || 'normalAgent';
-            // Determine the new type based on the agent
-            const newType = (agent === 'human' || agent === 'user') ? 'text-input' : 'generate-text';
-            
-            return {
-              ...node,
-              type: newType,
-            };
-          }
-          return node;
-        });
+              return {
+                ...node,
+                type: newType,
+              };
+            }
+            return node;
+          },
+        );
 
         // Filter for executable nodes after transformation
         const executableNodes = transformedNodes.filter(
-          (node: WorkflowNode) => node.type === "generate-text" || node.type === "text-input"
+          (node: WorkflowNode) =>
+            node.type === 'generate-text' || node.type === 'text-input',
         );
-        console.log("Executable nodes after filter:", executableNodes);
-
         for (const node of executableNodes) {
-          const agentName = node.data.agent || "normalAgent";
-          const agentDescription = node.data.description || node.data.config?.value || `Execute ${node.type} node`;
-
-          // If it's a text-input node and has user input, use that as the output
-          if (node.data.type === "human-input" && node.data.userInput) {
+          const agentName = node.data.agent || 'normalAgent';
+          const agentDescription =
+            node.data.description ||
+            node.data.config?.value ||
+            `Execute ${node.type} node`;
+          if (node.data.type === 'human-input' && node.data.userInput) {
             const output = node.data.userInput;
-            console.log(`Human input node ${node.id} received input:`, output);
 
             const completedEvent = {
-              type: "node_completed",
+              type: 'node_completed',
               nodeId: node.id,
               agentName,
               description: agentDescription,
-              output
+              output,
             };
-            controller.enqueue(encoder.encode(`data: ${JSON.stringify(completedEvent)}\n\n`));
+            controller.enqueue(
+              encoder.encode(`data: ${JSON.stringify(completedEvent)}\n\n`),
+            );
             currentInput = output;
             continue; // Skip agent execution for human input nodes
           }
-          
+
           // For other nodes or text-input without user input, use the config value as the prompt
           let nodePrompt = agentDescription;
-          if (node.type === "text-input" && node.data.config?.value) {
+          if (node.type === 'text-input' && node.data.config?.value) {
             nodePrompt = node.data.config.value;
           }
 
           const agent = agentMap[agentName];
           if (!agent) {
-            console.warn(`Agent "${agentName}" not found for node ID: ${node.id}`);
+            console.warn(
+              `Agent "${agentName}" not found for node ID: ${node.id}`,
+            );
             const errorData = {
-              type: "node_error",
+              type: 'node_error',
               nodeId: node.id,
               message: `Agent "${agentName}" not found`,
-              description: agentDescription
+              description: agentDescription,
             };
-            controller.enqueue(encoder.encode(`data: ${JSON.stringify(errorData)}\n\n`));
+            controller.enqueue(
+              encoder.encode(`data: ${JSON.stringify(errorData)}\n\n`),
+            );
             controller.close();
             return;
           }
 
           // Send node started event
           const startedEvent = {
-            type: "node_started",
+            type: 'node_started',
             nodeId: node.id,
             agentName,
-            description: agentDescription
+            description: agentDescription,
           };
-          controller.enqueue(encoder.encode(`data: ${JSON.stringify(startedEvent)}\n\n`));
+          controller.enqueue(
+            encoder.encode(`data: ${JSON.stringify(startedEvent)}\n\n`),
+          );
 
           try {
-            const workflowOverview = workflowSchema.nodes.map((node: WorkflowNode) => {
-              return `Node ID: ${node.id}, Type: ${node.type}, Description: ${node.data.description || 'N/A'}`;
-            }).join('\n');
+            const workflowOverview = workflowSchema.nodes
+              .map((node: WorkflowNode) => {
+                return `Node ID: ${node.id}, Type: ${node.type}, Description: ${node.data.description || 'N/A'}`;
+              })
+              .join('\n');
 
             const systemPrompt = `You are running in a predefined workflow. Do not ask clarifying questions or use the options tool. Execute the task as described.
 Workflow Name: ${workflowSchema.name}
-Workflow Description: ${workflowSchema.description || "No description provided."}
+Workflow Description: ${workflowSchema.description || 'No description provided.'}
 
 Workflow Overview:
 ${workflowOverview}`;
             const result = await agent.generate([
-              { role: "system", content: systemPrompt },
+              { role: 'system', content: systemPrompt },
               {
-                role: "user",
+                role: 'user',
                 content: `${nodePrompt}\n\nInput: ${JSON.stringify(currentInput)}`,
               },
             ]);
 
-            console.log(`Agent ${agentName} raw result:`, result);
-
             let output: string;
-            if (result && typeof result === "object" && "text" in result) {
+            if (result && typeof result === 'object' && 'text' in result) {
               output = (result as { text: string }).text;
-            } else if (typeof result === "string") {
+            } else if (typeof result === 'string') {
               output = result;
             } else {
               output = JSON.stringify(result, null, 2);
             }
-            console.log(`Agent ${agentName} processed output:`, output);
 
             nodeResults.push({
               nodeId: node.id,
@@ -200,15 +202,16 @@ ${workflowOverview}`;
               output,
             });
 
-            // Send node completed event
             const completedEvent = {
-              type: "node_completed",
+              type: 'node_completed',
               nodeId: node.id,
               agentName,
               description: agentDescription,
-              output
+              output,
             };
-            controller.enqueue(encoder.encode(`data: ${JSON.stringify(completedEvent)}\n\n`));
+            controller.enqueue(
+              encoder.encode(`data: ${JSON.stringify(completedEvent)}\n\n`),
+            );
 
             currentInput = output;
           } catch (agentError) {
@@ -216,15 +219,17 @@ ${workflowOverview}`;
               `Error executing agent ${agentName} for node ID ${node.id}:`,
               agentError,
             );
-            
+
             const errorData = {
-              type: "node_error",
+              type: 'node_error',
               nodeId: node.id,
               agentName,
               description: agentDescription,
-              error: `Agent execution failed for ${agentName}: ${agentError}`
+              error: `Agent execution failed for ${agentName}: ${agentError}`,
             };
-            controller.enqueue(encoder.encode(`data: ${JSON.stringify(errorData)}\n\n`));
+            controller.enqueue(
+              encoder.encode(`data: ${JSON.stringify(errorData)}\n\n`),
+            );
             controller.close();
             return;
           }
@@ -232,21 +237,25 @@ ${workflowOverview}`;
 
         // Send workflow completed event
         const completedEvent = {
-          type: "workflow_completed",
-          message: "Workflow execution completed successfully",
-          output: nodeResults
+          type: 'workflow_completed',
+          message: 'Workflow execution completed successfully',
+          output: nodeResults,
         };
-        controller.enqueue(encoder.encode(`data: ${JSON.stringify(completedEvent)}\n\n`));
+        controller.enqueue(
+          encoder.encode(`data: ${JSON.stringify(completedEvent)}\n\n`),
+        );
         controller.close();
       } catch (error) {
-        console.error("Error in workflow execution API:", error);
-        
+        console.error('Error in workflow execution API:', error);
+
         const errorData = {
-          type: "error",
-          message: "Internal Server Error",
-          error: error instanceof Error ? error.message : String(error)
+          type: 'error',
+          message: 'Internal Server Error',
+          error: error instanceof Error ? error.message : String(error),
         };
-        controller.enqueue(encoder.encode(`data: ${JSON.stringify(errorData)}\n\n`));
+        controller.enqueue(
+          encoder.encode(`data: ${JSON.stringify(errorData)}\n\n`),
+        );
         controller.close();
       }
     },
@@ -256,7 +265,7 @@ ${workflowOverview}`;
     headers: {
       'Content-Type': 'text/event-stream',
       'Cache-Control': 'no-cache',
-      'Connection': 'keep-alive',
+      Connection: 'keep-alive',
     },
   });
 }

@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import { Button } from "@/components/ui/button";
+import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
@@ -9,7 +9,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog";
+} from '@/components/ui/dialog';
 import {
   Stepper,
   StepperItem,
@@ -18,31 +18,31 @@ import {
   StepperTitle,
   StepperDescription,
   StepperSeparator,
-} from "@/components/ui/stepper";
-import { useWorkflow } from "@/hooks/use-workflow";
-import { useQueryClient } from "@tanstack/react-query";
-import { ReactFlowProvider } from "@xyflow/react";
-import { useState } from "react";
-import { toast } from "sonner";
-import { v4 as uuidv4 } from "uuid";
-import { z } from "zod";
-import { Flow } from "./workflow-detail-flow";
+} from '@/components/ui/stepper';
+import { useWorkflow } from '@/hooks/use-workflow';
+import { useQueryClient } from '@tanstack/react-query';
+import { ReactFlowProvider } from '@xyflow/react';
+import { useState } from 'react';
+import { toast } from 'sonner';
+import { v4 as uuidv4 } from 'uuid';
+import { z } from 'zod';
+import { Flow } from './workflow-detail-flow';
 import {
   NodeBuilder,
   WorkflowDetails,
   WorkflowReview,
-} from "./workflow-details";
-import { GenerateWorkflow } from "./generate-workflow";
+} from './workflow-details';
+import { GenerateWorkflow } from './generate-workflow';
 
 const steps = [
-  { id: 1, title: "Generate", description: "Create a workflow from a prompt" },
-  { id: 2, title: "Details", description: "Configure basic settings" },
-  { id: 3, title: "Build", description: "Add and connect nodes" },
-  { id: 4, title: "Review", description: "Review and test" },
+  { id: 1, title: 'Generate', description: 'Create a workflow from a prompt' },
+  { id: 2, title: 'Details', description: 'Configure basic settings' },
+  { id: 3, title: 'Build', description: 'Add and connect nodes' },
+  { id: 4, title: 'Review', description: 'Review and test' },
 ];
 
 const workflowDetailSchema = z.object({
-  workflowName: z.string().min(1, "Workflow name is required."),
+  workflowName: z.string().min(1, 'Workflow name is required.'),
   workflowDescription: z.string().optional(),
 });
 
@@ -54,17 +54,22 @@ export function ManualWorkflowDialog({
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const [activeStep, setActiveStep] = useState(1);
-  const [workflowName, setWorkflowName] = useState("");
-  const [workflowDescription, setWorkflowDescription] = useState("");
+  const [workflowName, setWorkflowName] = useState('');
+  const [workflowDescription, setWorkflowDescription] = useState('');
 
-  const { nodes, edges, startExecution, resetWorkflow, workflowExecutionState } =
-    useWorkflow((state) => ({
-      nodes: state.nodes,
-      edges: state.edges,
-      startExecution: state.startExecution,
-      resetWorkflow: state.resetWorkflow,
-      workflowExecutionState: state.workflowExecutionState,
-    }));
+  const {
+    nodes,
+    edges,
+    startExecution,
+    resetWorkflow,
+    workflowExecutionState,
+  } = useWorkflow((state) => ({
+    nodes: state.nodes,
+    edges: state.edges,
+    startExecution: state.startExecution,
+    resetWorkflow: state.resetWorkflow,
+    workflowExecutionState: state.workflowExecutionState,
+  }));
 
   const handleNextStep = () => {
     if (activeStep === 2) {
@@ -82,7 +87,7 @@ export function ManualWorkflowDialog({
 
   const handleSaveWorkflow = async () => {
     if (!workflowName) {
-      toast.error("Workflow name cannot be empty.");
+      toast.error('Workflow name cannot be empty.');
       return;
     }
 
@@ -95,9 +100,9 @@ export function ManualWorkflowDialog({
     };
 
     try {
-      const response = await fetch("/api/workflows", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const response = await fetch('/api/workflows', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           schema: workflowData,
           name: workflowName,
@@ -106,11 +111,11 @@ export function ManualWorkflowDialog({
       });
 
       if (response.ok) {
-        toast.success("Workflow saved successfully!");
+        toast.success('Workflow saved successfully!');
         setOpen(false);
         setActiveStep(1);
         resetWorkflow();
-        queryClient.invalidateQueries({ queryKey: ["workflows"] });
+        queryClient.invalidateQueries({ queryKey: ['workflows'] });
         if (onWorkflowCreated) {
           onWorkflowCreated();
         }
@@ -121,21 +126,21 @@ export function ManualWorkflowDialog({
         );
       }
     } catch (error) {
-      toast.error("An unexpected error occurred while saving the workflow.");
+      toast.error('An unexpected error occurred while saving the workflow.');
     }
   };
 
   const handleRunWorkflow = async () => {
     if (nodes.length === 0) {
-      toast.error("Please add at least one node to run the workflow");
+      toast.error('Please add at least one node to run the workflow');
       return;
     }
 
     const result = await startExecution();
-    if (result.status === "error") {
+    if (result.status === 'error') {
       toast.error(result.message);
     } else {
-      toast.success("Workflow execution started.");
+      toast.success('Workflow execution started.');
     }
   };
 
@@ -168,7 +173,9 @@ export function ManualWorkflowDialog({
                     <StepperIndicator>{index + 1}</StepperIndicator>
                     <div>
                       <StepperTitle>{step.title}</StepperTitle>
-                      <StepperDescription>{step.description}</StepperDescription>
+                      <StepperDescription>
+                        {step.description}
+                      </StepperDescription>
                     </div>
                   </StepperTrigger>
                   {index < steps.length - 1 && <StepperSeparator />}
@@ -216,10 +223,14 @@ export function ManualWorkflowDialog({
             <>
               <Button
                 onClick={handleRunWorkflow}
-                disabled={workflowExecutionState.isRunning || nodes.length === 0}
+                disabled={
+                  workflowExecutionState.isRunning || nodes.length === 0
+                }
                 variant="secondary"
               >
-                {workflowExecutionState.isRunning ? "Running..." : "Run Workflow"}
+                {workflowExecutionState.isRunning
+                  ? 'Running...'
+                  : 'Run Workflow'}
               </Button>
               <Button onClick={handleSaveWorkflow}>Save Workflow</Button>
             </>

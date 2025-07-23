@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import type { Attachment, UIMessage } from "ai";
-import cx from "classnames";
+import type { Attachment, UIMessage } from 'ai';
+import cx from 'classnames';
 import {
   useRef,
   useEffect,
@@ -11,24 +11,24 @@ import {
   type SetStateAction,
   type ChangeEvent,
   memo,
-} from "react";
-import { toast } from "sonner";
-import { useLocalStorage, useWindowSize } from "usehooks-ts";
-import { ArrowUpIcon, PaperclipIcon, StopIcon } from "./icons";
-import { PreviewAttachment } from "./preview-attachment";
-import { Button } from "./ui/button";
-import { Textarea } from "./ui/textarea";
-import { SuggestedActions } from "./suggested-actions";
-import equal from "fast-deep-equal";
-import type { UseChatHelpers } from "@ai-sdk/react";
-import { AnimatePresence, motion } from "framer-motion";
-import { ArrowDown } from "lucide-react";
-import { useScrollToBottom } from "@/hooks/use-scroll-to-bottom";
-import type { VisibilityType } from "./visibility-selector";
-import { upload } from "@vercel/blob/client";
-import { MultiSelect } from "./multi-select";
-import type { UserUpload } from "./vault-drawer";
-import { useVaultFilesStore } from "@/lib/store/vault-files-store";
+} from 'react';
+import { toast } from 'sonner';
+import { useLocalStorage, useWindowSize } from 'usehooks-ts';
+import { ArrowUpIcon, PaperclipIcon, StopIcon } from './icons';
+import { PreviewAttachment } from './preview-attachment';
+import { Button } from './ui/button';
+import { Textarea } from './ui/textarea';
+import { SuggestedActions } from './suggested-actions';
+import equal from 'fast-deep-equal';
+import type { UseChatHelpers } from '@ai-sdk/react';
+import { AnimatePresence, motion } from 'framer-motion';
+import { ArrowDown } from 'lucide-react';
+import { useScrollToBottom } from '@/hooks/use-scroll-to-bottom';
+import type { VisibilityType } from './visibility-selector';
+import { upload } from '@vercel/blob/client';
+import { MultiSelect } from './multi-select';
+import type { UserUpload } from './vault-drawer';
+import { useVaultFilesStore } from '@/lib/store/vault-files-store';
 
 export function FileUploadSection({
   onAttachmentsChange,
@@ -51,17 +51,14 @@ export function FileUploadSection({
     const toastId = toast.loading(`Uploading "${file.name}"...`);
     try {
       const newBlob = await upload(file.name, file, {
-        access: "public",
-        handleUploadUrl: "/api/files/upload-blob",
+        access: 'public',
+        handleUploadUrl: '/api/files/upload-blob',
         multipart: true,
       });
-
-      // console.log("Processing document:", file.name);
-      // console.log("Blob URL:", newBlob.url);
-      const processResponse = await fetch("/api/files/process-document", {
-        method: "POST",
+      const processResponse = await fetch('/api/files/process-document', {
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           fileUrl: newBlob.url,
@@ -71,7 +68,7 @@ export function FileUploadSection({
       });
 
       if (!processResponse.ok) {
-        throw new Error("Failed to process document");
+        throw new Error('Failed to process document');
       }
 
       const processResult = await processResponse.json();
@@ -79,10 +76,10 @@ export function FileUploadSection({
       if (processResult.success && processResult.document.canSaveToVault) {
         // Immediately save to vault
         try {
-          const saveResponse = await fetch("/api/vault/save", {
-            method: "POST",
+          const saveResponse = await fetch('/api/vault/save', {
+            method: 'POST',
             headers: {
-              "Content-Type": "application/json",
+              'Content-Type': 'application/json',
             },
             body: JSON.stringify({
               tempDocumentId: processResult.document.id,
@@ -113,8 +110,7 @@ export function FileUploadSection({
         contentType: file.type,
       };
     } catch (error) {
-      console.error("File upload error:", error);
-      toast.error("Failed to upload and process file, please try again!");
+      toast.error('Failed to upload and process file, please try again!');
     } finally {
       toast.dismiss(toastId);
     }
@@ -122,8 +118,6 @@ export function FileUploadSection({
 
   const handleFileChange = useCallback(
     async (event: ChangeEvent<HTMLInputElement>) => {
-      console.log("handleFileChange", event);
-
       const files = Array.from(event.target.files || []);
 
       setUploadQueue(files.map((file) => file.name));
@@ -148,11 +142,10 @@ export function FileUploadSection({
             .filter(Boolean);
           // Use window.dispatchEvent to notify VaultFilesSection
           window.dispatchEvent(
-            new CustomEvent("vault-autoselect", { detail: uploadedNames }),
+            new CustomEvent('vault-autoselect', { detail: uploadedNames }),
           );
         }
       } catch (error) {
-        console.error("Error uploading files!", error);
       } finally {
         setUploadQueue([]);
       }
@@ -185,7 +178,7 @@ export function FileUploadSection({
             <PreviewAttachment
               key={attachment.url}
               attachment={attachment}
-              unattachFile={() => unattachFile(attachment.name ?? "")}
+              unattachFile={() => unattachFile(attachment.name ?? '')}
             />
           ))}
           {uploadQueue.map((filename) => (
@@ -193,9 +186,9 @@ export function FileUploadSection({
               key={filename}
               unattachFile={() => unattachFile(filename)}
               attachment={{
-                url: "",
+                url: '',
                 name: filename,
-                contentType: "",
+                contentType: '',
               }}
               isUploading={true}
             />
@@ -219,7 +212,7 @@ function MessageInputSection({
   submitForm,
 }: {
   input: string;
-  status: UseChatHelpers["status"];
+  status: UseChatHelpers['status'];
   textareaRef: React.MutableRefObject<HTMLTextAreaElement | null>;
   handleInput: (event: React.ChangeEvent<HTMLTextAreaElement>) => void;
   className?: string;
@@ -238,13 +231,13 @@ function MessageInputSection({
         autoFocus
         onKeyDown={(event) => {
           if (
-            event.key === "Enter" &&
+            event.key === 'Enter' &&
             !event.shiftKey &&
             !event.nativeEvent.isComposing
           ) {
             event.preventDefault();
-            if (status !== "ready") {
-              toast.error("Please wait for the model to finish its response!");
+            if (status !== 'ready') {
+              toast.error('Please wait for the model to finish its response!');
             } else {
               submitForm();
             }
@@ -271,16 +264,16 @@ function PureMultimodalInput({
   selectedVisibilityType,
 }: {
   chatId: string;
-  input: UseChatHelpers["input"];
-  setInput: UseChatHelpers["setInput"];
-  status: UseChatHelpers["status"];
+  input: UseChatHelpers['input'];
+  setInput: UseChatHelpers['setInput'];
+  status: UseChatHelpers['status'];
   stop: () => void;
   attachments: Array<Attachment>;
   setAttachments: Dispatch<SetStateAction<Array<Attachment>>>;
   messages: Array<UIMessage>;
-  setMessages: UseChatHelpers["setMessages"];
-  append: UseChatHelpers["append"];
-  handleSubmit: UseChatHelpers["handleSubmit"];
+  setMessages: UseChatHelpers['setMessages'];
+  append: UseChatHelpers['append'];
+  handleSubmit: UseChatHelpers['handleSubmit'];
   className?: string;
   selectedVisibilityType: VisibilityType;
 }) {
@@ -295,28 +288,28 @@ function PureMultimodalInput({
 
   const adjustHeight = () => {
     if (textareaRef.current) {
-      textareaRef.current.style.height = "auto";
+      textareaRef.current.style.height = 'auto';
       textareaRef.current.style.height = `${textareaRef.current.scrollHeight + 2}px`;
     }
   };
 
   const resetHeight = () => {
     if (textareaRef.current) {
-      textareaRef.current.style.height = "auto";
-      textareaRef.current.style.height = "98px";
+      textareaRef.current.style.height = 'auto';
+      textareaRef.current.style.height = '98px';
     }
   };
 
   const [localStorageInput, setLocalStorageInput] = useLocalStorage(
-    "input",
-    "",
+    'input',
+    '',
   );
 
   useEffect(() => {
     if (textareaRef.current) {
       const domValue = textareaRef.current.value;
       // Prefer DOM value over localStorage to handle hydration
-      const finalValue = domValue || localStorageInput || "";
+      const finalValue = domValue || localStorageInput || '';
       setInput(finalValue);
       adjustHeight();
     }
@@ -336,21 +329,19 @@ function PureMultimodalInput({
   const { selectedVaultFileNames } = useVaultFilesStore();
 
   const submitForm = useCallback(() => {
-    window.history.replaceState({}, "", `/chat/${chatId}`);
+    window.history.replaceState({}, '', `/chat/${chatId}`);
 
     let userPrompt = input;
     let restoreInput = false;
     if (selectedVaultFileNames && selectedVaultFileNames.length > 0) {
-      userPrompt = `[Vault Files Selected: ${selectedVaultFileNames.join(", ")}]\n${input}`;
+      userPrompt = `[Vault Files Selected: ${selectedVaultFileNames.join(', ')}]\n${input}`;
       setInput(userPrompt);
       restoreInput = true;
     }
 
-    console.log("Submitting form with input:", userPrompt);
-
     let systemPrompt: string | undefined = undefined;
     if (selectedVaultFileNames && selectedVaultFileNames.length > 0) {
-      systemPrompt = `Vault Files Selected: ${selectedVaultFileNames.join(", ")}`;
+      systemPrompt = `Vault Files Selected: ${selectedVaultFileNames.join(', ')}`;
     }
 
     handleSubmit(undefined, {
@@ -359,11 +350,11 @@ function PureMultimodalInput({
     });
 
     if (restoreInput) {
-      setTimeout(() => setInput(""), 0);
+      setTimeout(() => setInput(''), 0);
     }
 
     setAttachments([]);
-    setLocalStorageInput("");
+    setLocalStorageInput('');
     resetHeight();
 
     if (width && width > 768) {
@@ -384,7 +375,7 @@ function PureMultimodalInput({
   const { isAtBottom, scrollToBottom } = useScrollToBottom();
 
   useEffect(() => {
-    if (status === "submitted") {
+    if (status === 'submitted') {
       scrollToBottom();
     }
   }, [status, scrollToBottom]);
@@ -397,7 +388,7 @@ function PureMultimodalInput({
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 10 }}
-            transition={{ type: "spring", stiffness: 300, damping: 20 }}
+            transition={{ type: 'spring', stiffness: 300, damping: 20 }}
             className="absolute left-1/2 bottom-28 -translate-x-1/2 z-50"
           >
             <Button
@@ -424,12 +415,12 @@ function PureMultimodalInput({
       )}
       <VaultFilesSection
         onAttachmentsChange={setAttachments}
-        disabled={status !== "ready"}
+        disabled={status !== 'ready'}
       />
       {/* File upload section (self-contained) */}
       <FileUploadSection
         onAttachmentsChange={setAttachments}
-        disabled={status !== "ready"}
+        disabled={status !== 'ready'}
       />
       {/* Message input section */}
       <MessageInputSection
@@ -438,13 +429,13 @@ function PureMultimodalInput({
         textareaRef={textareaRef}
         handleInput={handleInput}
         className={cx(
-          "min-h-[24px] max-h-[calc(75dvh)] overflow-hidden resize-none rounded-2xl !text-base bg-muted dark:border-zinc-700 p-4",
+          'min-h-[24px] max-h-[calc(75dvh)] overflow-hidden resize-none rounded-2xl !text-base bg-muted dark:border-zinc-700 p-4',
           className,
         )}
         submitForm={submitForm}
       />
       <div className="absolute bottom-0 right-0 p-2 w-fit flex flex-row justify-end">
-        {status === "submitted" ? (
+        {status === 'submitted' ? (
           <StopButton stop={stop} setMessages={setMessages} />
         ) : (
           <SendButton input={input} submitForm={submitForm} />
@@ -478,17 +469,17 @@ function VaultFilesSection({
         );
       }
     };
-    window.addEventListener("vault-autoselect", handler);
-    return () => window.removeEventListener("vault-autoselect", handler);
+    window.addEventListener('vault-autoselect', handler);
+    return () => window.removeEventListener('vault-autoselect', handler);
   }, []);
   const [isLoading, setIsLoading] = useState(false);
 
   const fetchUserUploads = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch("/api/vault/documents");
+      const response = await fetch('/api/vault/documents');
       if (!response.ok) {
-        throw new Error("Failed to fetch vault documents");
+        throw new Error('Failed to fetch vault documents');
       }
       const data = await response.json();
       // Filter out duplicates based on name
@@ -499,7 +490,6 @@ function VaultFilesSection({
       );
       setVaultFiles(uniqueDocuments || []);
     } catch (error) {
-      console.error("Error fetching vault documents:", error);
       setVaultFiles([]);
     } finally {
       setIsLoading(false);
@@ -511,9 +501,9 @@ function VaultFilesSection({
       selectedVaultFiles.map((fileId) => {
         const file = vaultFiles.find((f) => f.id === fileId);
         return {
-          url: file?.url || "",
-          name: file?.filename || "",
-          contentType: "",
+          url: file?.url || '',
+          name: file?.filename || '',
+          contentType: '',
         };
       }),
     );
@@ -588,7 +578,7 @@ function PureStopButton({
   setMessages,
 }: {
   stop: () => void;
-  setMessages: UseChatHelpers["setMessages"];
+  setMessages: UseChatHelpers['setMessages'];
 }) {
   return (
     <Button

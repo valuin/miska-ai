@@ -13,7 +13,9 @@ export const useWorkflowExecution = () => {
     errors: [] as WorkflowError[],
     timesRun: 0,
   });
-  const [nodeUserInputs, setNodeUserInputs] = useState<Record<string, string>>({});
+  const [nodeUserInputs, setNodeUserInputs] = useState<Record<string, string>>(
+    {},
+  );
 
   const {
     nodes,
@@ -35,19 +37,15 @@ export const useWorkflowExecution = () => {
   };
 
   const validateInputsBeforeExecution = () => {
-    return validateHumanInputs(
-      nodes as GenerateTextNode[],
-      nodeUserInputs,
-    );
+    return validateHumanInputs(nodes as GenerateTextNode[], nodeUserInputs);
   };
 
   const startExecution = async () => {
     if (workflowExecutionState.timesRun > 3) {
       const message =
-        "Workflow has already run successfully and cannot be run again";
-      console.warn(message);
+        'Workflow has already run successfully and cannot be run again';
       return {
-        status: "error" as const,
+        status: 'error' as const,
         message,
         error: new Error(message),
       };
@@ -58,9 +56,9 @@ export const useWorkflowExecution = () => {
     if (!validation.isValid) {
       const errorMessages = validation.errors.map((e) => e.message);
       return {
-        status: "error" as const,
-        message: errorMessages.join(", "),
-        error: new Error(errorMessages.join(", ")),
+        status: 'error' as const,
+        message: errorMessages.join(', '),
+        error: new Error(errorMessages.join(', ')),
         validationErrors: validation.errors,
       };
     }
@@ -75,9 +73,9 @@ export const useWorkflowExecution = () => {
       const workflow = validateWorkflow();
 
       if (workflow.errors.length > 0) {
-        const message = "Workflow validation failed";
+        const message = 'Workflow validation failed';
         return {
-          status: "error" as const,
+          status: 'error' as const,
           message,
           error: new Error(message),
           validationErrors: workflow.errors,
@@ -90,7 +88,6 @@ export const useWorkflowExecution = () => {
             updateNodeExecutionState(nodeId, state);
           },
           onError: (error) => {
-            console.error("Error in execution:", error);
             reject(error);
           },
           onComplete: ({ timestamp }) => {
@@ -105,14 +102,13 @@ export const useWorkflowExecution = () => {
       });
 
       return {
-        status: "success" as const,
-        message: "Workflow executed successfully",
+        status: 'success' as const,
+        message: 'Workflow executed successfully',
       };
     } catch (error) {
-      console.error("Workflow execution failed:", error);
       return {
-        status: "error" as const,
-        message: "Workflow execution failed",
+        status: 'error' as const,
+        message: 'Workflow execution failed',
         error: error instanceof Error ? error : new Error(String(error)),
       };
     } finally {

@@ -1,16 +1,16 @@
-import { createNode } from "@/lib/utils/workflows/node-factory";
+import { createNode } from '@/lib/utils/workflows/node-factory';
 import {
   type DynamicHandle,
   type FlowEdge,
   type FlowNode,
   isNodeOfType,
   isNodeWithDynamicHandles,
-} from "@/lib/utils/workflows/workflow";
-import { addEdge, applyEdgeChanges, applyNodeChanges } from "@xyflow/react";
-import type { Connection, EdgeChange, NodeChange } from "@xyflow/react";
-import { nanoid } from "nanoid";
-import type { StateCreator } from "zustand";
-import type { WorkflowState } from "./types";
+} from '@/lib/utils/workflows/workflow';
+import { addEdge, applyEdgeChanges, applyNodeChanges } from '@xyflow/react';
+import type { Connection, EdgeChange, NodeChange } from '@xyflow/react';
+import { nanoid } from 'nanoid';
+import type { StateCreator } from 'zustand';
+import type { WorkflowState } from './types';
 
 export interface NodeSlice {
   resetWorkflow: () => void;
@@ -21,22 +21,22 @@ export interface NodeSlice {
   onConnect: (connection: Connection) => void;
   getNodeById: (nodeId: string) => FlowNode;
   createNode: (
-    nodeType: FlowNode["type"],
+    nodeType: FlowNode['type'],
     position: { x: number; y: number },
   ) => FlowNode;
-  updateNode: <T extends FlowNode["type"]>(
+  updateNode: <T extends FlowNode['type']>(
     id: string,
     nodeType: T,
-    data: Partial<FlowNode["data"]>,
+    data: Partial<FlowNode['data']>,
   ) => void;
   deleteNode: (id: string) => void;
-  addDynamicHandle: <T extends FlowNode["type"]>(
+  addDynamicHandle: <T extends FlowNode['type']>(
     nodeId: string,
     nodeType: T,
     handleCategory: string,
-    handle: Omit<DynamicHandle, "id">,
+    handle: Omit<DynamicHandle, 'id'>,
   ) => string;
-  removeDynamicHandle: <T extends FlowNode["type"]>(
+  removeDynamicHandle: <T extends FlowNode['type']>(
     nodeId: string,
     nodeType: T,
     handleCategory: string,
@@ -44,12 +44,10 @@ export interface NodeSlice {
   ) => void;
 }
 
-export const createNodeSlice: StateCreator<
-  WorkflowState,
-  [],
-  [],
-  NodeSlice
-> = (set, get) => ({
+export const createNodeSlice: StateCreator<WorkflowState, [], [], NodeSlice> = (
+  set,
+  get,
+) => ({
   nodes: [],
   edges: [],
   resetWorkflow: () => {
@@ -113,11 +111,11 @@ export const createNodeSlice: StateCreator<
     get().validateWorkflow();
   },
   onConnect: (connection) => {
-    const newEdge = addEdge({ ...connection, type: "status" }, get().edges);
+    const newEdge = addEdge({ ...connection, type: 'status' }, get().edges);
     const sourceNode = get().getNodeById(connection.source!);
 
     if (!connection.sourceHandle) {
-      throw new Error("Source handle not found");
+      throw new Error('Source handle not found');
     }
 
     const sourceExecutionState = sourceNode.data.executionState;
@@ -140,7 +138,7 @@ export const createNodeSlice: StateCreator<
                     },
                   }
                 : {
-                    status: "success",
+                    status: 'success',
                     timestamp: new Date().toISOString(),
                     targets: {
                       [connection.targetHandle]: sourceHandleData,

@@ -15,7 +15,7 @@ export async function POST(request: NextRequest) {
     }
 
     const { fileUrl, filename, contentType } = await request.json();
-    
+
     if (!fileUrl || !filename) {
       return new ChatSDKError('bad_request:document').toResponse();
     }
@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
     const result = await processor.processDocument(
       fileUrl,
       filename,
-      contentType
+      contentType,
     );
 
     // Store temporarily for user decision
@@ -57,7 +57,6 @@ export async function POST(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error('Document processing error:', error);
     return new ChatSDKError('bad_request:document').toResponse();
   }
 }

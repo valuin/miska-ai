@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 
 export const WorkflowDetails = ({
   name,
@@ -72,7 +72,7 @@ export const WorkflowReview = () => (
 );
 
 export const steps = [
-  { id: 1, title: "Details", description: "Configure basic settings" },
-  { id: 2, title: "Build", description: "Add and connect nodes" },
-  { id: 3, title: "Review", description: "Review and test" },
+  { id: 1, title: 'Details', description: 'Configure basic settings' },
+  { id: 2, title: 'Build', description: 'Add and connect nodes' },
+  { id: 3, title: 'Review', description: 'Review and test' },
 ];

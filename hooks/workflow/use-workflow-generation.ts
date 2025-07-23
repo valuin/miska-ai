@@ -6,7 +6,7 @@ export const useWorkflowGeneration = () => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [generationError, setGenerationError] = useState<string | null>(null);
   const [generationProgress, setGenerationProgress] = useState(0);
-  const [generationMessage, setGenerationMessage] = useState("");
+  const [generationMessage, setGenerationMessage] = useState('');
   const initializeWorkflow = useWorkflow((state) => state.initializeWorkflow);
 
   const generateWorkflow = async (prompt: string, file?: File) => {
@@ -21,8 +21,8 @@ export const useWorkflowGeneration = () => {
 
       if (file) {
         const formData = new FormData();
-        formData.append("prompt", prompt);
-        formData.append("file", file);
+        formData.append('prompt', prompt);
+        formData.append('file', file);
         body = formData;
         // When sending FormData, do not set Content-Type header manually,
         // the browser will set it automatically with the correct boundary.
@@ -48,18 +48,23 @@ export const useWorkflowGeneration = () => {
         value,
       }: ReadableStreamReadResult<Uint8Array>) => {
         if (done) {
-          console.log('Stream complete');
           try {
             const finalSchema = JSON.parse(fullSchema);
-            if (finalSchema && finalSchema.schema && finalSchema.schema.nodes && finalSchema.schema.edges) {
-              initializeWorkflow(finalSchema.schema.nodes, finalSchema.schema.edges);
-              console.log("Workflow initialized with nodes:", finalSchema.schema.nodes, "and edges:", finalSchema.schema.edges);
+            if (
+              finalSchema &&
+              finalSchema.schema &&
+              finalSchema.schema.nodes &&
+              finalSchema.schema.edges
+            ) {
+              initializeWorkflow(
+                finalSchema.schema.nodes,
+                finalSchema.schema.edges,
+              );
             } else {
-              throw new Error("Invalid workflow schema received.");
+              throw new Error('Invalid workflow schema received.');
             }
           } catch (parseError) {
-            console.error("Failed to parse final schema:", parseError);
-            setGenerationError("Failed to parse workflow schema.");
+            setGenerationError('Failed to parse workflow schema.');
           }
           setIsGenerating(false);
           return;
@@ -105,29 +110,37 @@ export const useWorkflowGeneration = () => {
                 break;
             }
           } catch (error) {
-            console.error('Error parsing stream part:', error);
             setGenerationError('Error processing workflow generation stream.');
           }
         }
 
-        reader.read().then(processStream).catch((error) => {
-          console.error('Stream reading error:', error);
-          setGenerationError('Error reading workflow generation stream.');
-          setIsGenerating(false);
-        });
+        reader
+          .read()
+          .then(processStream)
+          .catch((error) => {
+            setGenerationError('Error reading workflow generation stream.');
+            setIsGenerating(false);
+          });
       };
 
-      reader.read().then(processStream).catch((error) => {
-        console.error('Initial stream reading error:', error);
-        setGenerationError('Failed to start workflow generation stream.');
-        setIsGenerating(false);
-      });
+      reader
+        .read()
+        .then(processStream)
+        .catch((error) => {
+          setGenerationError('Failed to start workflow generation stream.');
+          setIsGenerating(false);
+        });
     } catch (error: any) {
-      console.error('Error generating workflow:', error);
       setGenerationError(error.message || 'Failed to generate workflow.');
       setIsGenerating(false);
     }
   };
 
-  return { generateWorkflow, isGenerating, generationError, generationProgress, generationMessage };
+  return {
+    generateWorkflow,
+    isGenerating,
+    generationError,
+    generationProgress,
+    generationMessage,
+  };
 };

@@ -1,14 +1,14 @@
-"use client";
+'use client';
 
-import { StatusEdge } from "@/components/workflow-v2/status-edge";
-import type { EdgeExecutionState } from "@/lib/utils/workflows/workflow-execution-engine";
-import type { EdgeProps } from "@xyflow/react";
+import { StatusEdge } from '@/components/workflow-v2/status-edge';
+import type { EdgeExecutionState } from '@/lib/utils/workflows/workflow-execution-engine';
+import type { EdgeProps } from '@xyflow/react';
 
-export type StatusEdgeController = Omit<StatusEdge, "data"> & {
-  type: "status";
+export type StatusEdgeController = Omit<StatusEdge, 'data'> & {
+  type: 'status';
   data: {
     executionState?: EdgeExecutionState;
-    status?: "idle" | "running" | "completed" | "error";
+    status?: 'idle' | 'running' | 'completed' | 'error';
   };
 };
 
@@ -20,7 +20,7 @@ export function StatusEdgeController({
     <StatusEdge
       {...props}
       data={{
-        status: data.executionState?.status || "idle",
+        status: data.executionState?.status || 'idle',
         error: !!data.executionState?.error,
       }}
     />

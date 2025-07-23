@@ -1,7 +1,7 @@
 export default function GradientText({
   children,
-  className = "",
-  colors = ["#40ffaa", "#4079ff", "#40ffaa", "#4079ff", "#40ffaa"],
+  className = '',
+  colors = ['#40ffaa', '#4079ff', '#40ffaa', '#4079ff', '#40ffaa'],
   animationSpeed = 8,
   showBorder = false,
 }: {
@@ -12,7 +12,7 @@ export default function GradientText({
   showBorder?: boolean;
 }) {
   const gradientStyle = {
-    backgroundImage: `linear-gradient(to right, ${colors.join(", ")})`,
+    backgroundImage: `linear-gradient(to right, ${colors.join(', ')})`,
     animationDuration: `${animationSpeed}s`,
   };
 

@@ -1,5 +1,5 @@
-import { auth } from "@/app/(auth)/auth";
-import { toggleIntegration } from "@/lib/db/queries/integration.model";
+import { auth } from '@/app/(auth)/auth';
+import { toggleIntegration } from '@/lib/db/queries/integration.model';
 
 export async function PATCH(
   request: Request,
@@ -8,7 +8,7 @@ export async function PATCH(
   const { integration_id } = await params;
   const session = await auth();
   if (!session?.user) {
-    return Response.json({ error: "Unauthorized" }, { status: 401 });
+    return Response.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   const { enabled } = await request.json();

@@ -1,19 +1,19 @@
-import { Button } from "@/components/ui/button";
-import { Play, ChevronDown } from "lucide-react";
+import { Button } from '@/components/ui/button';
+import { Play, ChevronDown } from 'lucide-react';
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
-} from "@/components/ui/collapsible";
-import { Spinner } from "@/components/ui/spinner";
+} from '@/components/ui/collapsible';
+import { Spinner } from '@/components/ui/spinner';
 import type {
   WorkflowDetailsProps,
   NodeOutputProps,
   WorkflowOutputProps,
-} from "@/lib/types/workflow";
-import { useWorkflowUiState } from "@/lib/store/workflow-ui-store";
-import { HumanInputNotch } from "@/components/workflow-v2/human-input-notch";
-import { useWorkflow } from "@/hooks/use-workflow";
+} from '@/lib/types/workflow';
+import { useWorkflowUiState } from '@/lib/store/workflow-ui-store';
+import { HumanInputNotch } from '@/components/workflow-v2/human-input-notch';
+import { useWorkflow } from '@/hooks/use-workflow';
 
 export function WorkflowDetails({
   workflow,
@@ -36,7 +36,6 @@ export function WorkflowDetails({
       return true;
     }
     const validation = validateInputsBeforeExecution();
-    console.log("Validation result:", validation);
     return !validation.isValid;
   };
 
@@ -45,7 +44,7 @@ export function WorkflowDetails({
       <h2 className="text-xl font-semibold mb-4">Workflow Details</h2>
       <p className="text-lg font-medium">{workflow.name}</p>
       <p className="text-sm text-muted-foreground mb-4">
-        {workflow.description || "No description."}
+        {workflow.description || 'No description.'}
       </p>
       <h3 className="text-lg font-semibold mb-2">Input</h3>
       <div className="mb-4">
@@ -56,7 +55,7 @@ export function WorkflowDetails({
       </div>
       <Button
         onClick={onRunWorkflow}
-        className={`w-full ${isExecuting ? "bg-transparent text-white" : ""}`}
+        className={`w-full ${isExecuting ? 'bg-transparent text-white' : ''}`}
         disabled={isRunDisabled()}
       >
         {isExecuting ? (
@@ -85,7 +84,7 @@ export function NodeOutput({ nodeResults }: NodeOutputProps) {
             <Collapsible key={result.nodeId} className="w-full mt-4">
               <CollapsibleTrigger asChild>
                 <Button variant="outline" className="w-full justify-between">
-                  <b className="truncate">{result.description}</b>{" "}
+                  <b className="truncate">{result.description}</b>{' '}
                   <ChevronDown className="size-1" />
                 </Button>
               </CollapsibleTrigger>

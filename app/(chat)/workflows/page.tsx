@@ -1,11 +1,11 @@
-"use client";
+'use client';
 
-import Link from "next/link";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { LayoutGrid, Workflow } from "lucide-react";
-import { toast } from "sonner";
-import { ManualWorkflowDialog } from "@/components/manual-workflow-dialog";
-import { useQuery } from "@tanstack/react-query";
+import Link from 'next/link';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { LayoutGrid, Workflow } from 'lucide-react';
+import { toast } from 'sonner';
+import { ManualWorkflowDialog } from '@/components/manual-workflow-dialog';
+import { useQuery } from '@tanstack/react-query';
 
 interface WorkflowData {
   id: string;
@@ -17,7 +17,7 @@ interface WorkflowData {
 }
 
 const fetchWorkflows = async (): Promise<WorkflowData[]> => {
-  const response = await fetch("/api/workflows");
+  const response = await fetch('/api/workflows');
   if (!response.ok) {
     const errorData = await response.json();
     throw new Error(errorData.error || response.statusText);
@@ -33,7 +33,7 @@ export default function WorkflowsPage() {
     error,
     refetch,
   } = useQuery({
-    queryKey: ["workflows"],
+    queryKey: ['workflows'],
     queryFn: fetchWorkflows,
   });
 
@@ -84,7 +84,7 @@ export default function WorkflowsPage() {
                 </CardHeader>
                 <CardContent>
                   <p className="text-sm text-muted-foreground">
-                    {wf.description || "No description provided."}
+                    {wf.description || 'No description provided.'}
                   </p>
                 </CardContent>
               </Card>

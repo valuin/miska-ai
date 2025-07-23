@@ -1,30 +1,30 @@
-import { AGENT_NAMES } from "@/lib/constants";
-import { generateUUID } from "@/lib/utils";
-import { getAgentType } from "@/mastra/agents/agent-router";
-import { mastra, type MastraRuntimeContext } from "@/mastra";
-import { saveMessages } from "@/lib/db/queries";
-import { workflowModifierAgent } from "@/mastra/tools/utility-tools";
-import type { DataStreamWriter, Message, StepResult } from "ai";
-import type { RuntimeContext } from "@mastra/core/di";
+import { AGENT_NAMES } from '@/lib/constants';
+import { generateUUID } from '@/lib/utils';
+import { getAgentType } from '@/mastra/agents/agent-router';
+import { mastra, type MastraRuntimeContext } from '@/mastra';
+import { saveMessages } from '@/lib/db/queries';
+import { workflowModifierAgent } from '@/mastra/tools/utility-tools';
+import type { DataStreamWriter, Message, StepResult } from 'ai';
+import type { RuntimeContext } from '@mastra/core/di';
 
-type onFinishResult = Omit<StepResult<any>, "stepType" | "isContinued"> & {
+type onFinishResult = Omit<StepResult<any>, 'stepType' | 'isContinued'> & {
   readonly steps: StepResult<any>[];
 };
 
 type StepText = {
-  type: "text";
+  type: 'text';
   text: string;
 };
 
 type ToolCall = {
-  type: "tool-call";
+  type: 'tool-call';
   toolCallId: string;
   toolName: string;
   args: Record<string, any>;
 };
 
 type ToolResult = {
-  type: "tool-result";
+  type: 'tool-result';
   toolCallId: string;
   toolName: string;
   result: Record<string, any>;
@@ -45,13 +45,13 @@ export async function streamWithMastraAgent(
   // Check for selectedVaultFileNames in runtimeContext
   let vaultFiles: string[] | undefined = undefined;
   if (runtimeContext) {
-    vaultFiles = runtimeContext.get("selectedVaultFileNames");
-    runtimeContext.set("mastra", mastra);
+    vaultFiles = runtimeContext.get('selectedVaultFileNames');
+    runtimeContext.set('mastra', mastra);
   }
 
   let selectedAgent = await getAgentType(messages);
   if (vaultFiles && Array.isArray(vaultFiles) && vaultFiles.length > 0) {
-    selectedAgent = "ragChatAgent";
+    selectedAgent = 'ragChatAgent';
   }
   const agent = mastra.getAgent(selectedAgent);
 
@@ -60,20 +60,20 @@ export async function streamWithMastraAgent(
   if (vaultFiles && vaultFiles.length > 0) {
     finalMessages = [
       {
-        id: "system-vault-context",
-        role: "system",
-        content: `Vault Files Selected: ${vaultFiles.join(", ")}`,
+        id: 'system-vault-context',
+        role: 'system',
+        content: `Vault Files Selected: ${vaultFiles.join(', ')}`,
         createdAt: new Date(),
       },
       ...messages,
     ];
   }
 
-  if (selectedAgent !== "normalAgent") {
+  if (selectedAgent !== 'normalAgent') {
     const agentChoice = `Initiating ${AGENT_NAMES[selectedAgent]}...`;
     if (!agentChoice) return;
     responsePipe.writeMessageAnnotation({
-      type: "agent-choice",
+      type: 'agent-choice',
       agentChoice,
     });
   }
@@ -85,11 +85,11 @@ export async function streamWithMastraAgent(
     try {
       const steps: Step[] = [];
       for (const step of result) {
-        if (step.text) steps.push({ type: "text", text: step.text });
+        if (step.text) steps.push({ type: 'text', text: step.text });
         if (step.toolCalls && step.toolCalls.length > 0) {
           for (const toolCall of step.toolCalls) {
             steps.push({
-              type: "tool-call",
+              type: 'tool-call',
               toolCallId: toolCall.toolCallId,
               toolName: toolCall.toolName,
               args: toolCall.args,
@@ -99,7 +99,7 @@ export async function streamWithMastraAgent(
         if (step.toolResults && step.toolResults.length > 0) {
           for (const toolResult of step.toolResults) {
             steps.push({
-              type: "tool-result",
+              type: 'tool-result',
               toolCallId: toolResult.toolCallId,
               toolName: toolResult.toolName,
               result: toolResult.result,
@@ -109,10 +109,10 @@ export async function streamWithMastraAgent(
       }
 
       const filteredSteps = steps.filter((step) => {
-        if (step.type !== "tool-call") return true;
+        if (step.type !== 'tool-call') return true;
         if (
           steps.find(
-            (s) => s.type === "tool-result" && s.toolCallId === step.toolCallId,
+            (s) => s.type === 'tool-result' && s.toolCallId === step.toolCallId,
           )
         ) {
           return false;
@@ -123,12 +123,10 @@ export async function streamWithMastraAgent(
       await saveMastraMessage(
         selectedAgent,
         chatId,
-        "assistant",
+        'assistant',
         filteredSteps,
       );
-    } catch (error) {
-      console.error("Failed to save Mastra agent message:", error);
-    }
+    } catch (error) {}
   };
 
   const streamOptions: any = {
@@ -139,8 +137,8 @@ export async function streamWithMastraAgent(
     runtimeContext: options?.runtimeContext,
     onFinish: async (result: onFinishResult) => {
       const lastMessage = {
-        id: "LAST GENERATED AGENT RESPONSE",
-        role: "assistant" as const,
+        id: 'LAST GENERATED AGENT RESPONSE',
+        role: 'assistant' as const,
         content: JSON.stringify(result.response.messages),
       };
       const content = [...messages, lastMessage];
@@ -163,14 +161,14 @@ export async function streamWithMastraAgent(
 export async function saveMastraMessage(
   agentName: string,
   chatId: string,
-  role: "user" | "assistant",
+  role: 'user' | 'assistant',
   parts: Step[],
 ) {
   const messageId = generateUUID();
 
   // Ensure we have at least one part
   if (parts.length === 0) {
-    parts.push({ type: "text", text: "" });
+    parts.push({ type: 'text', text: '' });
   }
 
   const dbMessage = {
@@ -221,7 +219,7 @@ export async function createMastraAgentAPIRoute(
 
     const agent = mastra.getAgent(agentName);
     if (!agent) {
-      return new Response("Agent not found", { status: 404 });
+      return new Response('Agent not found', { status: 404 });
     }
     const stream = await agent.stream(messages);
     return stream.toDataStreamResponse();

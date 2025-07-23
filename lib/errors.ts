@@ -57,7 +57,6 @@ export class ChatSDKError extends Error {
     const { message, cause, statusCode } = this;
 
     if (visibility === 'log') {
-      console.error({
         code,
         message,
         cause,

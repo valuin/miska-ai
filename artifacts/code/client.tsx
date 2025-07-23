@@ -11,10 +11,6 @@ import {
 import { toast } from 'sonner';
 import { generateUUID } from '@/lib/utils';
 import {
-  Console,
-  type ConsoleOutput,
-  type ConsoleOutputContent,
-} from '@/components/console';
 
 const OUTPUT_HANDLERS = {
   matplotlib: `
@@ -63,7 +59,6 @@ function detectRequiredHandlers(code: string): string[] {
 }
 
 interface Metadata {
-  outputs: Array<ConsoleOutput>;
 }
 
 export const codeArtifact = new Artifact<'code', Metadata>({
@@ -98,9 +93,6 @@ export const codeArtifact = new Artifact<'code', Metadata>({
         </div>
 
         {metadata?.outputs && (
-          <Console
-            consoleOutputs={metadata.outputs}
-            setConsoleOutputs={() => {
               setMetadata({
                 ...metadata,
                 outputs: [],
@@ -118,7 +110,6 @@ export const codeArtifact = new Artifact<'code', Metadata>({
       description: 'Execute code',
       onClick: async ({ content, setMetadata }) => {
         const runId = generateUUID();
-        const outputContent: Array<ConsoleOutputContent> = [];
 
         setMetadata((metadata) => ({
           ...metadata,

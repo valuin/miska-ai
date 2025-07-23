@@ -1,14 +1,14 @@
-"use client";
+'use client';
 
-import { TextInputNode } from "@/components/workflow-v2/text-input-node";
-import { useWorkflow } from "@/hooks/use-workflow";
-import type { NodeExecutionState } from "@/lib/utils/workflows/workflow-execution-engine";
-import type { NodeProps } from "@xyflow/react";
-import { useCallback } from "react";
+import { TextInputNode } from '@/components/workflow-v2/text-input-node';
+import { useWorkflow } from '@/hooks/use-workflow';
+import type { NodeExecutionState } from '@/lib/utils/workflows/workflow-execution-engine';
+import type { NodeProps } from '@xyflow/react';
+import { useCallback } from 'react';
 
-export type TextInputNodeController = Omit<TextInputNode, "data"> & {
-  type: "text-input";
-  data: Omit<TextInputNode["data"], "status"> & {
+export type TextInputNodeController = Omit<TextInputNode, 'data'> & {
+  type: 'text-input';
+  data: Omit<TextInputNode['data'], 'status'> & {
     executionState?: NodeExecutionState;
   };
 };
@@ -23,9 +23,9 @@ export function TextInputNodeController({
 
   const handleTextChange = useCallback(
     (value: string) => {
-      updateNode(id, "text-input", { config: { value } });
+      updateNode(id, 'text-input', { config: { value } });
     },
-    [id, updateNode]
+    [id, updateNode],
   );
 
   const handleDeleteNode = useCallback(() => {

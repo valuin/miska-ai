@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import { Card, CardContent } from "@/components/ui/card";
-import { TrendingDown, TrendingUp } from "lucide-react";
+import { Card, CardContent } from '@/components/ui/card';
+import { TrendingDown, TrendingUp } from 'lucide-react';
 
 export function StatCard({
   title,
@@ -15,7 +15,7 @@ export function StatCard({
   value: string;
   subtitle: string;
   trend?: string;
-  trendDirection?: "up" | "down";
+  trendDirection?: 'up' | 'down';
   icon: React.ReactNode;
 }) {
   return (
@@ -30,10 +30,10 @@ export function StatCard({
             {trend && trendDirection && (
               <span
                 className={`flex items-center text-xs font-medium ${
-                  trendDirection === "up" ? "text-green-500" : "text-red-500"
+                  trendDirection === 'up' ? 'text-green-500' : 'text-red-500'
                 }`}
               >
-                {trendDirection === "up" ? (
+                {trendDirection === 'up' ? (
                   <TrendingUp className="mr-1 size-3" />
                 ) : (
                   <TrendingDown className="mr-1 size-3" />

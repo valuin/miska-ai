@@ -1,8 +1,8 @@
-import { ChartBarInteractive } from "@/components/analytics/bar-chart";
-import { AgentUsageChart } from "@/components/analytics/agent-usage-chart";
-import { StatCard } from "@/components/analytics/stat-card";
-import { ToolUsageChart } from "@/components/analytics/tool-usage-chart";
-import { MessageCircle, Clock, Zap } from "lucide-react";
+import { ChartBarInteractive } from '@/components/analytics/bar-chart';
+import { AgentUsageChart } from '@/components/analytics/agent-usage-chart';
+import { StatCard } from '@/components/analytics/stat-card';
+import { ToolUsageChart } from '@/components/analytics/tool-usage-chart';
+import { MessageCircle, Clock, Zap } from 'lucide-react';
 
 export default function AnalyticsPage() {
   return (

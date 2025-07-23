@@ -1,15 +1,15 @@
-"use client";
+'use client';
 
-import { PromptCrafterNode } from "@/components/workflow-v2/prompt-crafter-node";
-import { useWorkflow } from "@/hooks/use-workflow";
-import type { NodeExecutionState } from "@/lib/utils/workflows/workflow-execution-engine";
-import type { NodeProps } from "@xyflow/react";
-import { useCallback } from "react";
-import { toast } from "sonner";
+import { PromptCrafterNode } from '@/components/workflow-v2/prompt-crafter-node';
+import { useWorkflow } from '@/hooks/use-workflow';
+import type { NodeExecutionState } from '@/lib/utils/workflows/workflow-execution-engine';
+import type { NodeProps } from '@xyflow/react';
+import { useCallback } from 'react';
+import { toast } from 'sonner';
 
-export type PromptCrafterNodeController = Omit<PromptCrafterNode, "data"> & {
-  type: "prompt-crafter";
-  data: Omit<PromptCrafterNode["data"], "status"> & {
+export type PromptCrafterNodeController = Omit<PromptCrafterNode, 'data'> & {
+  type: 'prompt-crafter';
+  data: Omit<PromptCrafterNode['data'], 'status'> & {
     executionState?: NodeExecutionState;
   };
 };
@@ -26,82 +26,82 @@ export function PromptCrafterNodeController({
 
   const handlePromptTextChange = useCallback(
     (value: string) => {
-      updateNode(id, "prompt-crafter", { config: { template: value } });
+      updateNode(id, 'prompt-crafter', { config: { template: value } });
     },
-    [id, updateNode]
+    [id, updateNode],
   );
 
   const handleCreateInput = useCallback(
     (name: string) => {
       if (!name) {
-        toast.error("Input name cannot be empty");
+        toast.error('Input name cannot be empty');
         return false;
       }
 
-      const existingInput = data.dynamicHandles["template-tags"]?.find(
-        (input) => input.name === name
+      const existingInput = data.dynamicHandles['template-tags']?.find(
+        (input) => input.name === name,
       );
       if (existingInput) {
-        toast.error("Input name already exists");
+        toast.error('Input name already exists');
         return false;
       }
 
-      addDynamicHandle(id, "prompt-crafter", "template-tags", {
+      addDynamicHandle(id, 'prompt-crafter', 'template-tags', {
         name,
       });
       return true;
     },
-    [id, data.dynamicHandles, addDynamicHandle]
+    [id, data.dynamicHandles, addDynamicHandle],
   );
 
   const handleRemoveInput = useCallback(
     (handleId: string) => {
-      removeDynamicHandle(id, "prompt-crafter", "template-tags", handleId);
+      removeDynamicHandle(id, 'prompt-crafter', 'template-tags', handleId);
     },
-    [id, removeDynamicHandle]
+    [id, removeDynamicHandle],
   );
 
   const handleUpdateInputName = useCallback(
     (handleId: string, newLabel: string): boolean => {
       if (!newLabel) {
-        toast.error("Input name cannot be empty");
+        toast.error('Input name cannot be empty');
         return false;
       }
 
-      const existingInput = data.dynamicHandles["template-tags"]?.find(
-        (input) => input.name === newLabel
+      const existingInput = data.dynamicHandles['template-tags']?.find(
+        (input) => input.name === newLabel,
       );
       if (existingInput && existingInput.id !== handleId) {
-        toast.error("Input name already exists");
+        toast.error('Input name already exists');
         return false;
       }
 
-      const oldInput = data.dynamicHandles["template-tags"]?.find(
-        (input) => input.id === handleId
+      const oldInput = data.dynamicHandles['template-tags']?.find(
+        (input) => input.id === handleId,
       );
       if (!oldInput) {
         return false;
       }
 
-      updateNode(id, "prompt-crafter", {
+      updateNode(id, 'prompt-crafter', {
         config: {
           ...data.config,
-          template: (data.config.template || "").replace(
-            new RegExp(`{{${oldInput.name}}}`, "g"),
-            `{{${newLabel}}}`
+          template: (data.config.template || '').replace(
+            new RegExp(`{{${oldInput.name}}}`, 'g'),
+            `{{${newLabel}}}`,
           ),
         },
         dynamicHandles: {
           ...data.dynamicHandles,
-          "template-tags": (data.dynamicHandles["template-tags"] || []).map(
+          'template-tags': (data.dynamicHandles['template-tags'] || []).map(
             (input) =>
-              input.id === handleId ? { ...input, name: newLabel } : input
+              input.id === handleId ? { ...input, name: newLabel } : input,
           ),
         },
       });
       return true;
     },
-    [id, data.dynamicHandles, data.config, updateNode]
+    [id, data.dynamicHandles, data.config, updateNode],
   );
 
   const handleDeleteNode = useCallback(() => {

@@ -1,5 +1,5 @@
-import { parseDataStreamPart } from "ai";
-import { SSEWorkflowExecutionClient } from "@/lib/utils/workflows/sse-workflow-execution-client";
+import { parseDataStreamPart } from 'ai';
+import { SSEWorkflowExecutionClient } from '@/lib/utils/workflows/sse-workflow-execution-client';
 import {
   type FlowEdge,
   type FlowNode,
@@ -7,18 +7,15 @@ import {
   type WorkflowError,
   getLayoutedElements,
   prepareWorkflow,
-} from "@/lib/utils/workflows/workflow";
+} from '@/lib/utils/workflows/workflow';
 import type {
   EdgeExecutionState,
   NodeExecutionState,
-} from "@/lib/utils/workflows/workflow-execution-engine";
-import type { StateCreator } from "zustand";
-import { validateHumanInputs } from "@/lib/validation/workflow-validation";
-import type {
-  GenerateTextNode,
-  WorkflowState,
-} from "./types";
-import type { WorkflowNodeProgress } from "@/lib/types/workflow";
+} from '@/lib/utils/workflows/workflow-execution-engine';
+import type { StateCreator } from 'zustand';
+import { validateHumanInputs } from '@/lib/validation/workflow-validation';
+import type { GenerateTextNode, WorkflowState } from './types';
+import type { WorkflowNodeProgress } from '@/lib/types/workflow';
 
 export interface ExecutionSlice {
   generationProgress: number;
@@ -41,7 +38,7 @@ export interface ExecutionSlice {
     errors: { nodeId: string; message: string }[];
   };
   startExecution: () => Promise<{
-    status: "success" | "error";
+    status: 'success' | 'error';
     message: string;
     error?: Error;
     validationErrors?: WorkflowError[];
@@ -69,35 +66,35 @@ export const createExecutionSlice: StateCreator<
   ExecutionSlice
 > = (set, get) => ({
   generationProgress: 0,
-  generationMessage: "",
+  generationMessage: '',
   showGenerationProgress: false,
   setGenerationProgress: (progress) => set({ generationProgress: progress }),
   setGenerationMessage: (message) => set({ generationMessage: message }),
   setShowGenerationProgress: (show) => set({ showGenerationProgress: show }),
   generateWorkflow: async (prompt, file) => {
     get().setShowGenerationProgress(true);
-    get().setGenerationMessage("Generating workflow...");
+    get().setGenerationMessage('Generating workflow...');
     get().setGenerationProgress(0);
 
     const formData = new FormData();
-    formData.append("prompt", prompt);
+    formData.append('prompt', prompt);
     if (file) {
-      formData.append("file", file);
+      formData.append('file', file);
     }
 
     try {
-      const response = await fetch("/api/workflows/generate", {
-        method: "POST",
+      const response = await fetch('/api/workflows/generate', {
+        method: 'POST',
         body: formData,
       });
 
       if (!response.body) {
-        throw new Error("No response body");
+        throw new Error('No response body');
       }
 
-      let fullSchema = "";
+      let fullSchema = '';
       try {
-        let lineBuffer = ""; // Buffer for incomplete lines
+        let lineBuffer = ''; // Buffer for incomplete lines
 
         await response.body.pipeThrough(new TextDecoderStream()).pipeTo(
           new WritableStream({
@@ -143,53 +140,54 @@ export const createExecutionSlice: StateCreator<
                       }
                       break;
                   }
-                } catch (parseError) {
-                  console.error("Error parsing stream line with parseDataStreamPart:", line, parseError);
-                }
+                } catch (parseError) {}
               }
             },
             close() {
-              console.log("Stream closed. Final accumulated fullSchema:", fullSchema);
               try {
                 const finalSchema = JSON.parse(fullSchema);
-                console.log("Final parsed schema:", finalSchema);
 
                 // The schema is now nested under the `schema` property
                 const workflowSchema = finalSchema.schema;
 
-                get().initializeWorkflow(workflowSchema.nodes, workflowSchema.edges);
-                console.log("Workflow initialized with nodes:", workflowSchema.nodes, "and edges:", workflowSchema.edges);
-                get().setGenerationMessage("Workflow generated successfully!");
+                get().initializeWorkflow(
+                  workflowSchema.nodes,
+                  workflowSchema.edges,
+                );
+                get().setGenerationMessage('Workflow generated successfully!');
                 get().setGenerationProgress(100);
               } catch (jsonError) {
-                console.error("Error parsing final schema JSON (in close):", jsonError, "Full schema content:", fullSchema);
-                get().setGenerationMessage(`Failed to parse final workflow schema: ${jsonError instanceof Error ? jsonError.message : String(jsonError)}`);
+                get().setGenerationMessage(
+                  `Failed to parse final workflow schema: ${jsonError instanceof Error ? jsonError.message : String(jsonError)}`,
+                );
               }
             },
             abort(reason) {
-              console.error("Stream aborted:", reason);
-              get().setGenerationMessage(`Workflow generation aborted: ${reason instanceof Error ? reason.message : String(reason)}`);
+              get().setGenerationMessage(
+                `Workflow generation aborted: ${reason instanceof Error ? reason.message : String(reason)}`,
+              );
             },
-          })
+          }),
         );
       } catch (error) {
-        console.error("Workflow generation failed in client-side hook:", error);
-        get().setGenerationMessage(`Failed to generate workflow: ${error instanceof Error ? error.message : String(error)}`);
+        get().setGenerationMessage(
+          `Failed to generate workflow: ${error instanceof Error ? error.message : String(error)}`,
+        );
       }
       try {
         const finalSchema = JSON.parse(fullSchema);
-        console.log("Final parsed schema:", finalSchema);
         get().initializeWorkflow(finalSchema.nodes, finalSchema.edges);
-        console.log("Workflow initialized with nodes:", finalSchema.nodes, "and edges:", finalSchema.edges);
-        get().setGenerationMessage("Workflow generated successfully!");
+        get().setGenerationMessage('Workflow generated successfully!');
         get().setGenerationProgress(100);
       } catch (jsonError) {
-        console.error("Error parsing final schema JSON:", jsonError, "Full schema content:", fullSchema);
-        get().setGenerationMessage(`Failed to parse final workflow schema: ${jsonError instanceof Error ? jsonError.message : String(jsonError)}`);
+        get().setGenerationMessage(
+          `Failed to parse final workflow schema: ${jsonError instanceof Error ? jsonError.message : String(jsonError)}`,
+        );
       }
     } catch (error) {
-      console.error("Workflow generation failed in client-side hook:", error);
-      get().setGenerationMessage(`Failed to generate workflow: ${error instanceof Error ? error.message : String(error)}`);
+      get().setGenerationMessage(
+        `Failed to generate workflow: ${error instanceof Error ? error.message : String(error)}`,
+      );
     } finally {
       setTimeout(() => get().setShowGenerationProgress(false), 3000);
     }
@@ -211,17 +209,10 @@ export const createExecutionSlice: StateCreator<
   },
   validateInputsBeforeExecution: () => {
     const { nodes, nodeUserInputs } = get();
-    return validateHumanInputs(
-      nodes as GenerateTextNode[],
-      nodeUserInputs,
-    );
+    return validateHumanInputs(nodes as GenerateTextNode[], nodeUserInputs);
   },
   initializeWorkflow: (initialNodes: FlowNode[], initialEdges: FlowEdge[]) => {
-    console.log("initializeWorkflow called with initialNodes:", initialNodes, "and initialEdges:", initialEdges);
-    console.trace("Call stack for initializeWorkflow:");
-
     if (!initialNodes || !initialEdges) {
-      console.warn("initializeWorkflow received undefined nodes or edges. Skipping layouting.");
       return;
     }
 
@@ -272,28 +263,25 @@ export const createExecutionSlice: StateCreator<
           sourceNode?.data.executionState &&
           targetNode?.data.executionState
         ) {
-          let edgeStatus: "idle" | "running" | "completed" | "error" = "idle";
+          let edgeStatus: 'idle' | 'running' | 'completed' | 'error' = 'idle';
 
           const sourceStatus = sourceNode.data.executionState.status;
           const targetStatus = targetNode.data.executionState.status;
 
-          if (sourceStatus === "error" || targetStatus === "error") {
-            edgeStatus = "error";
+          if (sourceStatus === 'error' || targetStatus === 'error') {
+            edgeStatus = 'error';
           } else if (
-            sourceStatus === "completed" &&
-            targetStatus === "completed"
+            sourceStatus === 'completed' &&
+            targetStatus === 'completed'
           ) {
-            edgeStatus = "completed";
+            edgeStatus = 'completed';
           } else if (
-            (sourceStatus === "running" || sourceStatus === "completed") &&
-            targetStatus === "running"
+            (sourceStatus === 'running' || sourceStatus === 'completed') &&
+            targetStatus === 'running'
           ) {
-            edgeStatus = "running";
-          } else if (
-            sourceStatus === "completed" &&
-            targetStatus === "idle"
-          ) {
-            edgeStatus = "completed";
+            edgeStatus = 'running';
+          } else if (sourceStatus === 'completed' && targetStatus === 'idle') {
+            edgeStatus = 'completed';
           }
 
           return {
@@ -321,17 +309,17 @@ export const createExecutionSlice: StateCreator<
     if (workflow.errors.length > 0) {
       for (const error of workflow.errors) {
         switch (error.type) {
-          case "multiple-sources-for-target-handle":
-          case "cycle":
+          case 'multiple-sources-for-target-handle':
+          case 'cycle':
             for (const edge of error.edges) {
               get().updateEdgeExecutionState(edge.id, {
                 error,
               });
             }
             break;
-          case "missing-required-connection":
+          case 'missing-required-connection':
             get().updateNodeExecutionState(error.node.id, {
-              status: "idle",
+              status: 'idle',
               timestamp: new Date().toISOString(),
               error,
             });
@@ -389,10 +377,9 @@ export const createExecutionSlice: StateCreator<
   async startExecution() {
     if (get().workflowExecutionState.timesRun > 3) {
       const message =
-        "Workflow has already run successfully and cannot be run again";
-      console.warn(message);
+        'Workflow has already run successfully and cannot be run again';
       return {
-        status: "error",
+        status: 'error',
         message,
         error: new Error(message),
       };
@@ -403,9 +390,9 @@ export const createExecutionSlice: StateCreator<
     if (!validation.isValid) {
       const errorMessages = validation.errors.map((e) => e.message);
       return {
-        status: "error",
-        message: errorMessages.join(", "),
-        error: new Error(errorMessages.join(", ")),
+        status: 'error',
+        message: errorMessages.join(', '),
+        error: new Error(errorMessages.join(', ')),
       };
     }
 
@@ -415,7 +402,7 @@ export const createExecutionSlice: StateCreator<
         data: {
           ...node.data,
           executionState: {
-            status: "idle",
+            status: 'idle',
             timestamp: new Date().toISOString(),
           },
         },
@@ -425,9 +412,9 @@ export const createExecutionSlice: StateCreator<
     const workflow = get().validateWorkflow();
 
     if (workflow.errors.length > 0) {
-      const message = "Workflow validation failed";
+      const message = 'Workflow validation failed';
       return {
-        status: "error",
+        status: 'error',
         message,
         error: new Error(message),
         validationErrors: workflow.errors,
@@ -451,7 +438,6 @@ export const createExecutionSlice: StateCreator<
             updateNodeExecutionState(nodeId, state);
           },
           onError: (error) => {
-            console.error("Error in execution:", error);
             reject(error);
           },
           onComplete: ({ timestamp }) => {
@@ -468,14 +454,13 @@ export const createExecutionSlice: StateCreator<
       });
 
       return {
-        status: "success",
-        message: "Workflow executed successfully",
+        status: 'success',
+        message: 'Workflow executed successfully',
       };
     } catch (error) {
-      console.error("Workflow execution failed:", error);
       return {
-        status: "error",
-        message: "Workflow execution failed",
+        status: 'error',
+        message: 'Workflow execution failed',
         error: error instanceof Error ? error : new Error(String(error)),
       };
     } finally {

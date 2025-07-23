@@ -378,10 +378,6 @@ export function prepareWorkflow(
   // First pass: Build dependency graph and check connection validity
   const { dependencies, dependents, connectionMap } =
     buildDependencyGraph(edges);
-
-  /* console.log("dependencies", dependencies);
-	console.log("dependents", dependents);
-	console.log("connectionMap", connectionMap);
  */
   // Second pass: Validate multiple sources for single target handle
   errors.push(...validateMultipleSources(connectionMap));
@@ -420,7 +416,6 @@ export const getLayoutedElements = (
   edges: FlowEdge[],
   direction = "TB",
 ): { nodes: FlowNode[]; edges: FlowEdge[] } => {
-  console.log("getLayoutedElements called with nodes:", nodes, "and edges:", edges);
   const isHorizontal = direction === "LR";
   dagreGraph.setGraph({ rankdir: direction });
 

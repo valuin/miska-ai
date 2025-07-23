@@ -1,19 +1,19 @@
-"use client";
+'use client';
 
-import { cn } from "@/lib/utils";
+import { cn } from '@/lib/utils';
 
 interface SpinnerProps extends React.HTMLAttributes<HTMLDivElement> {
-  size?: "sm" | "md" | "lg";
+  size?: 'sm' | 'md' | 'lg';
 }
 
-export function Spinner({ className, size = "md", ...props }: SpinnerProps) {
+export function Spinner({ className, size = 'md', ...props }: SpinnerProps) {
   return (
     <div
       className={cn(
-        "relative inline-block",
-        size === "sm" && "size-3",
-        size === "md" && "size-4",
-        size === "lg" && "size-6",
+        'relative inline-block',
+        size === 'sm' && 'size-3',
+        size === 'md' && 'size-4',
+        size === 'lg' && 'size-6',
         className,
       )}
       {...props}

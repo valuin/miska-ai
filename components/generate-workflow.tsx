@@ -1,19 +1,19 @@
-"use client";
+'use client';
 
-import { Button } from "@/components/ui/button";
+import { Button } from '@/components/ui/button';
 import {
   Dropzone,
   DropzoneContent,
   DropzoneEmptyState,
-} from "@/components/ui/dropzone";
-import { Textarea } from "@/components/ui/textarea";
-import { useWorkflow } from "@/hooks/use-workflow";
-import { useState } from "react";
-import { toast } from "sonner";
-import { Progress } from "@/components/ui/progress";
+} from '@/components/ui/dropzone';
+import { Textarea } from '@/components/ui/textarea';
+import { useWorkflow } from '@/hooks/use-workflow';
+import { useState } from 'react';
+import { toast } from 'sonner';
+import { Progress } from '@/components/ui/progress';
 
 export function GenerateWorkflow() {
-  const [prompt, setPrompt] = useState("");
+  const [prompt, setPrompt] = useState('');
   const [file, setFile] = useState<File | undefined>();
   const {
     generateWorkflow,
@@ -29,7 +29,7 @@ export function GenerateWorkflow() {
 
   const handleGenerate = () => {
     if (!prompt) {
-      toast.error("Please enter a prompt to generate the workflow.");
+      toast.error('Please enter a prompt to generate the workflow.');
       return;
     }
     generateWorkflow(prompt, file);
@@ -56,7 +56,7 @@ export function GenerateWorkflow() {
         )}
       </Dropzone>
       <Button onClick={handleGenerate} disabled={showGenerationProgress}>
-        {showGenerationProgress ? "Generating..." : "Generate Workflow"}
+        {showGenerationProgress ? 'Generating...' : 'Generate Workflow'}
       </Button>
       {showGenerationProgress && (
         <div className="space-y-2">

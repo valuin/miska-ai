@@ -1,16 +1,15 @@
-import { toast } from "sonner";
-import { useQuery } from "@tanstack/react-query";
-import { useRouter } from "next/navigation";
-import Image from "next/image";
-import type { UserIntegrationResponse } from "@/app/(chat)/api/integrations/route";
+import { toast } from 'sonner';
+import { useQuery } from '@tanstack/react-query';
+import { useRouter } from 'next/navigation';
+import Image from 'next/image';
+import type { UserIntegrationResponse } from '@/app/(chat)/api/integrations/route';
 
 const fetchIntegrations = async (): Promise<
-  UserIntegrationResponse["integrations"]
+  UserIntegrationResponse['integrations']
 > => {
-  const response = await fetch("/api/integrations");
+  const response = await fetch('/api/integrations');
   if (!response.ok) {
     const errorData = await response.json();
-    console.error(errorData);
     return [];
   }
   const { integrations } = await response.json();
@@ -19,7 +18,7 @@ const fetchIntegrations = async (): Promise<
 
 const toggleIntegration = async (id: string, enabled: boolean) => {
   await fetch(`/api/integrations/${id}`, {
-    method: "PATCH",
+    method: 'PATCH',
     body: JSON.stringify({ enabled }),
   });
 };
@@ -30,7 +29,7 @@ export default function Integrations() {
     refetch,
     isLoading,
   } = useQuery({
-    queryKey: ["integrations"],
+    queryKey: ['integrations'],
     queryFn: fetchIntegrations,
   });
 
@@ -64,7 +63,7 @@ export default function Integrations() {
                   await toggleIntegration(integration.id, toggle);
                   refetch().then(() => {
                     toast.success(
-                      `${toggle ? "Enabled" : "Disabled"} integration`,
+                      `${toggle ? 'Enabled' : 'Disabled'} integration`,
                     );
                   });
                 }

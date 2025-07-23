@@ -1,13 +1,13 @@
-import { auth } from "@/app/(auth)/auth";
-import { ChatSDKError } from "@/lib/errors";
-import { generateTitleFromUserMessage } from "../../actions";
-import { generateUUID } from "@/lib/utils";
-import { getAttachmentText } from "@/lib/utils/text-extraction";
-import { getStreamContext } from "./streamUtils";
-import { postRequestBodySchema, type PostRequestBody } from "./schema";
-import { streamWithMastraAgent } from "@/lib/ai/mastra-integration";
-import type { DBMessage } from "@/lib/db/schema";
-import type { Session } from "next-auth";
+import { auth } from '@/app/(auth)/auth';
+import { ChatSDKError } from '@/lib/errors';
+import { generateTitleFromUserMessage } from '../../actions';
+import { generateUUID } from '@/lib/utils';
+import { getAttachmentText } from '@/lib/utils/text-extraction';
+import { getStreamContext } from './streamUtils';
+import { postRequestBodySchema, type PostRequestBody } from './schema';
+import { streamWithMastraAgent } from '@/lib/ai/mastra-integration';
+import type { DBMessage } from '@/lib/db/schema';
+import type { Session } from 'next-auth';
 import {
   createStreamId,
   getChatById,
@@ -15,15 +15,15 @@ import {
   saveChat,
   saveMessages,
   uploadFile,
-} from "@/lib/db/queries";
+} from '@/lib/db/queries';
 import {
   createDataStream,
   type DataStreamWriter,
   type Message,
   type Attachment,
-} from "ai";
-import { RuntimeContext } from "@mastra/core/di";
-import type { MastraRuntimeContext } from "@/mastra";
+} from 'ai';
+import { RuntimeContext } from '@mastra/core/di';
+import type { MastraRuntimeContext } from '@/mastra';
 
 interface ProcessAttachmentsParams {
   files: Attachment[] | undefined;
@@ -40,13 +40,11 @@ async function processAttachments({
       try {
         await uploadFile({
           name: file.name || `attachment-${Date.now()}-${index}`,
-          url: file.url || "",
-          text: text || "",
+          url: file.url || '',
+          text: text || '',
           userId: session.user.id,
         });
-      } catch (error) {
-        console.warn(`Failed to save attachment ${file.name}:`, error);
-      }
+      } catch (error) {}
       return text;
     }) ?? [],
   );
@@ -71,10 +69,10 @@ async function handleChatStreaming({
   await processAttachments({ files, session });
 
   const mastraRuntimeContext = new RuntimeContext<MastraRuntimeContext>();
-  mastraRuntimeContext.set("session", session);
-  mastraRuntimeContext.set("dataStream", responsePipe);
+  mastraRuntimeContext.set('session', session);
+  mastraRuntimeContext.set('dataStream', responsePipe);
   mastraRuntimeContext.set(
-    "selectedVaultFileNames",
+    'selectedVaultFileNames',
     selectedVaultFileNames ?? [],
   ); // Use nullish coalescing for clarity
 
@@ -90,11 +88,9 @@ export async function handlePost(request: Request) {
     const json = await request.json();
     requestBody = postRequestBodySchema.parse(json);
   } catch (error) {
-    console.error("Zod validation error:", error);
     if (error instanceof Error) {
-      console.error("Error details:", error.message);
     }
-    return new ChatSDKError("bad_request:api").toResponse();
+    return new ChatSDKError('bad_request:api').toResponse();
   }
 
   try {
@@ -104,7 +100,7 @@ export async function handlePost(request: Request) {
     const session = await auth();
 
     if (!session?.user)
-      return new ChatSDKError("unauthorized:chat").toResponse();
+      return new ChatSDKError('unauthorized:chat').toResponse();
 
     const chat = await getChatById({ id });
 
@@ -118,7 +114,7 @@ export async function handlePost(request: Request) {
       });
     } else {
       if (chat.userId !== session.user.id) {
-        return new ChatSDKError("forbidden:chat").toResponse();
+        return new ChatSDKError('forbidden:chat').toResponse();
       }
     }
 
@@ -128,7 +124,7 @@ export async function handlePost(request: Request) {
       chatId: id,
       id: message.id,
       agentName: null,
-      role: "user",
+      role: 'user',
       parts: message.parts,
       attachments: message.experimental_attachments ?? [],
       createdAt: new Date(),
@@ -142,10 +138,10 @@ export async function handlePost(request: Request) {
     const uiMessages: Message[] = messages.map((msg) => ({
       // Renamed arg to msg to avoid conflict
       id: msg.id,
-      role: msg.role as Message["role"],
+      role: msg.role as Message['role'],
       content: Array.isArray(msg.parts)
-        ? msg.parts.map((part) => part?.text ?? "").join("")
-        : "",
+        ? msg.parts.map((part) => part?.text ?? '').join('')
+        : '',
       createdAt: msg.createdAt,
     }));
 
@@ -158,7 +154,7 @@ export async function handlePost(request: Request) {
           id,
           selectedVaultFileNames, // Pass the extracted value
         }),
-      onError: () => "Oops, an error occurred!",
+      onError: () => 'Oops, an error occurred!',
     });
     const streamContext = getStreamContext();
 

@@ -1,17 +1,17 @@
-"use client";
+'use client';
 
-import { GenerateTextNode } from "@/components/workflow-v2/generate-text-node";
-import { useWorkflow } from "@/hooks/use-workflow";
-import type { GenerateTextData } from "@/hooks/workflow/types";
-import type { NodeExecutionState } from "@/lib/utils/workflows/workflow-execution-engine";
-import type { Node, NodeProps } from "@xyflow/react";
-import { useCallback } from "react";
+import { GenerateTextNode } from '@/components/workflow-v2/generate-text-node';
+import { useWorkflow } from '@/hooks/use-workflow';
+import type { GenerateTextData } from '@/hooks/workflow/types';
+import type { NodeExecutionState } from '@/lib/utils/workflows/workflow-execution-engine';
+import type { Node, NodeProps } from '@xyflow/react';
+import { useCallback } from 'react';
 
 export type GenerateTextNodeController = Node<
   GenerateTextData & {
     executionState?: NodeExecutionState;
   },
-  "generate-text"
+  'generate-text'
 >;
 
 export function GenerateTextNodeController({

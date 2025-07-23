@@ -1,25 +1,25 @@
-import { Button } from "@/components/ui/button";
-import { Panel } from "@xyflow/react";
-import { Eye, PenLine } from "lucide-react";
-import type React from "react";
+import { Button } from '@/components/ui/button';
+import { Panel } from '@xyflow/react';
+import { Eye, PenLine } from 'lucide-react';
+import type React from 'react';
 
 const nodeTypes = [
   {
-    type: "visualize-text",
-    label: "Visualize Text",
+    type: 'visualize-text',
+    label: 'Visualize Text',
     icon: Eye,
   },
   {
-    type: "text-input",
-    label: "Text Input",
+    type: 'text-input',
+    label: 'Text Input',
     icon: PenLine,
   },
 ];
 
 export function NodesPanel() {
   const onDragStart = (event: React.DragEvent, nodeType: string) => {
-    event.dataTransfer.setData("application/reactflow", nodeType);
-    event.dataTransfer.effectAllowed = "move";
+    event.dataTransfer.setData('application/reactflow', nodeType);
+    event.dataTransfer.effectAllowed = 'move';
   };
 
   return (

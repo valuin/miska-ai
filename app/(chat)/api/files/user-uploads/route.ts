@@ -15,18 +15,16 @@ export async function GET() {
 
     return NextResponse.json({ uploads });
   } catch (error) {
-    console.error('Error fetching user uploads:', error);
-    
     if (error instanceof ChatSDKError) {
       return NextResponse.json(
         { error: error.message },
-        { status: error.statusCode }
+        { status: error.statusCode },
       );
     }
 
     return NextResponse.json(
       { error: 'Failed to fetch uploads' },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

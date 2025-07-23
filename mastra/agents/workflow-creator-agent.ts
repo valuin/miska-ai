@@ -1,12 +1,12 @@
-import { BASE_MODEL } from "@/lib/constants";
-import { openai } from "@ai-sdk/openai";
-import { Agent } from "@mastra/core/agent";
-import { clarificationTool } from "../tools/chain-tools";
-import { workflowTool } from "../tools/workflow-creator-tools";
+import { BASE_MODEL } from '@/lib/constants';
+import { openai } from '@ai-sdk/openai';
+import { Agent } from '@mastra/core/agent';
+import { clarificationTool } from '../tools/chain-tools';
+import { workflowTool } from '../tools/workflow-creator-tools';
 
 export type WorkflowNode = {
   id: string;
-  type: "human-input" | "agent-task";
+  type: 'human-input' | 'agent-task';
   description: string;
   tool?: string;
   next?: string[];
@@ -24,7 +24,7 @@ export type WorkflowNode = {
 // - Keep questions concise and focused on missing information.
 
 export const workflowCreatorAgent = new Agent({
-  name: "Workflow Creator Agent",
+  name: 'Workflow Creator Agent',
   instructions: `
   You are a Workflow Creator Agent. Your job is to convert a high-level task, goal, or process description into a valid Mastra-compatible workflow.
 

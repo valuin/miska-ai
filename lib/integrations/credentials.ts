@@ -6,12 +6,12 @@ import {
   type slides_v1,
   type calendar_v3,
   google,
-} from "googleapis";
-import type { OAuth2Client } from "google-auth-library";
+} from 'googleapis';
+import type { OAuth2Client } from 'google-auth-library';
 
 const createGoogleOAuthIntegration = (factory: (auth: any) => any) => ({
-  type: "oauth2",
-  required: ["access_token", "refresh_token", "expires_at"],
+  type: 'oauth2',
+  required: ['access_token', 'refresh_token', 'expires_at'],
   async refresh(creds: Record<string, string>) {
     const oauth2 = new google.auth.OAuth2(
       process.env.GOOGLE_INTEGRATION_CLIENT_ID,
@@ -34,22 +34,22 @@ const createGoogleOAuthIntegration = (factory: (auth: any) => any) => ({
 
 export const IntegrationCredentialSchema = {
   google_gmail: createGoogleOAuthIntegration((auth: OAuth2Client) =>
-    google.gmail({ version: "v1", auth }),
+    google.gmail({ version: 'v1', auth }),
   ),
   google_drive: createGoogleOAuthIntegration((auth: OAuth2Client) =>
-    google.drive({ version: "v3", auth }),
+    google.drive({ version: 'v3', auth }),
   ),
   google_docs: createGoogleOAuthIntegration((auth: OAuth2Client) =>
-    google.docs({ version: "v1", auth }),
+    google.docs({ version: 'v1', auth }),
   ),
   google_sheets: createGoogleOAuthIntegration((auth: OAuth2Client) =>
-    google.sheets({ version: "v4", auth }),
+    google.sheets({ version: 'v4', auth }),
   ),
   google_slides: createGoogleOAuthIntegration((auth: OAuth2Client) =>
-    google.slides({ version: "v1", auth }),
+    google.slides({ version: 'v1', auth }),
   ),
   google_calendar: createGoogleOAuthIntegration((auth: OAuth2Client) =>
-    google.calendar({ version: "v3", auth }),
+    google.calendar({ version: 'v3', auth }),
   ),
 } as const;
 

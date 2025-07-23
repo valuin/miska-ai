@@ -1,6 +1,6 @@
-import { NextResponse } from "next/server";
-import { db } from "@/lib/db/queries/db";
-import { message } from "@/lib/db/schema/ai/message.schema";
+import { NextResponse } from 'next/server';
+import { db } from '@/lib/db/queries/db';
+import { message } from '@/lib/db/schema/ai/message.schema';
 
 export async function GET() {
   const messages = await db.select().from(message);

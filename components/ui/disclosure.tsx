@@ -18,7 +18,7 @@ export type DisclosureContextType = {
 };
 
 const DisclosureContext = createContext<DisclosureContextType | undefined>(
-  undefined
+  undefined,
 );
 
 export type DisclosureProviderProps = {
@@ -128,7 +128,7 @@ export function DisclosureTrigger({
               },
               className: cn(
                 className,
-                (child as React.ReactElement).props.className
+                (child as React.ReactElement).props.className,
               ),
               ...(child as React.ReactElement).props,
             })
@@ -170,9 +170,9 @@ export function DisclosureContent({
         {open && (
           <motion.div
             id={uniqueId}
-            initial='collapsed'
-            animate='expanded'
-            exit='collapsed'
+            initial="collapsed"
+            animate="expanded"
+            exit="collapsed"
             variants={combinedVariants}
           >
             {children}

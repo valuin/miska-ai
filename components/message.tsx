@@ -1,32 +1,32 @@
-"use client";
+'use client';
 
-import { AnimatePresence, motion } from "framer-motion";
-import { Button } from "./ui/button";
-import { ClarificationMessage, WorkflowMessage } from "./workflow";
-import { cn, sanitizeText } from "@/lib/utils";
-import { DefaultToolResult } from "./default-tool-result";
-import { DocumentPreview } from "./document-preview";
-import { DocumentToolCall, DocumentToolResult } from "./document";
-import { Markdown } from "./markdown";
-import { memo, useState } from "react";
-import { MessageActions } from "./message-actions";
-import { MessageEditor } from "./message-editor";
-import { MessageReasoning } from "./message-reasoning";
-import { PencilEditIcon, SparklesIcon } from "./icons";
-import { PreviewAttachment } from "./preview-attachment";
-import { SearchIcon } from "lucide-react";
-import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
-import { VaultList, type UserUpload } from "./vault-drawer";
-import Badge from "./badge";
-import cx from "classnames";
-import equal from "fast-deep-equal";
-import GradientText from "./GradientText/GradientText";
-import Options from "./options";
-import Sources from "./sources";
-import ToolCallBadge from "./tool-call-badge";
-import type { UIMessage } from "ai";
-import type { UseChatHelpers } from "@ai-sdk/react";
-import type { Vote } from "@/lib/db/schema";
+import { AnimatePresence, motion } from 'framer-motion';
+import { Button } from './ui/button';
+import { ClarificationMessage, WorkflowMessage } from './workflow';
+import { cn, sanitizeText } from '@/lib/utils';
+import { DefaultToolResult } from './default-tool-result';
+import { DocumentPreview } from './document-preview';
+import { DocumentToolCall, DocumentToolResult } from './document';
+import { Markdown } from './markdown';
+import { memo, useState } from 'react';
+import { MessageActions } from './message-actions';
+import { MessageEditor } from './message-editor';
+import { MessageReasoning } from './message-reasoning';
+import { PencilEditIcon, SparklesIcon } from './icons';
+import { PreviewAttachment } from './preview-attachment';
+import { SearchIcon } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
+import { VaultList, type UserUpload } from './vault-drawer';
+import Badge from './badge';
+import cx from 'classnames';
+import equal from 'fast-deep-equal';
+import GradientText from './GradientText/GradientText';
+import Options from './options';
+import Sources from './sources';
+import ToolCallBadge from './tool-call-badge';
+import type { UIMessage } from 'ai';
+import type { UseChatHelpers } from '@ai-sdk/react';
+import type { Vote } from '@/lib/db/schema';
 
 const PurePreviewMessage = ({
   chatId,
@@ -43,21 +43,21 @@ const PurePreviewMessage = ({
   message: UIMessage;
   vote: Vote | undefined;
   isLoading: boolean;
-  setMessages: UseChatHelpers["setMessages"];
-  reload: UseChatHelpers["reload"];
+  setMessages: UseChatHelpers['setMessages'];
+  reload: UseChatHelpers['reload'];
   isReadonly: boolean;
   requiresScrollPadding: boolean;
-  append: UseChatHelpers["append"];
+  append: UseChatHelpers['append'];
 }) => {
-  const [mode, setMode] = useState<"view" | "edit">("view");
+  const [mode, setMode] = useState<'view' | 'edit'>('view');
 
-  const rearrangeParts = (parts: UIMessage["parts"]) =>
+  const rearrangeParts = (parts: UIMessage['parts']) =>
     parts.slice().sort((a, b) => {
       const score = (item: typeof a) =>
         // if the tool invocation is a clarification or options, it should be at the bottom of the message
-        item.type === "tool-invocation" &&
-        (item.toolInvocation.toolName === "clarificationTool" ||
-          item.toolInvocation.toolName === "optionsTool")
+        item.type === 'tool-invocation' &&
+        (item.toolInvocation.toolName === 'clarificationTool' ||
+          item.toolInvocation.toolName === 'optionsTool')
           ? 1
           : 0;
       return score(a) - score(b);
@@ -65,8 +65,8 @@ const PurePreviewMessage = ({
 
   const handleSendUploads = (uploads: UserUpload[]) => {
     append({
-      role: "user",
-      content: `${uploads.length === 1 ? "This is the document" : "These are the documents"} that I want to process!.`,
+      role: 'user',
+      content: `${uploads.length === 1 ? 'This is the document' : 'These are the documents'} that I want to process!.`,
       experimental_attachments: uploads,
     });
   };
@@ -82,14 +82,14 @@ const PurePreviewMessage = ({
       >
         <div
           className={cn(
-            "flex gap-4 w-full group-data-[role=user]/message:ml-auto group-data-[role=user]/message:max-w-2xl",
+            'flex gap-4 w-full group-data-[role=user]/message:ml-auto group-data-[role=user]/message:max-w-2xl',
             {
-              "w-full": mode === "edit",
-              "group-data-[role=user]/message:w-fit": mode !== "edit",
+              'w-full': mode === 'edit',
+              'group-data-[role=user]/message:w-fit': mode !== 'edit',
             },
           )}
         >
-          {message.role === "assistant" && (
+          {message.role === 'assistant' && (
             <div className="size-8 flex items-center rounded-full justify-center ring-1 shrink-0 ring-border bg-background">
               <div className="translate-y-px">
                 <SparklesIcon size={14} />
@@ -98,15 +98,15 @@ const PurePreviewMessage = ({
           )}
 
           <div
-            className={cn("flex flex-col gap-4 w-full", {
-              "min-h-96": message.role === "assistant" && requiresScrollPadding,
+            className={cn('flex flex-col gap-4 w-full', {
+              'min-h-96': message.role === 'assistant' && requiresScrollPadding,
             })}
           >
             {message.annotations &&
               message.annotations.length > 0 &&
               message.annotations.map(
                 (annotation: { type: string } & any, index: number) => {
-                  if (annotation.type === "agent-choice") {
+                  if (annotation.type === 'agent-choice') {
                     return (
                       <Badge
                         key={index}
@@ -114,11 +114,11 @@ const PurePreviewMessage = ({
                         text={
                           <GradientText
                             colors={[
-                              "#154fc2",
-                              "#9b61e8",
-                              "#4bdee2",
-                              "#9b61e8",
-                              "#154fc2",
+                              '#154fc2',
+                              '#9b61e8',
+                              '#4bdee2',
+                              '#9b61e8',
+                              '#154fc2',
                             ]}
                             animationSpeed={3}
                             showBorder={false}
@@ -153,7 +153,7 @@ const PurePreviewMessage = ({
               const { type } = part;
               const key = `message-${message.id}-part-${index}`;
 
-              if (type === "reasoning") {
+              if (type === 'reasoning') {
                 return (
                   <MessageReasoning
                     key={key}
@@ -163,11 +163,11 @@ const PurePreviewMessage = ({
                 );
               }
 
-              if (type === "text") {
-                if (mode === "view") {
+              if (type === 'text') {
+                if (mode === 'view') {
                   return (
                     <div key={key} className="flex flex-row gap-2 items-start">
-                      {message.role === "user" && !isReadonly && (
+                      {message.role === 'user' && !isReadonly && (
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <Button
@@ -175,7 +175,7 @@ const PurePreviewMessage = ({
                               variant="ghost"
                               className="px-2 h-fit rounded-full text-muted-foreground opacity-0 group-hover/message:opacity-100"
                               onClick={() => {
-                                setMode("edit");
+                                setMode('edit');
                               }}
                             >
                               <PencilEditIcon />
@@ -187,9 +187,9 @@ const PurePreviewMessage = ({
 
                       <div
                         data-testid="message-content"
-                        className={cn("flex flex-col gap-4", {
-                          "bg-primary text-primary-foreground px-3 py-2 rounded-xl":
-                            message.role === "user",
+                        className={cn('flex flex-col gap-4', {
+                          'bg-primary text-primary-foreground px-3 py-2 rounded-xl':
+                            message.role === 'user',
                         })}
                       >
                         <Markdown>{sanitizeText(part.text)}</Markdown>
@@ -198,7 +198,7 @@ const PurePreviewMessage = ({
                   );
                 }
 
-                if (mode === "edit") {
+                if (mode === 'edit') {
                   return (
                     <div key={key} className="flex flex-row gap-2 items-start">
                       <div className="size-8" />
@@ -215,44 +215,44 @@ const PurePreviewMessage = ({
                 }
               }
 
-              if (type === "tool-invocation") {
+              if (type === 'tool-invocation') {
                 const { toolInvocation } = part;
                 const { toolName, toolCallId, state } = toolInvocation;
 
                 const isVaultTool =
-                  toolName === "queryVaultDocumentsTool" ||
-                  toolName === "listVaultDocumentsTool";
+                  toolName === 'queryVaultDocumentsTool' ||
+                  toolName === 'listVaultDocumentsTool';
 
-                if (state === "call") {
+                if (state === 'call') {
                   const { args } = toolInvocation;
 
                   return (
                     <div
                       key={toolCallId}
                       className={cx({
-                        skeleton: ["searxngTool"].includes(toolName),
+                        skeleton: ['searxngTool'].includes(toolName),
                       })}
                     >
                       {isVaultTool ||
-                      (toolName === "crawlerTool" && args?.query) ? (
+                      (toolName === 'crawlerTool' && args?.query) ? (
                         <ToolCallBadge icon={SearchIcon} query={args.query} />
-                      ) : toolName === "searxngTool" ? (
+                      ) : toolName === 'searxngTool' ? (
                         <Sources args={args} streaming={true} />
-                      ) : toolName === "createDocument" ? (
+                      ) : toolName === 'createDocument' ? (
                         <DocumentPreview isReadonly={isReadonly} args={args} />
-                      ) : toolName === "updateDocument" ? (
+                      ) : toolName === 'updateDocument' ? (
                         <DocumentToolCall
                           type="update"
                           args={args}
                           isReadonly={isReadonly}
                         />
-                      ) : toolName === "requestSuggestions" ? (
+                      ) : toolName === 'requestSuggestions' ? (
                         <DocumentToolCall
                           type="request-suggestions"
                           args={args}
                           isReadonly={isReadonly}
                         />
-                      ) : toolName === "listVaultDocumentsTool" ? (
+                      ) : toolName === 'listVaultDocumentsTool' ? (
                         <VaultList
                           uploads={args.documents.map((document: any) => ({
                             id: document.id,
@@ -272,10 +272,10 @@ const PurePreviewMessage = ({
                   );
                 }
 
-                if (state === "result") {
+                if (state === 'result') {
                   const { result } = toolInvocation;
                   // Custom: Show ToolCallBadge with file(s) for queryVaultDocumentsTool
-                  if (toolName === "queryVaultDocumentsTool") {
+                  if (toolName === 'queryVaultDocumentsTool') {
                     // Try to extract filenames from result
                     let filenames: string[] = [];
                     if (Array.isArray(result?.results)) {
@@ -293,8 +293,8 @@ const PurePreviewMessage = ({
                           icon={SearchIcon}
                           query={
                             filenames.length > 0
-                              ? `${filenames.join(", ")}`
-                              : "No results found"
+                              ? `${filenames.join(', ')}`
+                              : 'No results found'
                           }
                         />
                       </div>
@@ -302,25 +302,25 @@ const PurePreviewMessage = ({
                   }
                   return (
                     <div key={toolCallId}>
-                      {toolName === "searxngTool" ? (
+                      {toolName === 'searxngTool' ? (
                         <Sources args={result} streaming={false} />
-                      ) : toolName === "crawlerTool" ? (
+                      ) : toolName === 'crawlerTool' ? (
                         <ToolCallBadge
                           icon={SearchIcon}
                           query={result[0].url}
                         />
-                      ) : toolName === "optionsTool" ? (
+                      ) : toolName === 'optionsTool' ? (
                         <Options options={result.options} append={append} />
-                      ) : toolName === "workflowTool" ? (
+                      ) : toolName === 'workflowTool' ? (
                         <WorkflowMessage result={result} />
-                      ) : toolName === "clarificationTool" ? (
+                      ) : toolName === 'clarificationTool' ? (
                         <ClarificationMessage result={result} append={append} />
-                      ) : toolName === "createDocument" ? (
+                      ) : toolName === 'createDocument' ? (
                         <DocumentPreview
                           isReadonly={isReadonly}
                           result={result}
                         />
-                      ) : toolName === "listVaultDocumentsTool" ? (
+                      ) : toolName === 'listVaultDocumentsTool' ? (
                         <VaultList
                           uploads={result.documents.map((document: any) => ({
                             id: document.id,
@@ -333,13 +333,13 @@ const PurePreviewMessage = ({
                           isSelectable={true}
                           onSendToAgent={handleSendUploads}
                         />
-                      ) : toolName === "updateDocument" ? (
+                      ) : toolName === 'updateDocument' ? (
                         <DocumentToolResult
                           type="update"
                           result={result}
                           isReadonly={isReadonly}
                         />
-                      ) : toolName === "requestSuggestions" ? (
+                      ) : toolName === 'requestSuggestions' ? (
                         <DocumentToolResult
                           type="request-suggestions"
                           result={result}
@@ -387,7 +387,7 @@ export const PreviewMessage = memo(
 );
 
 export const ThinkingMessage = () => {
-  const role = "assistant";
+  const role = 'assistant';
 
   return (
     <motion.div
@@ -399,9 +399,9 @@ export const ThinkingMessage = () => {
     >
       <div
         className={cx(
-          "flex gap-4 group-data-[role=user]/message:px-3 w-full group-data-[role=user]/message:w-fit group-data-[role=user]/message:ml-auto group-data-[role=user]/message:max-w-2xl group-data-[role=user]/message:py-2 rounded-xl",
+          'flex gap-4 group-data-[role=user]/message:px-3 w-full group-data-[role=user]/message:w-fit group-data-[role=user]/message:ml-auto group-data-[role=user]/message:max-w-2xl group-data-[role=user]/message:py-2 rounded-xl',
           {
-            "group-data-[role=user]/message:bg-muted": true,
+            'group-data-[role=user]/message:bg-muted': true,
           },
         )}
       >

@@ -1,17 +1,17 @@
-import { createTool } from "@mastra/core/tools";
-import { generateUUID } from "@/lib/utils";
-import { z } from "zod";
-import type { MastraRuntimeContext } from "..";
+import { createTool } from '@mastra/core/tools';
+import { generateUUID } from '@/lib/utils';
+import { z } from 'zod';
+import type { MastraRuntimeContext } from '..';
 import {
   artifactKinds,
   documentHandlersByArtifactKind,
-} from "@/lib/artifacts/server";
+} from '@/lib/artifacts/server';
 
 // @hinson i still cant figure out how to send the session and dataStream to the tool
 export const createDocument = createTool({
-  id: "create-document",
+  id: 'create-document',
   description:
-    "Create a document for writing or content creation activities. This tool will call other functions that will generate the contents of the document based on the title and kind.",
+    'Create a document for writing or content creation activities. This tool will call other functions that will generate the contents of the document based on the title and kind.',
   inputSchema: z.object({
     title: z.string(),
     kind: z.enum(artifactKinds),
@@ -28,10 +28,10 @@ export const createDocument = createTool({
       runtimeContext as unknown as MastraRuntimeContext;
 
     const id = generateUUID();
-    dataStream.writeData({ type: "kind", content: kind });
-    dataStream.writeData({ type: "id", content: id });
-    dataStream.writeData({ type: "title", content: title });
-    dataStream.writeData({ type: "clear", content: "" });
+    dataStream.writeData({ type: 'kind', content: kind });
+    dataStream.writeData({ type: 'id', content: id });
+    dataStream.writeData({ type: 'title', content: title });
+    dataStream.writeData({ type: 'clear', content: '' });
 
     const documentHandler = documentHandlersByArtifactKind.find(
       (documentHandlerByArtifactKind) =>
@@ -49,13 +49,13 @@ export const createDocument = createTool({
       session,
     });
 
-    dataStream.writeData({ type: "finish", content: "" });
+    dataStream.writeData({ type: 'finish', content: '' });
 
     return {
       id,
       title,
       kind,
-      content: "A document was created and is now visible to the user.",
+      content: 'A document was created and is now visible to the user.',
     };
   },
 });

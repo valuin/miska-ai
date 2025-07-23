@@ -1,7 +1,7 @@
-"use client"
+'use client';
 
-import * as React from "react"
-import { Bar, BarChart, CartesianGrid, XAxis } from "recharts"
+import * as React from 'react';
+import { Bar, BarChart, CartesianGrid, XAxis } from 'recharts';
 
 import {
   Card,
@@ -9,35 +9,34 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card"
-import type {
-  ChartConfig,
-} from "@/components/ui/chart"
+} from '@/components/ui/card';
+import type { ChartConfig } from '@/components/ui/chart';
 import {
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
-} from "@/components/ui/chart"
+} from '@/components/ui/chart';
 
-export const description = "An interactive bar chart"
+export const description = 'An interactive bar chart';
 
-import { useEffect, useState } from "react"
-
+import { useEffect, useState } from 'react';
 
 const chartConfig = {
   messages: {
-    label: "Messages",
-    color: "hsl(var(--chart-1))",
+    label: 'Messages',
+    color: 'hsl(var(--chart-1))',
   },
-} satisfies ChartConfig
+} satisfies ChartConfig;
 
 export function ChartBarInteractive() {
-  const [chartData, setChartData] = useState<{ date: string; messages: number }[]>([]);
+  const [chartData, setChartData] = useState<
+    { date: string; messages: number }[]
+  >([]);
   const [messageCount, setMessageCount] = useState<number | null>(null);
 
   useEffect(() => {
-    fetch("/api/analytics/message-count-by-date")
-      .then((res) => res.ok ? res.json() : Promise.reject())
+    fetch('/api/analytics/message-count-by-date')
+      .then((res) => (res.ok ? res.json() : Promise.reject()))
       .then((data) => {
         if (Array.isArray(data)) {
           setChartData(data);
@@ -58,7 +57,7 @@ export function ChartBarInteractive() {
         <CardDescription>
           {messageCount !== null
             ? `Total messages: ${messageCount}`
-            : "Showing total messages for the last 3 months"}
+            : 'Showing total messages for the last 3 months'}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -79,22 +78,22 @@ export function ChartBarInteractive() {
               tickMargin={8}
               minTickGap={32}
               tickFormatter={(value) => {
-                const date = new Date(value)
-                return date.toLocaleDateString("en-US", {
-                  month: "short",
-                  day: "numeric",
-                })
+                const date = new Date(value);
+                return date.toLocaleDateString('en-US', {
+                  month: 'short',
+                  day: 'numeric',
+                });
               }}
             />
             <ChartTooltip
               content={
                 <ChartTooltipContent
                   labelFormatter={(value) => {
-                    return new Date(value).toLocaleDateString("en-US", {
-                      month: "short",
-                      day: "numeric",
-                      year: "numeric",
-                    })
+                    return new Date(value).toLocaleDateString('en-US', {
+                      month: 'short',
+                      day: 'numeric',
+                      year: 'numeric',
+                    });
                   }}
                 />
               }

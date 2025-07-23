@@ -1,5 +1,5 @@
-import { createTool } from "@mastra/core";
-import { z } from "zod";
+import { createTool } from '@mastra/core';
+import { z } from 'zod';
 
 const thinkingToolInputSchema = z.object({
   task: z
@@ -17,12 +17,12 @@ const thinkingToolInputSchema = z.object({
     .string()
     .max(1000)
     .describe(
-      "Your extended thought chain. You may think for as long as you want, but limit it to a few paragraphs.",
+      'Your extended thought chain. You may think for as long as you want, but limit it to a few paragraphs.',
     ),
 });
 
 export const thinkingTool = createTool({
-  id: "thinking-tool",
+  id: 'thinking-tool',
   description: `Think about the user's request and provide a response.`,
   inputSchema: thinkingToolInputSchema,
   outputSchema: thinkingToolInputSchema,
@@ -30,14 +30,13 @@ export const thinkingTool = createTool({
     try {
       return context;
     } catch (error) {
-      console.error("Thinking tool error:", error);
       return context;
     }
   },
 });
 
 export const clarificationTool = createTool({
-  id: "clarification-tool",
+  id: 'clarification-tool',
   description: `
   Asks user clarifying questions before workflow generation.
   
@@ -56,7 +55,6 @@ export const clarificationTool = createTool({
       const { questions } = context;
       return { questions };
     } catch (error) {
-      console.error("Clarification tool error:", error);
       return { questions: [] };
     }
   },

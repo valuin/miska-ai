@@ -1,21 +1,21 @@
-import { Agent } from "@mastra/core";
-import { AGENT_TYPES } from "@/lib/constants";
-import { BASE_MODEL } from "@/lib/constants";
-import { openai } from "@ai-sdk/openai";
-import { z } from "zod";
-import type { Message } from "ai";
+import { Agent } from '@mastra/core';
+import { AGENT_TYPES } from '@/lib/constants';
+import { BASE_MODEL } from '@/lib/constants';
+import { openai } from '@ai-sdk/openai';
+import { z } from 'zod';
+import type { Message } from 'ai';
 
 const agentTypeSchema = z.object({
   reasoning: z
     .string()
-    .describe("The reasoning for the agent type (~20 words)")
+    .describe('The reasoning for the agent type (~20 words)')
     .max(200),
   agentType: z.enum(AGENT_TYPES),
 });
-type AgentType = z.infer<typeof agentTypeSchema>["agentType"];
+type AgentType = z.infer<typeof agentTypeSchema>['agentType'];
 
 export const agentRouter = new Agent({
-  name: "Agent Router",
+  name: 'Agent Router',
   instructions: `You are an agent router. Your goal is to read the user's messages and decide which agent to use.
 
   Routing rules (strictly follow):
@@ -52,7 +52,7 @@ export async function getAgentType(messages: Message[]): Promise<AgentType> {
     const messageContent = messages
       .slice(-3)
       .map((m) => `${m.role.toLocaleUpperCase()}: ${m.content}`)
-      .join("\n");
+      .join('\n');
 
     const response = await agentRouter.generate(
       `User conversation so far: ${messageContent}`,
@@ -61,6 +61,6 @@ export async function getAgentType(messages: Message[]): Promise<AgentType> {
     const { agentType } = response.object;
     return agentType;
   } catch (err) {
-    return "normalAgent";
+    return 'normalAgent';
   }
 }

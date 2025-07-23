@@ -116,7 +116,6 @@
 
 //     for (const chat of chatBatch) {
 //       processedCount++;
-//       console.info(`Processed ${processedCount}/${chats.length} chats`);
 
 //       const messages = allMessages
 //         .filter((message) => message.chatId === chat.id)
@@ -208,7 +207,6 @@
 //             }
 //           }
 //         } catch (error) {
-//           console.error(`Error processing chat ${chat.id}: ${error}`);
 //         }
 //       }
 //     }
@@ -236,16 +234,12 @@
 //       }
 //     }
 //   }
-
-//   console.info(`Migration completed: ${processedCount} chats processed`);
 // }
 
 // migrateMessages()
 //   .then(() => {
-//     console.info('Script completed successfully');
 //     process.exit(0);
 //   })
 //   .catch((error) => {
-//     console.error('Script failed:', error);
 //     process.exit(1);
 //   });

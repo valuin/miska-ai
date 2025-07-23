@@ -4,14 +4,14 @@ import {
   type WorkflowDefinition,
   getLayoutedElements,
   prepareWorkflow,
-} from "@/lib/utils/workflows/workflow";
+} from '@/lib/utils/workflows/workflow';
 import type {
   EdgeExecutionState,
   NodeExecutionState,
-} from "@/lib/utils/workflows/workflow-execution-engine";
-import type { StateCreator } from "zustand";
-import type { WorkflowState } from "./types";
-import type { WorkflowNodeProgress } from "@/lib/types/workflow";
+} from '@/lib/utils/workflows/workflow-execution-engine';
+import type { StateCreator } from 'zustand';
+import type { WorkflowState } from './types';
+import type { WorkflowNodeProgress } from '@/lib/types/workflow';
 
 export interface WorkflowSlice {
   initializeWorkflow: (nodes: FlowNode[], edges: FlowEdge[]) => void;
@@ -37,11 +37,7 @@ export const createWorkflowSlice: StateCreator<
   WorkflowSlice
 > = (set, get) => ({
   initializeWorkflow: (initialNodes: FlowNode[], initialEdges: FlowEdge[]) => {
-    console.log("initializeWorkflow called with initialNodes:", initialNodes, "and initialEdges:", initialEdges);
-    console.trace("Call stack for initializeWorkflow:");
-
     if (!initialNodes || !initialEdges) {
-      console.warn("initializeWorkflow received undefined nodes or edges. Skipping layouting.");
       return;
     }
 
@@ -92,28 +88,25 @@ export const createWorkflowSlice: StateCreator<
           sourceNode?.data.executionState &&
           targetNode?.data.executionState
         ) {
-          let edgeStatus: "idle" | "running" | "completed" | "error" = "idle";
+          let edgeStatus: 'idle' | 'running' | 'completed' | 'error' = 'idle';
 
           const sourceStatus = sourceNode.data.executionState.status;
           const targetStatus = targetNode.data.executionState.status;
 
-          if (sourceStatus === "error" || targetStatus === "error") {
-            edgeStatus = "error";
+          if (sourceStatus === 'error' || targetStatus === 'error') {
+            edgeStatus = 'error';
           } else if (
-            sourceStatus === "completed" &&
-            targetStatus === "completed"
+            sourceStatus === 'completed' &&
+            targetStatus === 'completed'
           ) {
-            edgeStatus = "completed";
+            edgeStatus = 'completed';
           } else if (
-            (sourceStatus === "running" || sourceStatus === "completed") &&
-            targetStatus === "running"
+            (sourceStatus === 'running' || sourceStatus === 'completed') &&
+            targetStatus === 'running'
           ) {
-            edgeStatus = "running";
-          } else if (
-            sourceStatus === "completed" &&
-            targetStatus === "idle"
-          ) {
-            edgeStatus = "completed";
+            edgeStatus = 'running';
+          } else if (sourceStatus === 'completed' && targetStatus === 'idle') {
+            edgeStatus = 'completed';
           }
 
           return {
@@ -141,17 +134,17 @@ export const createWorkflowSlice: StateCreator<
     if (workflow.errors.length > 0) {
       for (const error of workflow.errors) {
         switch (error.type) {
-          case "multiple-sources-for-target-handle":
-          case "cycle":
+          case 'multiple-sources-for-target-handle':
+          case 'cycle':
             for (const edge of error.edges) {
               get().updateEdgeExecutionState(edge.id, {
                 error,
               });
             }
             break;
-          case "missing-required-connection":
+          case 'missing-required-connection':
             get().updateNodeExecutionState(error.node.id, {
-              status: "idle",
+              status: 'idle',
               timestamp: new Date().toISOString(),
               error,
             });

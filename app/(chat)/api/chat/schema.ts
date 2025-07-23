@@ -12,7 +12,7 @@ export const postRequestBodySchema = z.object({
     id: z.string().uuid(),
     createdAt: z.coerce.date(),
     role: z.enum(['user']),
-    content: z.string().max(2000).optional().default(""),
+    content: z.string().max(2000).optional().default(''),
     parts: z.array(textPartSchema).optional().default([]),
     experimental_attachments: z
       .array(
@@ -23,7 +23,7 @@ export const postRequestBodySchema = z.object({
         }),
       )
       .optional(),
-    selectedVaultFileNames: z.array(z.string()).optional()
+    selectedVaultFileNames: z.array(z.string()).optional(),
   }),
   selectedChatModel: z.enum(['chat-model', 'chat-model-reasoning']),
   selectedVisibilityType: z.enum(['public', 'private']),

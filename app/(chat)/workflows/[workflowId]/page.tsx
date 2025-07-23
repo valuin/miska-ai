@@ -1,26 +1,26 @@
-"use client";
+'use client';
 
-import { Flow } from "@/components/workflow-detail-flow";
-import { ReactFlowProvider } from "@xyflow/react";
-import { shallow } from "zustand/shallow";
-import { useParams } from "next/navigation";
-import { useWorkflow } from "@/hooks/use-workflow";
-import { useWorkflowData } from "@/hooks/use-workflow-data";
-import { useWorkflowExecution } from "@/hooks/use-workflow-execution";
-import { useWorkflowUiState } from "@/lib/store/workflow-ui-store";
-import React, { useState } from "react";
-import type { WorkflowData, WorkflowNodeProgress } from "@/lib/types/workflow";
+import { Flow } from '@/components/workflow-detail-flow';
+import { ReactFlowProvider } from '@xyflow/react';
+import { shallow } from 'zustand/shallow';
+import { useParams } from 'next/navigation';
+import { useWorkflow } from '@/hooks/use-workflow';
+import { useWorkflowData } from '@/hooks/use-workflow-data';
+import { useWorkflowExecution } from '@/hooks/use-workflow-execution';
+import { useWorkflowUiState } from '@/lib/store/workflow-ui-store';
+import React, { useState } from 'react';
+import type { WorkflowData, WorkflowNodeProgress } from '@/lib/types/workflow';
 import {
   WorkflowDetails,
   NodeOutput,
   WorkflowOutput,
-} from "@/components/workflow-detail-component";
+} from '@/components/workflow-detail-component';
 export default function WorkflowDetailPage() {
   const { workflowId } = useParams();
   const { setActiveHumanInputNode } = useWorkflowUiState();
   const [workflow, setWorkflow] = useState<WorkflowData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [inputQuery, setInputQuery] = useState("");
+  const [inputQuery, setInputQuery] = useState('');
   const [nodeResults, setNodeResults] = useState<any[]>([]);
   const [isExecuting, setIsExecuting] = useState(false);
   const [workflowProgress, setWorkflowProgress] = useState<

@@ -44,8 +44,6 @@ export function decrypt(encryptedStr: string): string {
 
   return decrypted.toString("utf8");
 }
-
-console.log(
   decrypt(
     "SGvxzdgZdZ9kz4g6:/fWG9LmRcS431ZLyj/Tb7A==:wWeSGwKw6q9L5VkY8/M5rO66N8sk",
   ),

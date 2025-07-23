@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 interface CodeBlockProps {
   node: any;
@@ -14,7 +14,7 @@ export function CodeBlock({
   children,
   ...props
 }: CodeBlockProps) {
-  if (block || (typeof children === "string" && children.length > 30)) {
+  if (block || (typeof children === 'string' && children.length > 30)) {
     return (
       <span className="not-prose flex flex-col p-4">
         <span
