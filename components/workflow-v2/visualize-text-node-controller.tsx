@@ -29,7 +29,12 @@ export function VisualizeTextNodeController({
       id={id}
       data={{
         input: data.executionState?.targets?.input,
-        status: data.executionState?.status,
+        status:
+          data.executionState?.status === 'running'
+            ? 'processing'
+            : data.executionState?.status === 'completed'
+              ? 'success'
+              : data.executionState?.status,
       }}
       onDeleteNode={handleDeleteNode}
       {...props}

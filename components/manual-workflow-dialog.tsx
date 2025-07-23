@@ -35,10 +35,9 @@ import {
 import { GenerateWorkflow } from './generate-workflow';
 
 const steps = [
-  { id: 1, title: 'Generate', description: 'Create a workflow from a prompt' },
-  { id: 2, title: 'Details', description: 'Configure basic settings' },
-  { id: 3, title: 'Build', description: 'Add and connect nodes' },
-  { id: 4, title: 'Review', description: 'Review and test' },
+  { id: 1, title: 'Details', description: 'Configure basic settings' },
+  { id: 2, title: 'Build', description: 'Add and connect nodes' },
+  { id: 3, title: 'Review', description: 'Review and test' },
 ];
 
 const workflowDetailSchema = z.object({
@@ -53,7 +52,7 @@ export function ManualWorkflowDialog({
 }) {
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
-  const [activeStep, setActiveStep] = useState(1);
+  const [activeStep, setActiveStep] = useState(1); // Start at 'Details'
   const [workflowName, setWorkflowName] = useState('');
   const [workflowDescription, setWorkflowDescription] = useState('');
 
@@ -72,7 +71,7 @@ export function ManualWorkflowDialog({
   }));
 
   const handleNextStep = () => {
-    if (activeStep === 2) {
+    if (activeStep === 1) { // Now 'Details' is step 1
       const result = workflowDetailSchema.safeParse({
         workflowName,
         workflowDescription,
@@ -187,8 +186,7 @@ export function ManualWorkflowDialog({
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 flex-1 overflow-auto">
           <div className="border rounded-lg overflow-y-auto p-4">
-            {activeStep === 1 && <GenerateWorkflow />}
-            {activeStep === 2 && (
+            {activeStep === 1 && (
               <WorkflowDetails
                 name={workflowName}
                 description={workflowDescription}
@@ -196,8 +194,9 @@ export function ManualWorkflowDialog({
                 setDescription={setWorkflowDescription}
               />
             )}
-            {activeStep === 3 && <NodeBuilder />}
-            {activeStep === 4 && <WorkflowReview />}
+            {activeStep === 2 && <NodeBuilder />}
+            {activeStep === 3 && <WorkflowReview />}
+            {activeStep === 4 && <GenerateWorkflow />}
           </div>
 
           <div className="border rounded-lg h-full">

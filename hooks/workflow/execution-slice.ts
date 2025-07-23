@@ -25,6 +25,10 @@ export interface ExecutionSlice {
   setGenerationMessage: (message: string) => void;
   setShowGenerationProgress: (show: boolean) => void;
   generateWorkflow: (prompt: string, file?: File) => Promise<void>;
+  workflowName: string;
+  workflowDescription: string;
+  setWorkflowName: (name: string) => void;
+  setWorkflowDescription: (description: string) => void;
   workflowExecutionState: {
     isRunning: boolean;
     finishedAt: string | null;
@@ -43,7 +47,12 @@ export interface ExecutionSlice {
     error?: Error;
     validationErrors?: WorkflowError[];
   }>;
-  initializeWorkflow: (nodes: FlowNode[], edges: FlowEdge[]) => void;
+  initializeWorkflow: (
+    nodes: FlowNode[],
+    edges: FlowEdge[],
+    name?: string,
+    description?: string,
+  ) => void;
   updateNodeExecutionStates: (
     workflowProgress: Map<string, WorkflowNodeProgress>,
   ) => void;
@@ -71,6 +80,10 @@ export const createExecutionSlice: StateCreator<
   setGenerationProgress: (progress) => set({ generationProgress: progress }),
   setGenerationMessage: (message) => set({ generationMessage: message }),
   setShowGenerationProgress: (show) => set({ showGenerationProgress: show }),
+  workflowName: '',
+  workflowDescription: '',
+  setWorkflowName: (name) => set({ workflowName: name }),
+  setWorkflowDescription: (description) => set({ workflowDescription: description }),
   generateWorkflow: async (prompt, file) => {
     get().setShowGenerationProgress(true);
     get().setGenerationMessage('Generating workflow...');
@@ -114,14 +127,14 @@ export const createExecutionSlice: StateCreator<
                           annotation &&
                           typeof annotation === 'object' &&
                           'type' in annotation &&
-                          annotation.type === 'progress' &&
+                          (annotation as any).type === 'progress' &&
                           'message' in annotation &&
-                          typeof annotation.message === 'string' &&
+                          typeof (annotation as any).message === 'string' &&
                           'progress' in annotation &&
-                          typeof annotation.progress === 'number'
+                          typeof (annotation as any).progress === 'number'
                         ) {
-                          get().setGenerationMessage(annotation.message);
-                          get().setGenerationProgress(annotation.progress);
+                          get().setGenerationMessage(annotation.message as string);
+                          get().setGenerationProgress(annotation.progress as number);
                         }
                       }
                       break;
@@ -131,11 +144,11 @@ export const createExecutionSlice: StateCreator<
                           data &&
                           typeof data === 'object' &&
                           'type' in data &&
-                          data.type === 'schema_chunk' &&
+                          (data as any).type === 'schema_chunk' &&
                           'chunk' in data &&
-                          typeof data.chunk === 'string'
+                          typeof (data as any).chunk === 'string'
                         ) {
-                          fullSchema += data.chunk;
+                          fullSchema += (data as any).chunk;
                         }
                       }
                       break;
@@ -153,6 +166,8 @@ export const createExecutionSlice: StateCreator<
                 get().initializeWorkflow(
                   workflowSchema.nodes,
                   workflowSchema.edges,
+                  finalSchema.name, // Pass name
+                  finalSchema.description, // Pass description
                 );
                 get().setGenerationMessage('Workflow generated successfully!');
                 get().setGenerationProgress(100);
@@ -211,7 +226,7 @@ export const createExecutionSlice: StateCreator<
     const { nodes, nodeUserInputs } = get();
     return validateHumanInputs(nodes as GenerateTextNode[], nodeUserInputs);
   },
-  initializeWorkflow: (initialNodes: FlowNode[], initialEdges: FlowEdge[]) => {
+  initializeWorkflow: (initialNodes: FlowNode[], initialEdges: FlowEdge[], name?: string, description?: string) => {
     if (!initialNodes || !initialEdges) {
       return;
     }
@@ -220,7 +235,7 @@ export const createExecutionSlice: StateCreator<
       initialNodes,
       initialEdges,
     );
-    set({ nodes: layoutedNodes, edges: layoutedEdges });
+    set({ nodes: layoutedNodes, edges: layoutedEdges, workflowName: name || '', workflowDescription: description || '' });
     get().validateWorkflow();
   },
   updateNodeExecutionStates: (
@@ -257,7 +272,7 @@ export const createExecutionSlice: StateCreator<
     set((state) => ({
       edges: state.edges.map((edge) => {
         const sourceNode = state.nodes.find((n) => n.id === edge.source);
-        const targetNode = state.nodes.find((n) => n.id === edge.target);
+        const targetNode = state.nodes.find((n) => n.id === edge.id);
 
         if (
           sourceNode?.data.executionState &&
@@ -321,7 +336,6 @@ export const createExecutionSlice: StateCreator<
             get().updateNodeExecutionState(error.node.id, {
               status: 'idle',
               timestamp: new Date().toISOString(),
-              error,
             });
             break;
         }

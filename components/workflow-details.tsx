@@ -1,49 +1,137 @@
-'use client';
+"use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { File, UploadCloud } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { toast } from "sonner";
+import { useState } from "react";
+import { useWorkflow } from "@/hooks/use-workflow";
+import { Dropzone, DropzoneContent, DropzoneEmptyState } from "@/components/ui/dropzone";
+import { Progress } from "@/components/ui/progress";
 
-export const WorkflowDetails = ({
-  name,
-  description,
-  setName,
-  setDescription,
-}: {
-  name: string;
-  description: string;
-  setName: (name: string) => void;
-  setDescription: (description: string) => void;
-}) => (
-  <Card>
-    <CardHeader>
-      <CardTitle>Workflow Details</CardTitle>
-    </CardHeader>
-    <CardContent className="space-y-4">
-      <div>
-        <Label htmlFor="workflow-name">Workflow Name</Label>
-        <Input
-          id="workflow-name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="Enter workflow name"
-          className="mt-1"
-        />
-      </div>
-      <div>
-        <Label htmlFor="workflow-description">Description</Label>
-        <Textarea
-          id="workflow-description"
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          placeholder="Enter workflow description"
-          className="mt-1"
-        />
-      </div>
-    </CardContent>
-  </Card>
-);
+export const WorkflowDetails = () => {
+  const [prompt, setPrompt] = useState("");
+  const [file, setFile] = useState<File | undefined>();
+  const {
+    generateWorkflow,
+    generationProgress,
+    generationMessage,
+    showGenerationProgress,
+    workflowName,
+    workflowDescription,
+    setWorkflowName,
+    setWorkflowDescription,
+  } = useWorkflow((state) => ({
+    generateWorkflow: state.generateWorkflow,
+    generationProgress: state.generationProgress,
+    generationMessage: state.generationMessage,
+    showGenerationProgress: state.showGenerationProgress,
+    workflowName: state.workflowName,
+    workflowDescription: state.workflowDescription,
+    setWorkflowName: state.setWorkflowName,
+    setWorkflowDescription: state.setWorkflowDescription,
+  }));
+
+  const handleGenerate = () => {
+    if (!prompt) {
+      toast.error("Please enter a prompt to generate the workflow.");
+      return;
+    }
+    generateWorkflow(prompt, file);
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Workflow Details</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div>
+          <Label htmlFor="workflow-name">Workflow Name</Label>
+          <Input
+            id="workflow-name"
+            value={workflowName}
+            onChange={(e) => setWorkflowName(e.target.value)}
+            placeholder="e.g., Customer Support Automation"
+            className="mt-1"
+          />
+        </div>
+        <div>
+          <Label htmlFor="workflow-description">Description</Label>
+          <Textarea
+            id="workflow-description"
+            value={workflowDescription}
+            onChange={(e) => setWorkflowDescription(e.target.value)}
+            placeholder="Describe what this workflow does."
+            className="mt-1"
+            rows={4}
+          />
+        </div>
+        {/* Generate Workflow Section */}
+        <div>
+          <Label htmlFor="workflow-prompt" className="text-lg">
+            Example Prompt
+          </Label>
+          <Textarea
+            rows={4}
+            id="workflow-prompt"
+            name="prompt"
+            placeholder="Describe the workflow you want to generate."
+            value={prompt}
+            onChange={(event) => setPrompt(event.target.value)}
+            className="mt-1"
+          />
+        </div>
+        <div>
+          <Label htmlFor="workflow-file" className="text-lg">
+            File
+          </Label>
+          <Dropzone
+            className="mt-1"
+            onDrop={(acceptedFiles) => {
+              setFile(acceptedFiles[0]);
+            }}
+            accept={{
+              "text/plain": [".txt"],
+              "application/pdf": [".pdf"],
+              "application/vnd.openxmlformats-officedocument.wordprocessingml.document": [".docx"],
+            }}
+            maxFiles={1}
+          >
+            <DropzoneContent>
+              <DropzoneEmptyState>
+                <UploadCloud className="h-6 w-6" />
+                <p className="text-sm text-gray-500">
+                  Drop a file here or click to upload
+                </p>
+              </DropzoneEmptyState>
+            </DropzoneContent>
+          </Dropzone>
+          {file && (
+            <p className="mt-2 text-sm text-muted-foreground flex items-center gap-2">
+              <File size={16} />
+              {file.name}
+            </p>
+          )}
+        </div>
+        <Button onClick={handleGenerate} className="w-full">
+          {showGenerationProgress ? "Generating..." : "Generate Workflow"}
+        </Button>
+        {showGenerationProgress && (
+          <div className="space-y-2">
+            <Progress value={generationProgress} />
+            <p className="text-sm text-muted-foreground">
+              {generationMessage}
+            </p>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+};
 
 export const NodeBuilder = () => (
   <Card>
@@ -72,7 +160,7 @@ export const WorkflowReview = () => (
 );
 
 export const steps = [
-  { id: 1, title: 'Details', description: 'Configure basic settings' },
-  { id: 2, title: 'Build', description: 'Add and connect nodes' },
-  { id: 3, title: 'Review', description: 'Review and test' },
+  { id: 1, title: "Details", description: "Configure basic settings" },
+  { id: 2, title: "Build", description: "Add and connect nodes" },
+  { id: 3, title: "Review", description: "Review and test" },
 ];

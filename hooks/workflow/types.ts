@@ -23,6 +23,10 @@ export interface WorkflowState {
   generateWorkflow: (prompt: string, file?: File) => Promise<void>;
   nodes: FlowNode[];
   edges: FlowEdge[];
+  workflowName: string;
+  workflowDescription: string;
+  setWorkflowName: (name: string) => void;
+  setWorkflowDescription: (description: string) => void;
   onNodesChange: (changes: NodeChange<FlowNode>[]) => void;
   onEdgesChange: (changes: EdgeChange<FlowEdge>[]) => void;
   onConnect: (connection: Connection) => void;
@@ -79,7 +83,12 @@ export interface WorkflowState {
     validationErrors?: WorkflowError[];
   }>;
   // Initialize workflow with nodes and edges
-  initializeWorkflow: (nodes: FlowNode[], edges: FlowEdge[]) => void;
+  initializeWorkflow: (
+    nodes: FlowNode[],
+    edges: FlowEdge[],
+    name?: string,
+    description?: string,
+  ) => void;
   updateNodeExecutionStates: (
     workflowProgress: Map<string, WorkflowNodeProgress>,
   ) => void;

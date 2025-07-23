@@ -9,13 +9,12 @@ import {
 } from '@/components/ui/disclosure';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { useWorkflow } from '@/hooks/use-workflow';
 
 type HumanInputNotchProps = {
   activeNode: { id: string; description: string } | null;
   onClose: () => void;
 };
-
-import { useWorkflow } from '@/hooks/use-workflow'; // Import useWorkflow
 
 export const HumanInputNotch = ({
   activeNode,
@@ -23,7 +22,7 @@ export const HumanInputNotch = ({
 }: HumanInputNotchProps) => {
   const [inputValue, setInputValue] = useState('');
   const [isOpen, setIsOpen] = useState(false);
-  const { updateNodeUserInput } = useWorkflow(); // Get the action from the store
+  const { updateNodeUserInput } = useWorkflow();
 
   useEffect(() => {
     setIsOpen(!!activeNode);
