@@ -2,7 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { File, UploadCloud } from "lucide-react";
+import { File, UploadCloud, Trash2 } from "lucide-react"; // Added Trash2
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -11,6 +11,15 @@ import { useState } from "react";
 import { useWorkflow } from "@/hooks/use-workflow";
 import { Dropzone, DropzoneContent, DropzoneEmptyState } from "@/components/ui/dropzone";
 import { Progress } from "@/components/ui/progress";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"; // Added Select components
+import { z } from "zod"; // Added zod
+import { AGENT_TYPES } from "@/lib/constants"; // Added AGENT_TYPES
 
 export const WorkflowDetails = () => {
   const [prompt, setPrompt] = useState("");
@@ -133,18 +142,111 @@ export const WorkflowDetails = () => {
   );
 };
 
-export const NodeBuilder = () => (
-  <Card>
-    <CardHeader>
-      <CardTitle>Build Workflow</CardTitle>
-    </CardHeader>
-    <CardContent>
-      <p className="text-sm text-muted-foreground">
-        Use the canvas to add and connect nodes.
-      </p>
-    </CardContent>
-  </Card>
-);
+const nodeSchema = z.object({
+  currentNodeDescription: z.string().min(1, "Node description is required."),
+  currentNodeAgent: z.string().min(1, "An agent is required."),
+});
+
+export function NodeBuilder() {
+  const {
+    nodes,
+    edges,
+    currentNodeDescription,
+    currentNodeAgent,
+    setCurrentNodeDescription,
+    setCurrentNodeAgent,
+    addNode,
+    deleteNode,
+  } = useWorkflow((state) => ({
+    nodes: state.nodes,
+    edges: state.edges,
+    currentNodeDescription: state.currentNodeDescription,
+    currentNodeAgent: state.currentNodeAgent,
+    setCurrentNodeDescription: state.setCurrentNodeDescription,
+    setCurrentNodeAgent: state.setCurrentNodeAgent,
+    addNode: state.addNode,
+    deleteNode: state.deleteNode,
+  }));
+
+  const handleAddNode = () => {
+    const result = nodeSchema.safeParse({
+      currentNodeDescription,
+      currentNodeAgent,
+    });
+    if (!result.success) {
+      toast.error(result.error.errors[0].message);
+      return;
+    }
+    addNode();
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Build Workflow</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div>
+          <Label className="text-lg">Nodes</Label>
+          <div className="border rounded-md bg-muted min-h-[100px] max-h-[220px] flex flex-col divide-y divide-white/10 overflow-x-hidden overflow-y-auto">
+            {nodes.map((n) => (
+              <div
+                key={n.id}
+                className="flex items-center justify-between text-sm hover:bg-muted-foreground/10 px-2"
+              >
+                <span className="w-full">
+                  <span className="text-xs bg-white rounded-lg px-1 py-px text-[#27272a] mr-1">
+                    {'agent' in n.data && n.data.agent
+                      ? n.data.agent
+                      : 'Human Input'}
+                  </span>
+                  <span className="text-xs">
+                    {'description' in n.data && n.data.description}
+                  </span>
+                </span>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => deleteNode(n.id)}
+                >
+                  <Trash2 className="size-4" />
+                </Button>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <Label className="text-lg">Create a new node</Label>
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="node-agent">Select Agent</Label>
+            <Select value={currentNodeAgent} onValueChange={setCurrentNodeAgent}>
+              <SelectTrigger>
+                <SelectValue placeholder="Choose an agent" />
+              </SelectTrigger>
+              <SelectContent>
+                {AGENT_TYPES.map((agent) => (
+                  <SelectItem key={agent} value={agent}>
+                    {agent}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Label htmlFor="node-description">Node Description</Label>
+            <Textarea
+              className="overflow-x-visible"
+              id="node-description"
+              value={currentNodeDescription}
+              onChange={(e) => setCurrentNodeDescription(e.target.value)}
+              placeholder="Describe the agent's task for this node."
+            />
+            <Button onClick={handleAddNode}>Add Node</Button>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
 
 export const WorkflowReview = () => (
   <Card>

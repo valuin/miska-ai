@@ -27,6 +27,11 @@ export interface WorkflowState {
   workflowDescription: string;
   setWorkflowName: (name: string) => void;
   setWorkflowDescription: (description: string) => void;
+  currentNodeDescription: string;
+  currentNodeAgent: string;
+  setCurrentNodeDescription: (description: string) => void;
+  setCurrentNodeAgent: (agent: string) => void;
+  addNode: () => void;
   onNodesChange: (changes: NodeChange<FlowNode>[]) => void;
   onEdgesChange: (changes: EdgeChange<FlowEdge>[]) => void;
   onConnect: (connection: Connection) => void;
@@ -86,8 +91,8 @@ export interface WorkflowState {
   initializeWorkflow: (
     nodes: FlowNode[],
     edges: FlowEdge[],
-    name?: string,
-    description?: string,
+    name: string,
+    description: string,
   ) => void;
   updateNodeExecutionStates: (
     workflowProgress: Map<string, WorkflowNodeProgress>,

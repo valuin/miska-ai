@@ -108,7 +108,12 @@ export type FlowNode =
 
 // Edges
 
-export type FlowEdge = StatusEdgeController;
+import type { Edge } from '@xyflow/react';
+
+export type FlowEdge = StatusEdgeController & Edge & {
+  sourceHandleId?: string;
+  targetHandleId?: string;
+};
 
 // Type Guards
 

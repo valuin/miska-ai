@@ -12,7 +12,12 @@ import { Input } from '@/components/ui/input';
 import { useWorkflow } from '@/hooks/use-workflow';
 
 type HumanInputNotchProps = {
-  activeNode: { id: string; description: string } | null;
+  activeNode: {
+    id: string;
+    description?: string;
+    agent?: string;
+    type?: string;
+  } | null;
   onClose: () => void;
 };
 

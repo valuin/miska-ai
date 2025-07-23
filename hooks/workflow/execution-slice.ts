@@ -16,6 +16,9 @@ import type { StateCreator } from 'zustand';
 import { validateHumanInputs } from '@/lib/validation/workflow-validation';
 import type { GenerateTextNode, WorkflowState } from './types';
 import type { WorkflowNodeProgress } from '@/lib/types/workflow';
+import { nanoid } from 'nanoid';
+import { toast } from 'sonner';
+import { Edge } from '@xyflow/react'; // Import Edge from reactflow
 
 export interface ExecutionSlice {
   generationProgress: number;
@@ -29,6 +32,12 @@ export interface ExecutionSlice {
   workflowDescription: string;
   setWorkflowName: (name: string) => void;
   setWorkflowDescription: (description: string) => void;
+  currentNodeDescription: string;
+  currentNodeAgent: string;
+  setCurrentNodeDescription: (description: string) => void;
+  setCurrentNodeAgent: (agent: string) => void;
+  addNode: () => void;
+  deleteNode: (nodeId: string) => void;
   workflowExecutionState: {
     isRunning: boolean;
     finishedAt: string | null;
@@ -84,6 +93,65 @@ export const createExecutionSlice: StateCreator<
   workflowDescription: '',
   setWorkflowName: (name) => set({ workflowName: name }),
   setWorkflowDescription: (description) => set({ workflowDescription: description }),
+  currentNodeDescription: '',
+  currentNodeAgent: '',
+  setCurrentNodeDescription: (description) => set({ currentNodeDescription: description }),
+  setCurrentNodeAgent: (agent) => set({ currentNodeAgent: agent }),
+  addNode: () => {
+    const { nodes, edges, currentNodeDescription, currentNodeAgent } = get();
+
+    if (!currentNodeDescription || !currentNodeAgent) {
+      toast.error("Node description and agent are required.");
+      return;
+    }
+
+    const newNodeId = `node-${nanoid()}`;
+    const newNode: FlowNode = {
+      id: newNodeId,
+      type: "generate-text",
+      position: { x: 250, y: 100 + nodes.length * 250 },
+      data: {
+        type: "agent-task",
+        description: currentNodeDescription,
+        agent: currentNodeAgent,
+        status: "idle",
+        executionState: {
+          status: "idle",
+          timestamp: new Date().toISOString(),
+        },
+      },
+    };
+
+    set({ nodes: [...nodes, newNode] });
+
+    if (nodes.length > 0) {
+      const prevNodeId = nodes[nodes.length - 1].id;
+      const newEdge: Edge = { // Cast to basic Edge type
+        id: `edge-${prevNodeId}-${newNodeId}`,
+        source: prevNodeId,
+        target: newNodeId,
+        type: "status",
+        sourceHandle: "result", // Use sourceHandle
+        targetHandle: "prompt", // Use targetHandle
+        data: {
+          executionState: {
+            status: "idle",
+          },
+        },
+      };
+      set({ edges: [...edges, newEdge as FlowEdge] }); // Cast back to FlowEdge for the state
+    }
+
+    set({ currentNodeDescription: "", currentNodeAgent: "" });
+    get().validateWorkflow();
+  },
+  deleteNode: (nodeId: string) => {
+    set((state) => ({
+      nodes: state.nodes.filter((node) => node.id !== nodeId),
+      edges: state.edges.filter((edge) => edge.source !== nodeId && edge.target !== nodeId),
+    }));
+    get().validateWorkflow();
+  },
   generateWorkflow: async (prompt, file) => {
     get().setShowGenerationProgress(true);
     get().setGenerationMessage('Generating workflow...');
@@ -402,11 +470,12 @@ export const createExecutionSlice: StateCreator<
     const validation = get().validateInputsBeforeExecution();
 
     if (!validation.isValid) {
-      const errorMessages = validation.errors.map((e) => e.message);
+      const errorMessages = validation.errors.map((e: { message: string }) => e.message);
       return {
         status: 'error',
         message: errorMessages.join(', '),
         error: new Error(errorMessages.join(', ')),
+        validationErrors: validation.errors as unknown as WorkflowError[],
       };
     }
 

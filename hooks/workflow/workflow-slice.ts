@@ -14,7 +14,12 @@ import type { WorkflowState } from './types';
 import type { WorkflowNodeProgress } from '@/lib/types/workflow';
 
 export interface WorkflowSlice {
-  initializeWorkflow: (nodes: FlowNode[], edges: FlowEdge[]) => void;
+  initializeWorkflow: (
+    nodes: FlowNode[],
+    edges: FlowEdge[],
+    name: string,
+    description: string,
+  ) => void;
   updateNodeExecutionStates: (
     workflowProgress: Map<string, WorkflowNodeProgress>,
   ) => void;
@@ -36,7 +41,12 @@ export const createWorkflowSlice: StateCreator<
   [],
   WorkflowSlice
 > = (set, get) => ({
-  initializeWorkflow: (initialNodes: FlowNode[], initialEdges: FlowEdge[]) => {
+  initializeWorkflow: (
+    initialNodes: FlowNode[],
+    initialEdges: FlowEdge[],
+    name: string,
+    description: string,
+  ) => {
     if (!initialNodes || !initialEdges) {
       return;
     }
@@ -45,7 +55,12 @@ export const createWorkflowSlice: StateCreator<
       initialNodes,
       initialEdges,
     );
-    set({ nodes: layoutedNodes, edges: layoutedEdges });
+    set({
+      nodes: layoutedNodes,
+      edges: layoutedEdges,
+      workflowName: name,
+      workflowDescription: description,
+    });
     get().validateWorkflow();
   },
   updateNodeExecutionStates: (

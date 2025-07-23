@@ -53,8 +53,6 @@ export function ManualWorkflowDialog({
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const [activeStep, setActiveStep] = useState(1); // Start at 'Details'
-  const [workflowName, setWorkflowName] = useState('');
-  const [workflowDescription, setWorkflowDescription] = useState('');
 
   const {
     nodes,
@@ -62,12 +60,16 @@ export function ManualWorkflowDialog({
     startExecution,
     resetWorkflow,
     workflowExecutionState,
+    workflowName,
+    workflowDescription,
   } = useWorkflow((state) => ({
     nodes: state.nodes,
     edges: state.edges,
     startExecution: state.startExecution,
     resetWorkflow: state.resetWorkflow,
     workflowExecutionState: state.workflowExecutionState,
+    workflowName: state.workflowName,
+    workflowDescription: state.workflowDescription,
   }));
 
   const handleNextStep = () => {
@@ -94,8 +96,8 @@ export function ManualWorkflowDialog({
       id: uuidv4(),
       name: workflowName,
       description: workflowDescription,
-      nodes: nodes,
-      edges: edges,
+      nodes,
+      edges,
     };
 
     try {
@@ -187,12 +189,7 @@ export function ManualWorkflowDialog({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 flex-1 overflow-auto">
           <div className="border rounded-lg overflow-y-auto p-4">
             {activeStep === 1 && (
-              <WorkflowDetails
-                name={workflowName}
-                description={workflowDescription}
-                setName={setWorkflowName}
-                setDescription={setWorkflowDescription}
-              />
+              <WorkflowDetails />
             )}
             {activeStep === 2 && <NodeBuilder />}
             {activeStep === 3 && <WorkflowReview />}

@@ -6,7 +6,12 @@ export function useWorkflowData(
   workflowId: string | string[] | undefined,
   setWorkflow: (data: WorkflowData | null) => void,
   setLoading: (loading: boolean) => void,
-  initializeWorkflow: (nodes: any[], edges: any[]) => void
+  initializeWorkflow: (
+    nodes: any[],
+    edges: any[],
+    name: string,
+    description: string
+  ) => void
 ) {
   useEffect(() => {
     if (!workflowId) return;
@@ -102,7 +107,12 @@ export function useWorkflowData(
           })),
         ];
 
-        initializeWorkflow(transformedNodes, transformedEdges);
+        initializeWorkflow(
+          transformedNodes,
+          transformedEdges,
+          data.workflow.name,
+          data.workflow.description
+        );
       } catch (error) {
         toast.error(
           "An unexpected error occurred while fetching the workflow."
