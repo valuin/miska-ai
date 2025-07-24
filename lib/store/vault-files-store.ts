@@ -7,5 +7,6 @@ interface VaultFilesState {
 
 export const useVaultFilesStore = create<VaultFilesState>((set) => ({
   selectedVaultFileNames: [],
-  setSelectedVaultFileNames: (fileNames) => set({ selectedVaultFileNames: fileNames }),
+  setSelectedVaultFileNames: (fileNames) =>
+    set({ selectedVaultFileNames: fileNames }),
 }));

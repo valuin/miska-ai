@@ -14,7 +14,9 @@ import { Button } from './ui/button';
 import { useArtifact } from '@/hooks/use-artifact';
 
 interface VersionFooterProps {
-  handleVersionChangeAction: (type: 'next' | 'prev' | 'toggle' | 'latest') => void;
+  handleVersionChangeAction: (
+    type: 'next' | 'prev' | 'toggle' | 'latest',
+  ) => void;
   documents: Array<Document> | undefined;
   currentVersionIndex: number;
 }

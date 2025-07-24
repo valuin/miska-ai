@@ -1,27 +1,27 @@
-"use client";
+'use client';
 
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@/components/ui/popover";
-import { BaseHandle } from "@/components/workflow-v2/base-handle";
-import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
-import { Edit2, Trash } from "lucide-react";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { useOnSelectionChange } from "@xyflow/react";
-import { useState, useCallback, forwardRef } from "react";
-import type { HandleProps, Node } from "@xyflow/react";
+} from '@/components/ui/popover';
+import { BaseHandle } from '@/components/workflow-v2/base-handle';
+import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
+import { Edit2, Trash } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { useOnSelectionChange } from '@xyflow/react';
+import { useState, useCallback, forwardRef } from 'react';
+import type { HandleProps, Node } from '@xyflow/react';
 
 type HandleEditorProps = {
-  variant: "edit" | "create";
+  variant: 'edit' | 'create';
   label?: string;
   description?: string;
   onSave: (newLabel: string, newDescription?: string) => boolean;
   onCancel?: () => void;
-  align?: "start" | "end";
+  align?: 'start' | 'end';
   children: React.ReactNode;
   showDescription?: boolean;
 };
@@ -32,25 +32,25 @@ const EditableHandleDialog = ({
   description,
   onSave,
   onCancel,
-  align = "start",
+  align = 'start',
   children,
   showDescription = false,
 }: HandleEditorProps) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [localLabel, setLocalLabel] = useState(label ?? "");
+  const [localLabel, setLocalLabel] = useState(label ?? '');
   const [localDescription, setLocalDescription] = useState(description);
 
   const handleSave = () => {
     // Trim and validate the label has no spaces
     const trimmedLabel = localLabel.trim();
-    if (trimmedLabel.includes(" ")) {
-      alert("Label cannot contain spaces");
+    if (trimmedLabel.includes(' ')) {
+      alert('Label cannot contain spaces');
       return;
     }
     const success = onSave(trimmedLabel, localDescription?.trim());
     if (success) {
       setIsOpen(false);
-      if (variant === "create") {
+      if (variant === 'create') {
         reset();
       }
     }
@@ -58,15 +58,15 @@ const EditableHandleDialog = ({
 
   const handleCancel = () => {
     setIsOpen(false);
-    if (variant === "create") {
+    if (variant === 'create') {
       reset();
     }
     onCancel?.();
   };
 
   const reset = () => {
-    setLocalLabel("");
-    setLocalDescription("");
+    setLocalLabel('');
+    setLocalDescription('');
   };
 
   return (
@@ -106,7 +106,7 @@ const EditableHandleDialog = ({
               Cancel
             </Button>
             <Button size="sm" onClick={handleSave}>
-              {variant === "create" ? "Create" : "Save"}
+              {variant === 'create' ? 'Create' : 'Save'}
             </Button>
           </div>
         </div>
@@ -115,7 +115,7 @@ const EditableHandleDialog = ({
   );
 };
 
-EditableHandleDialog.displayName = "EditableHandleDialog";
+EditableHandleDialog.displayName = 'EditableHandleDialog';
 
 type EditableHandleProps = HandleProps &
   React.HTMLAttributes<HTMLDivElement> & {
@@ -129,7 +129,7 @@ type EditableHandleProps = HandleProps &
     onUpdateTool: (
       handleId: string,
       newName: string,
-      newDescription?: string
+      newDescription?: string,
     ) => boolean;
     onDelete: (handleId: string) => void;
     showDescription?: boolean;
@@ -151,7 +151,7 @@ const EditableHandle = forwardRef<HTMLDivElement, EditableHandleProps>(
       showDescription = false,
       ...handleProps
     },
-    ref
+    ref,
   ) => {
     const [isEditing, setIsEditing] = useState(label.length === 0);
 
@@ -161,7 +161,7 @@ const EditableHandle = forwardRef<HTMLDivElement, EditableHandleProps>(
           resetEditing();
         }
       },
-      [isEditing, nodeId]
+      [isEditing, nodeId],
     );
 
     useOnSelectionChange({
@@ -185,7 +185,7 @@ const EditableHandle = forwardRef<HTMLDivElement, EditableHandleProps>(
       <div
         ref={ref}
         title={label}
-        className={cn("relative group", wrapperClassName)}
+        className={cn('relative group', wrapperClassName)}
       >
         <BaseHandle
           position={position}
@@ -194,16 +194,16 @@ const EditableHandle = forwardRef<HTMLDivElement, EditableHandleProps>(
           {...handleProps}
         />
         <div
-          className={cn("flex items-center px-4 py-3 gap-3 nodrag", {
-            "justify-end": position === "right",
-            "justify-start": position === "left",
+          className={cn('flex items-center px-4 py-3 gap-3 nodrag', {
+            'justify-end': position === 'right',
+            'justify-start': position === 'left',
           })}
         >
           <div className="flex flex-col min-w-0">
             <span
               className={cn(
-                "text-foreground truncate whitespace-nowrap",
-                labelClassName
+                'text-foreground truncate whitespace-nowrap',
+                labelClassName,
               )}
             >
               {label}
@@ -221,7 +221,7 @@ const EditableHandle = forwardRef<HTMLDivElement, EditableHandleProps>(
               description={description}
               onSave={handleSave}
               onCancel={resetEditing}
-              align={position === "left" ? "start" : "end"}
+              align={position === 'left' ? 'start' : 'end'}
               showDescription={showDescription}
             >
               <Button
@@ -244,9 +244,9 @@ const EditableHandle = forwardRef<HTMLDivElement, EditableHandleProps>(
         </div>
       </div>
     );
-  }
+  },
 );
 
-EditableHandle.displayName = "EditableHandle";
+EditableHandle.displayName = 'EditableHandle';
 
 export { EditableHandle, EditableHandleDialog };

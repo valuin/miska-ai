@@ -1,4 +1,5 @@
-import { SSEWorkflowExecutionClient } from "@/lib/utils/workflows/sse-workflow-execution-client";
+import { parseDataStreamPart } from 'ai';
+import { SSEWorkflowExecutionClient } from '@/lib/utils/workflows/sse-workflow-execution-client';
 import {
   type FlowEdge,
   type FlowNode,
@@ -6,20 +7,37 @@ import {
   type WorkflowError,
   getLayoutedElements,
   prepareWorkflow,
-} from "@/lib/utils/workflows/workflow";
+} from '@/lib/utils/workflows/workflow';
 import type {
   EdgeExecutionState,
   NodeExecutionState,
-} from "@/lib/utils/workflows/workflow-execution-engine";
-import type { StateCreator } from "zustand";
-import { validateHumanInputs } from "@/lib/validation/workflow-validation";
-import type {
-  GenerateTextNode,
-  WorkflowState,
-} from "./types";
-import type { WorkflowNodeProgress } from "@/lib/types/workflow";
+} from '@/lib/utils/workflows/workflow-execution-engine';
+import type { StateCreator } from 'zustand';
+import { validateHumanInputs } from '@/lib/validation/workflow-validation';
+import type { GenerateTextNode, WorkflowState } from './types';
+import type { WorkflowNodeProgress } from '@/lib/types/workflow';
+import { nanoid } from 'nanoid';
+import { toast } from 'sonner';
+import type { Edge } from '@xyflow/react'; // Import Edge from reactflow
 
 export interface ExecutionSlice {
+  generationProgress: number;
+  generationMessage: string;
+  showGenerationProgress: boolean;
+  setGenerationProgress: (progress: number) => void;
+  setGenerationMessage: (message: string) => void;
+  setShowGenerationProgress: (show: boolean) => void;
+  generateWorkflow: (prompt: string, file?: File) => Promise<void>;
+  workflowName: string;
+  workflowDescription: string;
+  setWorkflowName: (name: string) => void;
+  setWorkflowDescription: (description: string) => void;
+  currentNodeDescription: string;
+  currentNodeAgent: string;
+  setCurrentNodeDescription: (description: string) => void;
+  setCurrentNodeAgent: (agent: string) => void;
+  addNode: () => void;
+  deleteNode: (nodeId: string) => void;
   workflowExecutionState: {
     isRunning: boolean;
     finishedAt: string | null;
@@ -33,12 +51,17 @@ export interface ExecutionSlice {
     errors: { nodeId: string; message: string }[];
   };
   startExecution: () => Promise<{
-    status: "success" | "error";
+    status: 'success' | 'error';
     message: string;
     error?: Error;
     validationErrors?: WorkflowError[];
   }>;
-  initializeWorkflow: (nodes: FlowNode[], edges: FlowEdge[]) => void;
+  initializeWorkflow: (
+    nodes: FlowNode[],
+    edges: FlowEdge[],
+    name?: string,
+    description?: string,
+  ) => void;
   updateNodeExecutionStates: (
     workflowProgress: Map<string, WorkflowNodeProgress>,
   ) => void;
@@ -60,6 +83,197 @@ export const createExecutionSlice: StateCreator<
   [],
   ExecutionSlice
 > = (set, get) => ({
+  generationProgress: 0,
+  generationMessage: '',
+  showGenerationProgress: false,
+  setGenerationProgress: (progress) => set({ generationProgress: progress }),
+  setGenerationMessage: (message) => set({ generationMessage: message }),
+  setShowGenerationProgress: (show) => set({ showGenerationProgress: show }),
+  workflowName: '',
+  workflowDescription: '',
+  setWorkflowName: (name) => set({ workflowName: name }),
+  setWorkflowDescription: (description) =>
+    set({ workflowDescription: description }),
+  currentNodeDescription: '',
+  currentNodeAgent: '',
+  setCurrentNodeDescription: (description) =>
+    set({ currentNodeDescription: description }),
+  setCurrentNodeAgent: (agent) => set({ currentNodeAgent: agent }),
+  addNode: () => {
+    const { nodes, edges, currentNodeDescription, currentNodeAgent } = get();
+
+    if (!currentNodeDescription || !currentNodeAgent) {
+      toast.error('Node description and agent are required.');
+      return;
+    }
+
+    const newNodeId = `node-${nanoid()}`;
+    const newNode: FlowNode = {
+      id: newNodeId,
+      type: 'generate-text',
+      position: { x: 250, y: 100 + nodes.length * 250 },
+      data: {
+        type: 'agent-task',
+        description: currentNodeDescription,
+        agent: currentNodeAgent,
+        status: 'idle',
+        executionState: {
+          status: 'idle',
+          timestamp: new Date().toISOString(),
+        },
+      },
+    };
+
+    set({ nodes: [...nodes, newNode] });
+
+    if (nodes.length > 0) {
+      const prevNodeId = nodes[nodes.length - 1].id;
+      const newEdge: Edge = {
+        // Cast to basic Edge type
+        id: `edge-${prevNodeId}-${newNodeId}`,
+        source: prevNodeId,
+        target: newNodeId,
+        type: 'status',
+        sourceHandle: 'result', // Use sourceHandle
+        targetHandle: 'prompt', // Use targetHandle
+        data: {
+          executionState: {
+            status: 'idle',
+          },
+        },
+      };
+      set({ edges: [...edges, newEdge as FlowEdge] }); // Cast back to FlowEdge for the state
+    }
+
+    set({ currentNodeDescription: '', currentNodeAgent: '' });
+    get().validateWorkflow();
+  },
+  deleteNode: (nodeId: string) => {
+    set((state) => ({
+      nodes: state.nodes.filter((node) => node.id !== nodeId),
+      edges: state.edges.filter(
+        (edge) => edge.source !== nodeId && edge.target !== nodeId,
+      ),
+    }));
+    get().validateWorkflow();
+  },
+  generateWorkflow: async (prompt, file) => {
+    get().setShowGenerationProgress(true);
+    get().setGenerationMessage('Generating workflow...');
+    get().setGenerationProgress(0);
+
+    const formData = new FormData();
+    formData.append('prompt', prompt);
+    if (file) {
+      formData.append('file', file);
+    }
+
+    try {
+      const response = await fetch('/api/workflows/generate', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.body) {
+        throw new Error('No response body');
+      }
+
+      let fullSchema = '';
+      try {
+        let lineBuffer = ''; // Buffer for incomplete lines
+
+        await response.body.pipeThrough(new TextDecoderStream()).pipeTo(
+          new WritableStream({
+            write(chunk) {
+              lineBuffer += chunk;
+              const lines = lineBuffer.split('\n');
+              lineBuffer = lines.pop() || ''; // Keep the last (potentially incomplete) line
+
+              for (const line of lines) {
+                if (line.trim() === '') continue;
+                try {
+                  const part = parseDataStreamPart(line);
+                  switch (part.type) {
+                    case 'message_annotations':
+                      for (const annotation of part.value) {
+                        if (
+                          annotation &&
+                          typeof annotation === 'object' &&
+                          'type' in annotation &&
+                          (annotation as any).type === 'progress' &&
+                          'message' in annotation &&
+                          typeof (annotation as any).message === 'string' &&
+                          'progress' in annotation &&
+                          typeof (annotation as any).progress === 'number'
+                        ) {
+                          get().setGenerationMessage(
+                            annotation.message as string,
+                          );
+                          get().setGenerationProgress(
+                            annotation.progress as number,
+                          );
+                        }
+                      }
+                      break;
+                    case 'data':
+                      for (const data of part.value) {
+                        if (
+                          data &&
+                          typeof data === 'object' &&
+                          'type' in data &&
+                          (data as any).type === 'schema_chunk' &&
+                          'chunk' in data &&
+                          typeof (data as any).chunk === 'string'
+                        ) {
+                          fullSchema += (data as any).chunk;
+                        }
+                      }
+                      break;
+                  }
+                } catch (parseError) {}
+              }
+            },
+            close() {
+              try {
+                const finalSchema = JSON.parse(fullSchema);
+
+                // The schema is now nested under the `schema` property
+                const workflowSchema = finalSchema.schema;
+
+                get().initializeWorkflow(
+                  workflowSchema.nodes,
+                  workflowSchema.edges,
+                  finalSchema.name,
+                  finalSchema.description,
+                );
+                get().setGenerationMessage('Workflow generated successfully!');
+                get().setGenerationProgress(100);
+              } catch (jsonError) {
+                get().setGenerationMessage(
+                  `Failed to parse final workflow schema: ${jsonError instanceof Error ? jsonError.message : String(jsonError)}`,
+                );
+              }
+            },
+            abort(reason) {
+              get().setGenerationMessage(
+                `Workflow generation aborted: ${reason instanceof Error ? reason.message : String(reason)}`,
+              );
+            },
+          }),
+        );
+      } catch (error) {
+        get().setGenerationMessage(
+          `Failed to generate workflow: ${error instanceof Error ? error.message : String(error)}`,
+        );
+      }
+    } catch (error) {
+      get().setGenerationMessage(
+        `Failed to generate workflow: ${error instanceof Error ? error.message : String(error)}`,
+      );
+    } finally {
+      setTimeout(() => get().setShowGenerationProgress(false), 3000);
+    }
+  },
   workflowExecutionState: {
     isRunning: false,
     finishedAt: null,
@@ -77,17 +291,28 @@ export const createExecutionSlice: StateCreator<
   },
   validateInputsBeforeExecution: () => {
     const { nodes, nodeUserInputs } = get();
-    return validateHumanInputs(
-      nodes as GenerateTextNode[],
-      nodeUserInputs,
-    );
+    return validateHumanInputs(nodes as GenerateTextNode[], nodeUserInputs);
   },
-  initializeWorkflow: (initialNodes: FlowNode[], initialEdges: FlowEdge[]) => {
+  initializeWorkflow: (
+    initialNodes: FlowNode[],
+    initialEdges: FlowEdge[],
+    name?: string,
+    description?: string,
+  ) => {
+    if (!initialNodes || !initialEdges) {
+      return;
+    }
+
     const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(
       initialNodes,
       initialEdges,
     );
-    set({ nodes: layoutedNodes, edges: layoutedEdges });
+    set({
+      nodes: layoutedNodes,
+      edges: layoutedEdges,
+      workflowName: name || '',
+      workflowDescription: description || '',
+    });
     get().validateWorkflow();
   },
   updateNodeExecutionStates: (
@@ -124,34 +349,31 @@ export const createExecutionSlice: StateCreator<
     set((state) => ({
       edges: state.edges.map((edge) => {
         const sourceNode = state.nodes.find((n) => n.id === edge.source);
-        const targetNode = state.nodes.find((n) => n.id === edge.target);
+        const targetNode = state.nodes.find((n) => n.id === edge.id);
 
         if (
           sourceNode?.data.executionState &&
           targetNode?.data.executionState
         ) {
-          let edgeStatus: "idle" | "running" | "completed" | "error" = "idle";
+          let edgeStatus: 'idle' | 'running' | 'completed' | 'error' = 'idle';
 
           const sourceStatus = sourceNode.data.executionState.status;
           const targetStatus = targetNode.data.executionState.status;
 
-          if (sourceStatus === "error" || targetStatus === "error") {
-            edgeStatus = "error";
+          if (sourceStatus === 'error' || targetStatus === 'error') {
+            edgeStatus = 'error';
           } else if (
-            sourceStatus === "completed" &&
-            targetStatus === "completed"
+            sourceStatus === 'completed' &&
+            targetStatus === 'completed'
           ) {
-            edgeStatus = "completed";
+            edgeStatus = 'completed';
           } else if (
-            (sourceStatus === "running" || sourceStatus === "completed") &&
-            targetStatus === "running"
+            (sourceStatus === 'running' || sourceStatus === 'completed') &&
+            targetStatus === 'running'
           ) {
-            edgeStatus = "running";
-          } else if (
-            sourceStatus === "completed" &&
-            targetStatus === "idle"
-          ) {
-            edgeStatus = "completed";
+            edgeStatus = 'running';
+          } else if (sourceStatus === 'completed' && targetStatus === 'idle') {
+            edgeStatus = 'completed';
           }
 
           return {
@@ -179,19 +401,18 @@ export const createExecutionSlice: StateCreator<
     if (workflow.errors.length > 0) {
       for (const error of workflow.errors) {
         switch (error.type) {
-          case "multiple-sources-for-target-handle":
-          case "cycle":
+          case 'multiple-sources-for-target-handle':
+          case 'cycle':
             for (const edge of error.edges) {
               get().updateEdgeExecutionState(edge.id, {
                 error,
               });
             }
             break;
-          case "missing-required-connection":
+          case 'missing-required-connection':
             get().updateNodeExecutionState(error.node.id, {
-              status: "idle",
+              status: 'idle',
               timestamp: new Date().toISOString(),
-              error,
             });
             break;
         }
@@ -247,10 +468,9 @@ export const createExecutionSlice: StateCreator<
   async startExecution() {
     if (get().workflowExecutionState.timesRun > 3) {
       const message =
-        "Workflow has already run successfully and cannot be run again";
-      console.warn(message);
+        'Workflow has already run successfully and cannot be run again';
       return {
-        status: "error",
+        status: 'error',
         message,
         error: new Error(message),
       };
@@ -259,11 +479,14 @@ export const createExecutionSlice: StateCreator<
     const validation = get().validateInputsBeforeExecution();
 
     if (!validation.isValid) {
-      const errorMessages = validation.errors.map((e) => e.message);
+      const errorMessages = validation.errors.map(
+        (e: { message: string }) => e.message,
+      );
       return {
-        status: "error",
-        message: errorMessages.join(", "),
-        error: new Error(errorMessages.join(", ")),
+        status: 'error',
+        message: errorMessages.join(', '),
+        error: new Error(errorMessages.join(', ')),
+        validationErrors: validation.errors as unknown as WorkflowError[],
       };
     }
 
@@ -273,7 +496,7 @@ export const createExecutionSlice: StateCreator<
         data: {
           ...node.data,
           executionState: {
-            status: "idle",
+            status: 'idle',
             timestamp: new Date().toISOString(),
           },
         },
@@ -283,9 +506,9 @@ export const createExecutionSlice: StateCreator<
     const workflow = get().validateWorkflow();
 
     if (workflow.errors.length > 0) {
-      const message = "Workflow validation failed";
+      const message = 'Workflow validation failed';
       return {
-        status: "error",
+        status: 'error',
         message,
         error: new Error(message),
         validationErrors: workflow.errors,
@@ -309,7 +532,6 @@ export const createExecutionSlice: StateCreator<
             updateNodeExecutionState(nodeId, state);
           },
           onError: (error) => {
-            console.error("Error in execution:", error);
             reject(error);
           },
           onComplete: ({ timestamp }) => {
@@ -326,14 +548,13 @@ export const createExecutionSlice: StateCreator<
       });
 
       return {
-        status: "success",
-        message: "Workflow executed successfully",
+        status: 'success',
+        message: 'Workflow executed successfully',
       };
     } catch (error) {
-      console.error("Workflow execution failed:", error);
       return {
-        status: "error",
-        message: "Workflow execution failed",
+        status: 'error',
+        message: 'Workflow execution failed',
         error: error instanceof Error ? error : new Error(String(error)),
       };
     } finally {

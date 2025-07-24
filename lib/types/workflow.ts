@@ -1,9 +1,9 @@
 export type WorkflowNode = {
   id: string;
-  type: "workflowNode";
+  type: 'workflowNode';
   position: { x: number; y: number };
   data: {
-    type: "human-input" | "agent-task";
+    type: 'human-input' | 'agent-task';
     agent: string;
     description: string;
     config?: {
@@ -16,7 +16,7 @@ export type WorkflowNode = {
 
 export type WorkflowEdge = {
   id: string;
-  type: "custom";
+  type: 'custom';
   source: string;
   target: string;
 };
@@ -37,7 +37,7 @@ export interface WorkflowData {
 }
 
 export type WorkflowNodeProgress = {
-  status: "idle" | "running" | "completed" | "error";
+  status: 'idle' | 'running' | 'completed' | 'error';
   output?: string;
   error?: string;
   description?: string;

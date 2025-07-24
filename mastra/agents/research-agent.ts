@@ -1,13 +1,13 @@
-import { Agent } from "@mastra/core/agent";
-import { BASE_MODEL } from "@/lib/constants";
-import { clarificationTool, thinkingTool } from "../tools/chain-tools";
-import { crawlerTool } from "../tools/crawler-tool";
-import { openai } from "@ai-sdk/openai";
-import { optionsTool } from "../tools/utility-tools";
-import { searxngTool } from "../tools/searxng-tool";
+import { Agent } from '@mastra/core/agent';
+import { BASE_MODEL } from '@/lib/constants';
+import { clarificationTool, thinkingTool } from '../tools/chain-tools';
+import { crawlerTool } from '../tools/crawler-tool';
+import { openai } from '@ai-sdk/openai';
+import { optionsTool } from '../tools/utility-tools';
+import { searxngTool } from '../tools/searxng-tool';
 
 export const researchAgent = new Agent({
-  name: "Research Agent",
+  name: 'Research Agent',
   instructions: `
     You are a helpful web assistant that can search the web and extract information using two tools: searxngTool (for searching) and crawlerTool (for crawling links).
 

@@ -6,7 +6,6 @@ export async function getAttachmentText(file: {
   if (file.contentType?.startsWith('image/')) return '';
 
   if (!file.url || !file.name) {
-    console.warn('File missing URL or name for text extraction');
     return '';
   }
 
@@ -25,14 +24,12 @@ export async function getAttachmentText(file: {
     );
 
     if (!response.ok) {
-      console.warn(`Failed to extract text from ${file.name}:`, response.statusText);
       return '';
     }
 
     const data = await response.json();
     return data.result || '';
   } catch (error) {
-    console.warn(`Error extracting text from ${file.name}:`, error);
     return '';
   }
 }

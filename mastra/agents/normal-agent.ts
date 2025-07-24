@@ -1,13 +1,13 @@
-import { Agent } from "@mastra/core/agent";
-import { BASE_MODEL } from "@/lib/constants";
-import { calculator } from "@agentic/calculator";
-import { clarificationTool, thinkingTool } from "../tools/chain-tools";
-import { createMastraTools } from "@agentic/mastra";
-import { openai } from "@ai-sdk/openai";
-import { optionsTool } from "../tools/utility-tools";
+import { Agent } from '@mastra/core/agent';
+import { BASE_MODEL } from '@/lib/constants';
+import { calculator } from '@agentic/calculator';
+import { clarificationTool, thinkingTool } from '../tools/chain-tools';
+import { createMastraTools } from '@agentic/mastra';
+import { openai } from '@ai-sdk/openai';
+import { optionsTool } from '../tools/utility-tools';
 
 export const normalAgent = new Agent({
-  name: "General Assistant",
+  name: 'General Assistant',
   instructions: `
 You are a highly helpful AI assistant. Your job is to respond clearly, accurately, and concisely to user questions, and guide them toward useful options if appropriate.
 

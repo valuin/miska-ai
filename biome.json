@@ -39,7 +39,8 @@
         "noForEach": "off",
         "noUselessSwitchCase": "off",
         "noUselessThisAlias": "off",
-        "noBannedTypes": "off"
+        "noBannedTypes": "off",
+        "noStaticOnlyClass": "off"
       },
       "correctness": {
         "noUnusedImports": "warn",
@@ -56,11 +57,13 @@
         "useDefaultParameterLast": "warn",
         "useExponentiationOperator": "off",
         "noUnusedTemplateLiteral": "off",
-        "noUselessElse": "off"
+        "noUselessElse": "off",
+        "noNonNullAssertion": "off"
       },
       "suspicious": {
         "noExplicitAny": "off",
-        "noArrayIndexKey": "off"
+        "noArrayIndexKey": "off",
+        "noRedeclare": "off"
       },
       "nursery": {
         "recommended": true

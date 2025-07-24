@@ -21,7 +21,13 @@ export type DataStreamDelta = {
   content: string | Suggestion;
 };
 
-export function DataStreamHandler({ id, setMessages }: { id: string; setMessages?: (fn: (prev: any[]) => any[]) => void }) {
+export function DataStreamHandler({
+  id,
+  setMessages,
+}: {
+  id: string;
+  setMessages?: (fn: (prev: any[]) => any[]) => void;
+}) {
   const { data: dataStream } = useChat({ id });
   const { artifact, setArtifact, setMetadata } = useArtifact();
   const lastProcessedIndex = useRef(-1);

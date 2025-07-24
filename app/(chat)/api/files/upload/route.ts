@@ -14,9 +14,13 @@ const FileSchema = z.object({
       message: 'File size should be less than 5MB',
     })
     // Update the file type based on the kind of files you want to accept
-    .refine((file) => ['image/jpeg', 'image/png', 'application/pdf'].includes(file.type), {
-      message: 'File type should be JPEG, PNG or PDF',
-    }),
+    .refine(
+      (file) =>
+        ['image/jpeg', 'image/png', 'application/pdf'].includes(file.type),
+      {
+        message: 'File type should be JPEG, PNG or PDF',
+      },
+    ),
 });
 
 export async function POST(request: Request) {
@@ -65,9 +69,7 @@ export async function POST(request: Request) {
           text,
           userId: session.user.id,
         });
-      } catch (dbError) {
-        console.warn(`Failed to save file to database: ${filename}`, dbError);
-      }
+      } catch (dbError) {}
 
       return NextResponse.json({ ...data, text });
     } catch (error) {

@@ -1,15 +1,15 @@
-import { Agent } from "@mastra/core/agent";
-import { BASE_MODEL } from "@/lib/constants";
-import { openai } from "@ai-sdk/openai";
-import { thinkingTool, clarificationTool } from "../tools/chain-tools";
+import { Agent } from '@mastra/core/agent';
+import { BASE_MODEL } from '@/lib/constants';
+import { openai } from '@ai-sdk/openai';
+import { thinkingTool, clarificationTool } from '../tools/chain-tools';
 import {
   // saveDocumentToVaultTool,
   listVaultDocumentsTool,
   queryVaultDocumentsTool,
-} from "../tools/document-vault-tools";
+} from '../tools/document-vault-tools';
 
 export const ragChatAgent = new Agent({
-  name: "RAG Chat Agent",
+  name: 'RAG Chat Agent',
   instructions: `
 You are an AI assistant with access to user-uploaded documents through a document vault system.
 

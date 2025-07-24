@@ -1,12 +1,12 @@
 // Document CRUD Agent for Mastra
 
-import { openai } from "@ai-sdk/openai";
-import { Agent } from "@mastra/core/agent";
-import { createDocument } from "../tools/create-document";
-import { updateDocument } from "../tools/update-document";
-import { requestSuggestions } from "../tools/request-suggestions";
-import { clarificationTool } from "../tools/chain-tools";
-import { LARGE_MODEL } from "@/lib/constants";
+import { openai } from '@ai-sdk/openai';
+import { Agent } from '@mastra/core/agent';
+import { createDocument } from '../tools/create-document';
+import { updateDocument } from '../tools/update-document';
+import { requestSuggestions } from '../tools/request-suggestions';
+import { clarificationTool } from '../tools/chain-tools';
+import { LARGE_MODEL } from '@/lib/constants';
 
 /**
  * This agent handles document creation, updating, and suggestion requests.
@@ -20,7 +20,7 @@ import { LARGE_MODEL } from "@/lib/constants";
  * See Mastra documentation for tool schemas and usage.
  */
 export const documentAgent = new Agent({
-  name: "Document CRUD Agent",
+  name: 'Document CRUD Agent',
   instructions: `
 You are a Document CRUD Agent. Your job is to help users create, update, and request suggestions for documents.
 

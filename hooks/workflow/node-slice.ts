@@ -1,18 +1,19 @@
-import { createNode } from "@/lib/utils/workflows/node-factory";
+import { createNode } from '@/lib/utils/workflows/node-factory';
 import {
   type DynamicHandle,
   type FlowEdge,
   type FlowNode,
   isNodeOfType,
   isNodeWithDynamicHandles,
-} from "@/lib/utils/workflows/workflow";
-import { addEdge, applyEdgeChanges, applyNodeChanges } from "@xyflow/react";
-import type { Connection, EdgeChange, NodeChange } from "@xyflow/react";
-import { nanoid } from "nanoid";
-import type { StateCreator } from "zustand";
-import type { WorkflowState } from "./types";
+} from '@/lib/utils/workflows/workflow';
+import { addEdge, applyEdgeChanges, applyNodeChanges } from '@xyflow/react';
+import type { Connection, EdgeChange, NodeChange } from '@xyflow/react';
+import { nanoid } from 'nanoid';
+import type { StateCreator } from 'zustand';
+import type { WorkflowState } from './types';
 
 export interface NodeSlice {
+  resetWorkflow: () => void;
   nodes: FlowNode[];
   edges: FlowEdge[];
   onNodesChange: (changes: NodeChange<FlowNode>[]) => void;
@@ -20,139 +21,192 @@ export interface NodeSlice {
   onConnect: (connection: Connection) => void;
   getNodeById: (nodeId: string) => FlowNode;
   createNode: (
-    nodeType: FlowNode["type"],
+    nodeType: FlowNode['type'],
     position: { x: number; y: number },
   ) => FlowNode;
-  updateNode: <T extends FlowNode["type"]>(
+  updateNode: <T extends FlowNode['type']>(
     id: string,
     nodeType: T,
-    data: Partial<FlowNode["data"]>,
+    data: Partial<FlowNode['data']>,
   ) => void;
   deleteNode: (id: string) => void;
-  addDynamicHandle: <T extends FlowNode["type"]>(
+  addDynamicHandle: <T extends FlowNode['type']>(
     nodeId: string,
     nodeType: T,
     handleCategory: string,
-    handle: Omit<DynamicHandle, "id">,
+    handle: Omit<DynamicHandle, 'id'>,
   ) => string;
-  removeDynamicHandle: <T extends FlowNode["type"]>(
+  removeDynamicHandle: <T extends FlowNode['type']>(
     nodeId: string,
     nodeType: T,
     handleCategory: string,
     handleId: string,
   ) => void;
+  addNode: () => void;
 }
 
-export const createNodeSlice: StateCreator<
-  WorkflowState,
-  [],
-  [],
-  NodeSlice
-> = (set, get) => ({
+interface NodeSliceState {
+  nodes: FlowNode[];
+  edges: FlowEdge[];
+  currentNodeDescription: string;
+  currentNodeAgent: string;
+}
+
+interface NodeSliceActions {
+  setCurrentNodeDescription: (description: string) => void;
+  setCurrentNodeAgent: (agent: string) => void;
+  addNode: () => void;
+  resetWorkflow: () => void;
+  onNodesChange: (changes: NodeChange<FlowNode>[]) => void;
+  onEdgesChange: (changes: EdgeChange<FlowEdge>[]) => void;
+  onConnect: (connection: Connection) => void;
+  getNodeById: (nodeId: string) => FlowNode;
+  createNode: (
+    nodeType: FlowNode['type'],
+    position: { x: number; y: number },
+  ) => FlowNode;
+  updateNode: <T extends FlowNode['type']>(
+    id: string,
+    type: T,
+    data: Partial<FlowNode['data']>,
+  ) => void;
+  deleteNode: (id: string) => void;
+  addDynamicHandle: <T extends FlowNode['type']>(
+    nodeId: string,
+    type: T,
+    handleCategory: string,
+    handle: Omit<DynamicHandle, 'id'>,
+  ) => string;
+  removeDynamicHandle: <T extends FlowNode['type']>(
+    nodeId: string,
+    type: T,
+    handleCategory: string,
+    handleId: string,
+  ) => void;
+}
+
+type NodeSliceComplete = NodeSliceState & NodeSliceActions;
+
+export const createNodeSlice: StateCreator<WorkflowState, [], [], NodeSlice> = (
+  set: (
+    partial:
+      | Partial<WorkflowState>
+      | ((state: WorkflowState) => Partial<WorkflowState>),
+  ) => void,
+  get: () => WorkflowState,
+): NodeSliceComplete => ({
   nodes: [],
   edges: [],
-  onNodesChange: (changes) => {
-    const currentNodes = get().nodes;
-    const updatedNodes = applyNodeChanges<FlowNode>(changes, currentNodes);
+  currentNodeDescription: '',
+  currentNodeAgent: 'human',
+  setCurrentNodeDescription: (description: string) => {
+    set({ currentNodeDescription: description });
+  },
+  setCurrentNodeAgent: (agent: string) => {
+    set({ currentNodeAgent: agent });
+  },
+  addNode: () => {
+    const {
+      currentNodeAgent,
+      currentNodeDescription,
+    }: { currentNodeAgent: string; currentNodeDescription: string } = get();
+    const nodeType: FlowNode['type'] =
+      currentNodeAgent === 'human' || currentNodeAgent === 'user'
+        ? 'text-input'
+        : 'generate-text';
 
-    const nodesWithPreservedState = updatedNodes.map((updatedNode) => {
-      const originalNode = currentNodes.find((n) => n.id === updatedNode.id);
-      if (
-        originalNode &&
-        originalNode.data.executionState &&
-        updatedNode.data.executionState !== originalNode.data.executionState
-      ) {
-        return {
-          ...updatedNode,
-          data: {
-            ...updatedNode.data,
-            executionState: originalNode.data.executionState,
-          },
-        } as FlowNode;
-      }
-      return updatedNode;
+    const newNode: FlowNode = createNode(nodeType, {
+      x: 250,
+      y: 250,
     });
+    newNode.data = {
+      ...newNode.data,
+      agent: currentNodeAgent,
+      description: currentNodeDescription,
+      type: nodeType === 'text-input' ? 'human-input' : 'agent-task',
+    };
+
+    set((state: WorkflowState) => ({
+      nodes: [...state.nodes, newNode],
+      currentNodeDescription: '',
+      currentNodeAgent: 'human',
+    }));
+  },
+  resetWorkflow: () => {
+    set({
+      nodes: [],
+      edges: [],
+    });
+  },
+  onNodesChange: (changes: NodeChange<FlowNode>[]) => {
+    const currentNodes: FlowNode[] = get().nodes;
+    const updatedNodes: FlowNode[] = applyNodeChanges<FlowNode>(
+      changes,
+      currentNodes,
+    );
+
+    const nodesWithPreservedState: FlowNode[] = updatedNodes.map(
+      (updatedNode: FlowNode) => {
+        const originalNode: FlowNode | undefined = currentNodes.find(
+          (n: FlowNode) => n.id === updatedNode.id,
+        );
+        if (
+          originalNode?.data.executionState &&
+          updatedNode.data.executionState !== originalNode.data.executionState
+        ) {
+          return {
+            ...updatedNode,
+            data: {
+              ...updatedNode.data,
+              executionState: originalNode.data.executionState,
+            },
+          } as FlowNode;
+        }
+        return updatedNode;
+      },
+    );
 
     set({
       nodes: nodesWithPreservedState,
     });
     get().validateWorkflow();
   },
-  onEdgesChange: (changes) => {
-    const currentEdges = get().edges;
-    const updatedEdges = applyEdgeChanges(changes, currentEdges);
+  onEdgesChange: (changes: EdgeChange<FlowEdge>[]) => {
+    const currentEdges: FlowEdge[] = get().edges;
+    const updatedEdges: FlowEdge[] = applyEdgeChanges(changes, currentEdges);
 
-    const edgesWithPreservedState = updatedEdges.map((updatedEdge) => {
-      const originalEdge = currentEdges.find((e) => e.id === updatedEdge.id);
-      if (
-        originalEdge &&
-        originalEdge.data?.executionState &&
-        updatedEdge.data?.executionState !== originalEdge.data?.executionState
-      ) {
-        return {
-          ...updatedEdge,
-          data: {
-            ...updatedEdge.data,
-            executionState: originalEdge.data.executionState,
-          },
-        };
-      }
-      return updatedEdge;
-    });
+    const edgesWithPreservedState: FlowEdge[] = updatedEdges.map(
+      (updatedEdge: FlowEdge) => {
+        const originalEdge: FlowEdge | undefined = currentEdges.find(
+          (e: FlowEdge) => e.id === updatedEdge.id,
+        );
+        if (
+          originalEdge?.data?.executionState &&
+          updatedEdge.data?.executionState !== originalEdge.data?.executionState
+        ) {
+          return {
+            ...updatedEdge,
+            data: {
+              ...updatedEdge.data,
+              executionState: originalEdge.data.executionState,
+            },
+          };
+        }
+        return updatedEdge;
+      },
+    );
 
     set({
       edges: edgesWithPreservedState,
     });
     get().validateWorkflow();
   },
-  onConnect: (connection) => {
-    const newEdge = addEdge({ ...connection, type: "status" }, get().edges);
-    const sourceNode = get().getNodeById(connection.source!);
-
-    if (!connection.sourceHandle) {
-      throw new Error("Source handle not found");
-    }
-
-    const sourceExecutionState = sourceNode.data.executionState;
-
-    if (sourceExecutionState?.sources) {
-      const sourceHandleData =
-        sourceExecutionState.sources[connection.sourceHandle];
-      const nodes = get().nodes.map((node) => {
-        if (node.id === connection.target && connection.targetHandle) {
-          return {
-            ...node,
-            data: {
-              ...node.data,
-              executionState: node.data.executionState
-                ? {
-                    ...node.data.executionState,
-                    targets: {
-                      ...node.data.executionState.targets,
-                      [connection.targetHandle]: sourceHandleData,
-                    },
-                  }
-                : {
-                    status: "success",
-                    timestamp: new Date().toISOString(),
-                    targets: {
-                      [connection.targetHandle]: sourceHandleData,
-                    },
-                  },
-            },
-          };
-        }
-        return node;
-      });
-
-      set({
-        nodes: nodes as FlowNode[],
-      });
-    }
-
-    set({
-      edges: newEdge,
-    });
+  onConnect: (connection: Connection) => {
+    const newEdge: FlowEdge[] = addEdge(
+      { ...connection, type: 'status' },
+      get().edges,
+    );
+    const sourceNode: FlowNode = get().getNodeById(connection.source!);
     get().validateWorkflow();
   },
   getNodeById: (nodeId) => {

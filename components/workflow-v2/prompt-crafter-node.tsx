@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import { Button } from "@/components/ui/button";
+import { Button } from '@/components/ui/button';
 import {
   Command,
   CommandEmpty,
@@ -8,56 +8,56 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
-} from "@/components/ui/command";
+} from '@/components/ui/command';
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@/components/ui/popover";
-import { Separator } from "@/components/ui/separator";
-import { cn } from "@/lib/utils";
-import { BaseNode } from "@/components/workflow-v2/base-node";
+} from '@/components/ui/popover';
+import { Separator } from '@/components/ui/separator';
+import { cn } from '@/lib/utils';
+import { BaseNode } from '@/components/workflow-v2/base-node';
 import {
   EditableHandle,
   EditableHandleDialog,
-} from "@/components/workflow-v2/editable-handle";
-import { LabeledHandle } from "@/components/workflow-v2/labeled-handle";
+} from '@/components/workflow-v2/editable-handle';
+import { LabeledHandle } from '@/components/workflow-v2/labeled-handle';
 import {
   NodeHeader,
   NodeHeaderAction,
   NodeHeaderActions,
   NodeHeaderIcon,
   NodeHeaderTitle,
-} from "@/components/workflow-v2/node-header";
-import { NodeHeaderStatus } from "@/components/workflow-v2/node-header-status";
-import { StreamLanguage } from "@codemirror/language";
-import type { EditorView } from "@codemirror/view";
-import { tags as t } from "@lezer/highlight";
-import { createTheme } from "@uiw/codemirror-themes";
-import CodeMirror from "@uiw/react-codemirror";
+} from '@/components/workflow-v2/node-header';
+import { NodeHeaderStatus } from '@/components/workflow-v2/node-header-status';
+import { StreamLanguage } from '@codemirror/language';
+import type { EditorView } from '@codemirror/view';
+import { tags as t } from '@lezer/highlight';
+import { createTheme } from '@uiw/codemirror-themes';
+import CodeMirror from '@uiw/react-codemirror';
 import {
   type Node,
   type NodeProps,
   Position,
   useUpdateNodeInternals,
-} from "@xyflow/react";
-import { BetweenVerticalEnd, PencilRuler, Plus, Trash } from "lucide-react";
-import { useCallback, useMemo, useRef, useState } from "react";
+} from '@xyflow/react';
+import { BetweenVerticalEnd, PencilRuler, Plus, Trash } from 'lucide-react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 
 type PromptCrafterData = {
-  status: "running" | "error" | "completed" | "idle" | undefined;
+  status: 'running' | 'error' | 'completed' | 'idle' | undefined;
   config: {
     template: string;
   };
   dynamicHandles: {
-    "template-tags": {
+    'template-tags': {
       id: string;
       name: string;
     }[];
   };
 };
 
-export type PromptCrafterNode = Node<PromptCrafterData, "prompt-crafter">;
+export type PromptCrafterNode = Node<PromptCrafterData, 'prompt-crafter'>;
 
 interface PromptCrafterProps extends NodeProps<PromptCrafterNode> {
   onPromptTextChange: (value: string) => void;
@@ -69,18 +69,18 @@ interface PromptCrafterProps extends NodeProps<PromptCrafterNode> {
 
 // Custom theme that matches your app's design
 const promptTheme = createTheme({
-  theme: "dark",
+  theme: 'dark',
   settings: {
-    background: "transparent",
-    foreground: "hsl(var(--foreground))",
-    caret: "black",
-    selection: "#3B82F6",
-    lineHighlight: "transparent",
+    background: 'transparent',
+    foreground: 'hsl(var(--foreground))',
+    caret: 'black',
+    selection: '#3B82F6',
+    lineHighlight: 'transparent',
   },
   styles: [
-    { tag: t.variableName, color: "#10c43d" },
-    { tag: t.string, color: "hsl(var(--foreground))" },
-    { tag: t.invalid, color: "#DC2626" },
+    { tag: t.variableName, color: '#10c43d' },
+    { tag: t.string, color: 'hsl(var(--foreground))' },
+    { tag: t.invalid, color: '#DC2626' },
   ],
 });
 
@@ -93,9 +93,9 @@ const createPromptLanguage = (validInputs: string[] = []) =>
         const inputName = match.slice(2, -2);
         // Check if the input name is valid
         if (validInputs.includes(inputName)) {
-          return "variableName";
+          return 'variableName';
         }
-        return "invalid";
+        return 'invalid';
       }
       stream.next();
       return null;
@@ -125,7 +125,7 @@ export function PromptCrafterNode({
       }
       return result;
     },
-    [onCreateInput, id, updateNodeInternals]
+    [onCreateInput, id, updateNodeInternals],
   );
 
   const handleRemoveInput = useCallback(
@@ -133,7 +133,7 @@ export function PromptCrafterNode({
       onRemoveInput(handleId);
       updateNodeInternals(id);
     },
-    [onRemoveInput, id, updateNodeInternals]
+    [onRemoveInput, id, updateNodeInternals],
   );
 
   const handleUpdateInputName = useCallback(
@@ -144,7 +144,7 @@ export function PromptCrafterNode({
       }
       return result;
     },
-    [onUpdateInputName, id, updateNodeInternals]
+    [onUpdateInputName, id, updateNodeInternals],
   );
 
   const insertInputAtCursor = useCallback((inputName: string) => {
@@ -164,18 +164,18 @@ export function PromptCrafterNode({
 
   // Create language with current inputs
   const extensions = useMemo(() => {
-    const validLabels = (data.dynamicHandles["template-tags"] || []).map(
-      (input) => input.name
+    const validLabels = (data.dynamicHandles['template-tags'] || []).map(
+      (input) => input.name,
     );
     return [createPromptLanguage(validLabels)];
-  }, [data.dynamicHandles["template-tags"]]);
+  }, [data.dynamicHandles['template-tags']]);
 
   return (
     <BaseNode
       selected={selected}
-      className={cn("w-[350px] p-0 hover:ring-orange-500", {
-        "border-orange-500": data.status === "running",
-        "border-red-500": data.status === "error",
+      className={cn('w-[350px] p-0 hover:ring-orange-500', {
+        'border-orange-500': data.status === 'running',
+        'border-red-500': data.status === 'error',
       })}
     >
       <NodeHeader className="m-0">
@@ -212,7 +212,7 @@ export function PromptCrafterNode({
                 <CommandList>
                   <CommandEmpty>No inputs found.</CommandEmpty>
                   <CommandGroup>
-                    {data.dynamicHandles["template-tags"]?.map(
+                    {data.dynamicHandles['template-tags']?.map(
                       (input) =>
                         input.name && (
                           <CommandItem
@@ -222,7 +222,7 @@ export function PromptCrafterNode({
                           >
                             {input.name}
                           </CommandItem>
-                        )
+                        ),
                     )}
                   </CommandGroup>
                 </CommandList>
@@ -231,7 +231,7 @@ export function PromptCrafterNode({
           </Popover>
         </div>
         <CodeMirror
-          value={data.config.template || ""}
+          value={data.config.template || ''}
           height="150px"
           theme={promptTheme}
           extensions={extensions}
@@ -271,7 +271,7 @@ export function PromptCrafterNode({
               </Button>
             </EditableHandleDialog>
           </div>
-          {data.dynamicHandles["template-tags"]?.map((input) => (
+          {data.dynamicHandles['template-tags']?.map((input) => (
             <EditableHandle
               key={input.id}
               nodeId={id}

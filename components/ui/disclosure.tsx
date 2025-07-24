@@ -4,9 +4,9 @@ import {
   AnimatePresence,
   motion,
   MotionConfig,
-  Transition,
-  Variant,
-  Variants,
+  type Transition,
+  type Variant,
+  type Variants,
 } from 'motion/react';
 import { createContext, useContext, useState, useId, useEffect } from 'react';
 import { cn } from '@/lib/utils';
@@ -18,7 +18,7 @@ export type DisclosureContextType = {
 };
 
 const DisclosureContext = createContext<DisclosureContextType | undefined>(
-  undefined
+  undefined,
 );
 
 export type DisclosureProviderProps = {
@@ -128,7 +128,7 @@ export function DisclosureTrigger({
               },
               className: cn(
                 className,
-                (child as React.ReactElement).props.className
+                (child as React.ReactElement).props.className,
               ),
               ...(child as React.ReactElement).props,
             })
@@ -170,9 +170,9 @@ export function DisclosureContent({
         {open && (
           <motion.div
             id={uniqueId}
-            initial='collapsed'
-            animate='expanded'
-            exit='collapsed'
+            initial="collapsed"
+            animate="expanded"
+            exit="collapsed"
             variants={combinedVariants}
           >
             {children}

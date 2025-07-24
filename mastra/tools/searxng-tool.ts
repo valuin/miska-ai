@@ -1,16 +1,16 @@
-import { createTool } from "@mastra/core/tools";
-import { z } from "zod";
-import { SearxngClient } from "@agentic/searxng";
+import { createTool } from '@mastra/core/tools';
+import { z } from 'zod';
+import { SearxngClient } from '@agentic/searxng';
 
 const searxng = new SearxngClient({
-  apiBaseUrl: "https://searxng-railway-production.up.railway.app",
+  apiBaseUrl: 'https://searxng-railway-production.up.railway.app',
 });
 
 export const searxngTool = createTool({
-  id: "searxng",
-  description: "Search the web using Searxng and return results.",
+  id: 'searxng',
+  description: 'Search the web using Searxng and return results.',
   inputSchema: z.object({
-    query: z.string().describe("The search query to use."),
+    query: z.string().describe('The search query to use.'),
   }),
   outputSchema: z.object({
     results: z.array(
@@ -26,11 +26,9 @@ export const searxngTool = createTool({
       (context as any).query ??
       (context as any).input?.query ??
       (context as any).context?.query ??
-      "";
-    // console.log("SearxngTool context:", context);
-    if (typeof query !== "string") {
-      console.error("SearxngTool: query is not a string", query);
-      throw new Error("Query must be a string");
+      '';
+    if (typeof query !== 'string') {
+      throw new Error('Query must be a string');
     }
     const searchResponse = await searxng.search({ query });
     return {

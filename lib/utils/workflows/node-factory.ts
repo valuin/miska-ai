@@ -16,12 +16,10 @@ export const nodeFactory = {
     type: 'generate-text',
     position,
     data: {
-      config: {
-        agent: 'normalAgent',
-        type: 'agent-task',
-        description: 'Generate Text',
-        model: 'llama-3.1-8b-instant',
-      },
+      status: 'idle',
+      agent: 'normalAgent',
+      type: 'agent-task',
+      description: 'Generate Text',
       dynamicHandles: {
         tools: [],
       },

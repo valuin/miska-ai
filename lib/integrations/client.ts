@@ -1,12 +1,12 @@
 import {
   getValidCredentials,
   saveUpdatedCredentials,
-} from "../db/queries/integration.model";
+} from '../db/queries/integration.model';
 import {
   IntegrationCredentialSchema,
   type GoogleSlug,
   type IntegrationClientMap,
-} from "./credentials";
+} from './credentials';
 
 export async function getIntegrationClient<Slug extends GoogleSlug>(
   slug: Slug,
@@ -21,7 +21,7 @@ export async function getIntegrationClient<Slug extends GoogleSlug>(
     }
   }
 
-  if (schema.type === "oauth2") {
+  if (schema.type === 'oauth2') {
     const expiresAt = new Date(creds.expires_at);
     if (expiresAt < new Date() && schema.refresh) {
       const updated = await schema.refresh(creds as Record<string, string>);

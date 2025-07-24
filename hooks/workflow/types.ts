@@ -4,34 +4,46 @@ import type {
   FlowNode,
   WorkflowDefinition,
   WorkflowError,
-} from "@/lib/utils/workflows/workflow";
+} from '@/lib/utils/workflows/workflow';
 import type {
   EdgeExecutionState,
   NodeExecutionState,
-} from "@/lib/utils/workflows/workflow-execution-engine";
-import type {
-  Connection,
-  EdgeChange,
-  Node,
-  NodeChange,
-} from "@xyflow/react";
-import type { WorkflowNodeProgress } from "@/lib/types/workflow";
+} from '@/lib/utils/workflows/workflow-execution-engine';
+import type { Connection, EdgeChange, Node, NodeChange } from '@xyflow/react';
+import type { WorkflowNodeProgress } from '@/lib/types/workflow';
 
 export interface WorkflowState {
+  resetWorkflow: () => void;
+  generationProgress: number;
+  generationMessage: string;
+  showGenerationProgress: boolean;
+  setGenerationProgress: (progress: number) => void;
+  setGenerationMessage: (message: string) => void;
+  setShowGenerationProgress: (show: boolean) => void;
+  generateWorkflow: (prompt: string, file?: File) => Promise<void>;
   nodes: FlowNode[];
   edges: FlowEdge[];
+  workflowName: string;
+  workflowDescription: string;
+  setWorkflowName: (name: string) => void;
+  setWorkflowDescription: (description: string) => void;
+  currentNodeDescription: string;
+  currentNodeAgent: string;
+  setCurrentNodeDescription: (description: string) => void;
+  setCurrentNodeAgent: (agent: string) => void;
+  addNode: () => void;
   onNodesChange: (changes: NodeChange<FlowNode>[]) => void;
   onEdgesChange: (changes: EdgeChange<FlowEdge>[]) => void;
   onConnect: (connection: Connection) => void;
   getNodeById: (nodeId: string) => FlowNode;
   createNode: (
-    nodeType: FlowNode["type"],
+    nodeType: FlowNode['type'],
     position: { x: number; y: number },
   ) => FlowNode;
-  updateNode: <T extends FlowNode["type"]>(
+  updateNode: <T extends FlowNode['type']>(
     id: string,
     nodeType: T,
-    data: Partial<FlowNode["data"]>,
+    data: Partial<FlowNode['data']>,
   ) => void;
   updateNodeExecutionState: (
     nodeId: string,
@@ -42,13 +54,13 @@ export interface WorkflowState {
     state: Partial<EdgeExecutionState> | undefined,
   ) => void;
   deleteNode: (id: string) => void;
-  addDynamicHandle: <T extends FlowNode["type"]>(
+  addDynamicHandle: <T extends FlowNode['type']>(
     nodeId: string,
     nodeType: T,
     handleCategory: string,
-    handle: Omit<DynamicHandle, "id">,
+    handle: Omit<DynamicHandle, 'id'>,
   ) => string;
-  removeDynamicHandle: <T extends FlowNode["type"]>(
+  removeDynamicHandle: <T extends FlowNode['type']>(
     nodeId: string,
     nodeType: T,
     handleCategory: string,
@@ -70,28 +82,33 @@ export interface WorkflowState {
     errors: { nodeId: string; message: string }[];
   };
   startExecution: () => Promise<{
-    status: "success" | "error";
+    status: 'success' | 'error';
     message: string;
     error?: Error;
     validationErrors?: WorkflowError[];
   }>;
   // Initialize workflow with nodes and edges
-  initializeWorkflow: (nodes: FlowNode[], edges: FlowEdge[]) => void;
-  updateNodeExecutionStates: (workflowProgress: Map<string, WorkflowNodeProgress>) => void;
+  initializeWorkflow: (
+    nodes: FlowNode[],
+    edges: FlowEdge[],
+    name: string,
+    description: string,
+  ) => void;
+  updateNodeExecutionStates: (
+    workflowProgress: Map<string, WorkflowNodeProgress>,
+  ) => void;
   updateEdgeStatusFromNodes: () => void;
 }
 
 export type GenerateTextData = {
-  status: "running" | "error" | "completed" | "idle" | undefined;
-  config: {
-    agent: string;
-    type: "human-input" | "agent-task";
-    description: string;
-    model?: string;
-  };
+  status: 'running' | 'error' | 'completed' | 'idle' | undefined;
+  agent: string;
+  type: 'human-input' | 'agent-task';
+  description: string;
+  model?: string;
   dynamicHandles?: {
     [key: string]: any[];
   };
 };
 
-export type GenerateTextNode = Node<GenerateTextData, "generate-text">;
+export type GenerateTextNode = Node<GenerateTextData, 'generate-text'>;

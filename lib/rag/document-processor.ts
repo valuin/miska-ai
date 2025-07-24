@@ -6,14 +6,14 @@ import { getAttachmentText } from '@/lib/utils/text-extraction';
 export class DocumentProcessor {
   /**
    * Processes uploaded files using the text extraction microservice
-   * @param fileUrl - URL of the uploaded file 
+   * @param fileUrl - URL of the uploaded file
    * @param filename - Original filename
    * @param contentType - File MIME type
    */
   async processDocument(
     fileUrl: string,
     filename: string,
-    contentType?: string
+    contentType?: string,
   ): Promise<{
     content: string;
     chunks: any[];
@@ -21,14 +21,13 @@ export class DocumentProcessor {
     metadata: any;
   }> {
     // Extract text using the microservice
-    const content = await getAttachmentText({ 
-      url: fileUrl, 
-      name: filename, 
-      contentType 
+    const content = await getAttachmentText({
+      url: fileUrl,
+      name: filename,
+      contentType,
     });
-    
+
     if (!content) {
-      console.warn(`No text extracted from ${filename}. Saving with empty content.`);
     }
 
     // Create MDocument and chunk following Mastra patterns
@@ -48,7 +47,7 @@ export class DocumentProcessor {
     // Generate embeddings using AI SDK
     const { embeddings } = await embedMany({
       model: openai.embedding('text-embedding-3-small'),
-      values: chunks.map(chunk => chunk.text),
+      values: chunks.map((chunk) => chunk.text),
     });
 
     return {
@@ -65,7 +64,9 @@ export class DocumentProcessor {
     };
   }
 
-  private getChunkingStrategy(fileType?: string): 'markdown' | 'html' | 'recursive' {
+  private getChunkingStrategy(
+    fileType?: string,
+  ): 'markdown' | 'html' | 'recursive' {
     if (fileType === 'text/markdown') return 'markdown';
     if (fileType === 'text/html') return 'html';
     return 'recursive';

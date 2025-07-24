@@ -1,20 +1,20 @@
-import type { NextRequest } from "next/server";
-import { auth } from "@/app/(auth)/auth";
+import type { NextRequest } from 'next/server';
+import { auth } from '@/app/(auth)/auth';
 import {
   getIntegrationBySlug,
   saveUpdatedCredentials,
   updateUserIntegration,
-} from "@/lib/db/queries/integration.model";
+} from '@/lib/db/queries/integration.model';
 
 export async function GET(req: NextRequest) {
   const session = await auth();
   if (!session?.user) {
-    return Response.json({ error: "Unauthorized" }, { status: 401 });
+    return Response.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   const user_id = session.user.id;
-  const code = req.nextUrl.searchParams.get("code");
-  const scope = req.nextUrl.searchParams.get("q");
+  const code = req.nextUrl.searchParams.get('code');
+  const scope = req.nextUrl.searchParams.get('q');
   const redirect_uri = process.env.GOOGLE_INTEGRATION_REDIRECT_URI;
   const client_id = process.env.GOOGLE_INTEGRATION_CLIENT_ID;
   const client_secret = process.env.GOOGLE_INTEGRATION_CLIENT_SECRET;
@@ -29,20 +29,20 @@ export async function GET(req: NextRequest) {
     !final_redirect_url
   ) {
     return Response.json(
-      { error: "Missing environment variables" },
+      { error: 'Missing environment variables' },
       { status: 500 },
     );
   }
 
-  const tokenRes = await fetch("https://oauth2.googleapis.com/token", {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+  const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body: new URLSearchParams({
-      code: code || "",
+      code: code || '',
       client_id,
       client_secret,
       redirect_uri: `${redirect_uri}?q=${scope}`,
-      grant_type: "authorization_code",
+      grant_type: 'authorization_code',
     }),
   });
 
@@ -50,10 +50,10 @@ export async function GET(req: NextRequest) {
 
   const integration = await getIntegrationBySlug(scope);
   if (!integration) {
-    return Response.json({ error: "Integration not found" }, { status: 404 });
+    return Response.json({ error: 'Integration not found' }, { status: 404 });
   }
 
-  if (Object.keys(tokens).some((key) => key.includes("error"))) {
+  if (Object.keys(tokens).some((key) => key.includes('error'))) {
     return Response.redirect(
       `${final_redirect_url}?error=Failed to get tokens`,
     );

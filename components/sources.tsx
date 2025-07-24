@@ -1,9 +1,9 @@
 /* eslint-disable @next/next/no-img-element */
-import { useEffect, useState } from "react";
-import { DropdownMenu, DropdownMenuTrigger } from "./ui/dropdown-menu";
-import { ChevronDownIcon } from "./icons";
-import { LightbulbIcon, SearchIcon } from "lucide-react";
-import Badge from "./badge";
+import { useEffect, useState } from 'react';
+import { DropdownMenu, DropdownMenuTrigger } from './ui/dropdown-menu';
+import { ChevronDownIcon } from './icons';
+import { LightbulbIcon, SearchIcon } from 'lucide-react';
+import Badge from './badge';
 
 type SearchResult = {
   url: string;
@@ -52,7 +52,7 @@ export default function Sources({
         icon={SearchIcon}
         text={
           <p className="whitespace-nowrap flex flex-row gap-1">
-            Searched{" "}
+            Searched{' '}
             <code className="text-muted-foreground/80 font-semibold">
               {query}
             </code>
@@ -68,13 +68,13 @@ export default function Sources({
             <span className="flex items-center gap-2">
               <LightbulbIcon className="size-4 text-yellow-500" />
               <span className="text-xs text-muted-foreground font-medium">
-                {results.length} Source{results.length !== 1 ? "s" : ""} Found
+                {results.length} Source{results.length !== 1 ? 's' : ''} Found
               </span>
             </span>
             <div
               className="size-4 transition-transform"
               style={{
-                transform: open ? "rotate(180deg)" : "rotate(0deg)",
+                transform: open ? 'rotate(180deg)' : 'rotate(0deg)',
               }}
             >
               <ChevronDownIcon />
@@ -82,7 +82,7 @@ export default function Sources({
           </button>
         </DropdownMenuTrigger>
         <div
-          style={{ maxHeight: open ? "300px" : "0px" }}
+          style={{ maxHeight: open ? '300px' : '0px' }}
           className="overflow-y-auto !pt-0"
         >
           {results.map((result) => (

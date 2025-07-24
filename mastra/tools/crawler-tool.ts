@@ -31,7 +31,6 @@ export const crawlerTool = createTool({
       (context as any).context?.urls ??
       [];
     const crawler_config = { stream: true, cache_mode: 'BYPASS' };
-    console.log('CrawlerTool context:', context);
     const response = await fetch(
       'https://crawl4ai-production-805f.up.railway.app/crawl',
       {
@@ -77,7 +76,8 @@ export const crawlerTool = createTool({
               ? {
                   url: r.url ?? '',
                   markdown:
-                    typeof r?.markdown === 'object' && typeof r.markdown.markdown_with_citations === 'string'
+                    typeof r?.markdown === 'object' &&
+                    typeof r.markdown.markdown_with_citations === 'string'
                       ? r.markdown.markdown_with_citations
                           .replace(/(\r?\n)+/g, ' ')
                           .replace(/\s+/g, ' ')

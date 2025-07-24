@@ -71,9 +71,7 @@ export class SSEWorkflowExecutionClient {
                   break;
                 }
               }
-            } catch (error) {
-              console.error('Error parsing SSE data:', error);
-            }
+            } catch (error) {}
           }
         }
       }

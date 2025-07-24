@@ -1,9 +1,9 @@
-import { authCredentials, integrations, userIntegrations } from "../schema";
-import { db } from "./db";
-import { encrypt, decrypt } from "@/lib/encryption";
-import { and, eq } from "drizzle-orm";
+import { authCredentials, integrations, userIntegrations } from '../schema';
+import { db } from './db';
+import { encrypt, decrypt } from '@/lib/encryption';
+import { and, eq } from 'drizzle-orm';
 
-const DEFAULT_ENABLED_INTEGRATIONS = ["vault_search", "internet_search"];
+const DEFAULT_ENABLED_INTEGRATIONS = ['vault_search', 'internet_search'];
 
 export type UserIntegration = {
   id: string;
@@ -165,7 +165,7 @@ export async function saveUpdatedCredentials(
     user_integration_id: userIntegrationId,
     key,
     value_encrypted: encrypt(String(value)),
-    expires_at: key === "expires_at" ? new Date(value) : null,
+    expires_at: key === 'expires_at' ? new Date(value) : null,
   }));
 
   for (const v of values) {

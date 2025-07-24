@@ -1,5 +1,5 @@
-export const isProductionEnvironment = process.env.NODE_ENV === "production";
-export const isDevelopmentEnvironment = process.env.NODE_ENV === "development";
+export const isProductionEnvironment = process.env.NODE_ENV === 'production';
+export const isDevelopmentEnvironment = process.env.NODE_ENV === 'development';
 export const isTestEnvironment = Boolean(
   process.env.PLAYWRIGHT_TEST_BASE_URL ||
     process.env.PLAYWRIGHT ||
@@ -8,28 +8,28 @@ export const isTestEnvironment = Boolean(
 
 export const guestRegex = /^guest-\d+$/;
 
-export const LARGE_MODEL = "gpt-4o-mini";
-export const BASE_MODEL = "gpt-4.1-mini";
-export const TINY_MODEL = "gpt-4.1-nano";
+export const LARGE_MODEL = 'gpt-4o-mini';
+export const BASE_MODEL = 'gpt-4.1-mini';
+export const TINY_MODEL = 'gpt-4.1-nano';
 
 export const AGENT_NAMES = {
-  documentAgent: "Document Agent",
-  normalAgent: "Normal Agent",
-  ragChatAgent: "Vault Search Agent",
-  researchAgent: "Research Agent",
-  workflowCreatorAgent: "Workflow Agent",
-  communicationAgent: "Communication Agent",
-  gmailAgent: "Gmail Agent",
-  driveAgent: "Drive Agent",
+  documentAgent: 'Document Agent',
+  normalAgent: 'Normal Agent',
+  ragChatAgent: 'Vault Search Agent',
+  researchAgent: 'Research Agent',
+  workflowCreatorAgent: 'Workflow Agent',
+  communicationAgent: 'Communication Agent',
+  gmailAgent: 'Gmail Agent',
+  driveAgent: 'Drive Agent',
 } as const;
 
 export const AGENT_TYPES = [
-  "documentAgent",
-  "normalAgent",
-  "ragChatAgent",
-  "researchAgent",
-  "workflowCreatorAgent",
-  "communicationAgent",
-  "gmailAgent",
-  "driveAgent",
+  'documentAgent',
+  'normalAgent',
+  'ragChatAgent',
+  'researchAgent',
+  'workflowCreatorAgent',
+  'communicationAgent',
+  'gmailAgent',
+  'driveAgent',
 ] as const;

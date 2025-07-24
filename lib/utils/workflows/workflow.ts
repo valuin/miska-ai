@@ -1,10 +1,10 @@
-import { nanoid } from "nanoid";
-import dagre from "@dagrejs/dagre";
-import type { GenerateTextNodeController } from "@/components/workflow-v2/generate-text-node-controller";
-import type { PromptCrafterNodeController } from "@/components/workflow-v2/prompt-crafter-node-controller";
-import type { StatusEdgeController } from "@/components/workflow-v2/status-edge-controller";
-import type { TextInputNodeController } from "@/components/workflow-v2/text-input-node-controller";
-import type { VisualizeTextNodeController } from "@/components/workflow-v2/visualize-text-node-controller";
+import { nanoid } from 'nanoid';
+import dagre from '@dagrejs/dagre';
+import type { GenerateTextNodeController } from '@/components/workflow-v2/generate-text-node-controller';
+import type { PromptCrafterNodeController } from '@/components/workflow-v2/prompt-crafter-node-controller';
+import type { StatusEdgeController } from '@/components/workflow-v2/status-edge-controller';
+import type { TextInputNodeController } from '@/components/workflow-v2/text-input-node-controller';
+import type { VisualizeTextNodeController } from '@/components/workflow-v2/visualize-text-node-controller';
 
 type Dependency = {
   node: string;
@@ -39,13 +39,13 @@ type EdgeErrorInfo = {
 
 export type MultipleSourcesError = {
   message: string;
-  type: "multiple-sources-for-target-handle";
+  type: 'multiple-sources-for-target-handle';
   edges: EdgeErrorInfo[];
 };
 
 export type CycleError = {
   message: string;
-  type: "cycle";
+  type: 'cycle';
   edges: EdgeErrorInfo[];
 };
 
@@ -56,7 +56,7 @@ type NodeErrorInfo = {
 
 export type MissingConnectionError = {
   message: string;
-  type: "missing-required-connection";
+  type: 'missing-required-connection';
   node: NodeErrorInfo;
 };
 
@@ -87,14 +87,14 @@ export type DynamicHandle = {
 
 const NODES_CONFIG: Partial<
   Record<
-    FlowNode["type"],
+    FlowNode['type'],
     {
       requiredTargets: string[];
     }
   >
 > = {
-  "generate-text": {
-    requiredTargets: ["prompt"],
+  'generate-text': {
+    requiredTargets: ['prompt'],
   },
 };
 
@@ -108,11 +108,17 @@ export type FlowNode =
 
 // Edges
 
-export type FlowEdge = StatusEdgeController;
+import type { Edge } from '@xyflow/react';
+
+export type FlowEdge = StatusEdgeController &
+  Edge & {
+    sourceHandleId?: string;
+    targetHandleId?: string;
+  };
 
 // Type Guards
 
-export function isNodeOfType<T extends FlowNode["type"]>(
+export function isNodeOfType<T extends FlowNode['type']>(
   node: FlowNode,
   type: T,
 ): node is Extract<FlowNode, { type: T }> {
@@ -131,12 +137,12 @@ export function isNodeWithDynamicHandles<T extends FlowNode>(
     };
   }
 > {
-  return "dynamicHandles" in node.data;
+  return 'dynamicHandles' in node.data;
 }
 
 function buildDependencyGraph(edges: FlowEdge[]): {
-  dependencies: DependencyGraph["dependencies"];
-  dependents: DependencyGraph["dependents"];
+  dependencies: DependencyGraph['dependencies'];
+  dependents: DependencyGraph['dependents'];
   connectionMap: ConnectionMap;
 } {
   const dependencies = new Map<
@@ -161,7 +167,7 @@ function buildDependencyGraph(edges: FlowEdge[]): {
       ...existingDependencies,
       {
         node: edge.source,
-        sourceHandle: edge.sourceHandleId || "",
+        sourceHandle: edge.sourceHandleId || '',
       },
     ]);
 
@@ -170,7 +176,7 @@ function buildDependencyGraph(edges: FlowEdge[]): {
       ...existingDependents,
       {
         node: edge.target,
-        targetHandle: edge.targetHandleId || "",
+        targetHandle: edge.targetHandleId || '',
       },
     ]);
   }
@@ -180,8 +186,8 @@ function buildDependencyGraph(edges: FlowEdge[]): {
 
 function topologicalSort(
   nodes: FlowNode[],
-  dependencies: DependencyGraph["dependencies"],
-  dependents: DependencyGraph["dependents"],
+  dependencies: DependencyGraph['dependencies'],
+  dependents: DependencyGraph['dependents'],
 ): string[] {
   const indegree = new Map<string, number>();
   const queue: string[] = [];
@@ -208,7 +214,7 @@ function topologicalSort(
     const nodesDependentOnCurrent = dependents.get(currentNode) || [];
     for (const dependent of nodesDependentOnCurrent) {
       const currentDegree = indegree.get(dependent.node);
-      if (typeof currentDegree === "number") {
+      if (typeof currentDegree === 'number') {
         const newDegree = currentDegree - 1;
         indegree.set(dependent.node, newDegree);
         if (newDegree === 0) {
@@ -228,16 +234,16 @@ function validateMultipleSources(
 
   connectionMap.forEach((edges, targetKey) => {
     if (edges.length > 1) {
-      const [targetNode, targetHandle] = targetKey.split("-");
+      const [targetNode, targetHandle] = targetKey.split('-');
       errors.push({
-        type: "multiple-sources-for-target-handle",
+        type: 'multiple-sources-for-target-handle',
         message: `Target handle "${targetHandle}" on node "${targetNode}" has ${edges.length} sources.`,
         edges: edges.map((edge) => ({
           id: edge.id,
           source: edge.source,
           target: edge.target,
-          sourceHandle: edge.sourceHandleId || "",
-          targetHandle: edge.targetHandleId || "",
+          sourceHandle: edge.sourceHandleId || '',
+          targetHandle: edge.targetHandleId || '',
         })),
       });
     }
@@ -248,8 +254,8 @@ function validateMultipleSources(
 
 function detectCycles(
   nodes: FlowNode[],
-  dependencies: DependencyGraph["dependencies"],
-  dependents: DependencyGraph["dependents"],
+  dependencies: DependencyGraph['dependencies'],
+  dependents: DependencyGraph['dependents'],
   edges: FlowEdge[],
 ): CycleError[] {
   const executionOrder = topologicalSort(nodes, dependencies, dependents);
@@ -279,7 +285,7 @@ function detectCycles(
     const nodesDependentOnCurrent = dependents.get(currentNode) || [];
     for (const dependent of nodesDependentOnCurrent) {
       const currentDegree = indegree.get(dependent.node);
-      if (typeof currentDegree === "number") {
+      if (typeof currentDegree === 'number') {
         const newDegree = currentDegree - 1;
         indegree.set(dependent.node, newDegree);
         if (newDegree === 0) {
@@ -304,14 +310,14 @@ function detectCycles(
   }
 
   const error: CycleError = {
-    type: "cycle",
-    message: `Workflow contains cycles between nodes: ${cycleNodes.join(", ")}`,
+    type: 'cycle',
+    message: `Workflow contains cycles between nodes: ${cycleNodes.join(', ')}`,
     edges: cycleEdges.map((edge) => ({
       id: edge.id,
       source: edge.source,
       target: edge.target,
-      sourceHandle: edge.sourceHandleId || "",
-      targetHandle: edge.targetHandleId || "",
+      sourceHandle: edge.sourceHandleId || '',
+      targetHandle: edge.targetHandleId || '',
     })),
   };
 
@@ -354,7 +360,7 @@ function validateRequiredHandles(
 
         if (!connections || connections.length === 0) {
           errors.push({
-            type: "missing-required-connection",
+            type: 'missing-required-connection',
             message: `Node "${node.id}" requires a connection to its "${targetHandle}" input.`,
             node: {
               id: node.id,
@@ -418,9 +424,15 @@ const nodeHeight = 180;
 export const getLayoutedElements = (
   nodes: FlowNode[],
   edges: FlowEdge[],
-  direction = "TB",
+  direction = 'TB',
 ): { nodes: FlowNode[]; edges: FlowEdge[] } => {
-  const isHorizontal = direction === "LR";
+  console.log(
+    'getLayoutedElements called with nodes:',
+    nodes,
+    'and edges:',
+    edges,
+  );
+  const isHorizontal = direction === 'LR';
   dagreGraph.setGraph({ rankdir: direction });
 
   nodes.forEach((node) => {
@@ -437,8 +449,8 @@ export const getLayoutedElements = (
     const nodeWithPosition = dagreGraph.node(node.id);
     const newNode = {
       ...node,
-      targetPosition: isHorizontal ? "left" : "top",
-      sourcePosition: isHorizontal ? "right" : "bottom",
+      targetPosition: isHorizontal ? 'left' : 'top',
+      sourcePosition: isHorizontal ? 'right' : 'bottom',
       // We are shifting the dagre node position (anchor=center center) to the top left
       // so it matches the React Flow node anchor point (top left).
       position: {

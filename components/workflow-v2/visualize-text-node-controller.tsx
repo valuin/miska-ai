@@ -1,13 +1,13 @@
-"use client";
+'use client';
 
-import { VisualizeTextNode } from "@/components/workflow-v2/visualize-text-node";
-import { useWorkflow } from "@/hooks/use-workflow";
-import type { NodeExecutionState } from "@/lib/utils/workflows/workflow-execution-engine";
-import type { NodeProps } from "@xyflow/react";
-import { useCallback } from "react";
+import { VisualizeTextNode } from '@/components/workflow-v2/visualize-text-node';
+import { useWorkflow } from '@/hooks/use-workflow';
+import type { NodeExecutionState } from '@/lib/utils/workflows/workflow-execution-engine';
+import type { NodeProps } from '@xyflow/react';
+import { useCallback } from 'react';
 
-export type VisualizeTextNodeController = Omit<VisualizeTextNode, "data"> & {
-  type: "visualize-text";
+export type VisualizeTextNodeController = Omit<VisualizeTextNode, 'data'> & {
+  type: 'visualize-text';
   data: {
     executionState?: NodeExecutionState;
   };
@@ -29,7 +29,12 @@ export function VisualizeTextNodeController({
       id={id}
       data={{
         input: data.executionState?.targets?.input,
-        status: data.executionState?.status,
+        status:
+          data.executionState?.status === 'running'
+            ? 'processing'
+            : data.executionState?.status === 'completed'
+              ? 'success'
+              : data.executionState?.status,
       }}
       onDeleteNode={handleDeleteNode}
       {...props}

@@ -1,13 +1,13 @@
-import { AGENT_TYPES } from "@/lib/constants";
-import { createMastraWorkflowFromJson } from "./load-dynamic-workflow";
-import { createTool } from "@mastra/core/tools";
-import { z } from "zod";
+import { AGENT_TYPES } from '@/lib/constants';
+import { createMastraWorkflowFromJson } from './load-dynamic-workflow';
+import { createTool } from '@mastra/core/tools';
+import { z } from 'zod';
 
 const agentEnum = z.enum(AGENT_TYPES);
 
 export type WorkflowNode = {
   id: string;
-  type: "human-input" | "agent-task";
+  type: 'human-input' | 'agent-task';
   description: string;
   agent?: (typeof AGENT_TYPES)[number];
   next?: string[];
@@ -21,7 +21,7 @@ export type CreatedWorkflow = {
 };
 
 export const workflowTool = createTool({
-  id: "create-workflow-tool",
+  id: 'create-workflow-tool',
   description: `
   Generates a directed workflow graph from a description and list of steps.
   
@@ -51,14 +51,14 @@ export const workflowTool = createTool({
   4. The last node should omit 'next' field
   `,
   inputSchema: z.object({
-    name: z.string().describe("Name of the workflow"),
-    description: z.string().describe("High-level description of the workflow"),
+    name: z.string().describe('Name of the workflow'),
+    description: z.string().describe('High-level description of the workflow'),
     steps: z.array(
       z.object({
-        type: z.enum(["human-input", "agent-task"]),
+        type: z.enum(['human-input', 'agent-task']),
         description: z
           .string()
-          .describe("Description of the step, no more than ten words"),
+          .describe('Description of the step, no more than ten words'),
         agent: agentEnum.optional(),
       }),
     ),
@@ -67,15 +67,36 @@ export const workflowTool = createTool({
     id: z.string(),
     name: z.string(),
     description: z.string(),
-    nodes: z.array(
-      z.object({
-        id: z.string(),
-        type: z.enum(["human-input", "agent-task"]),
-        description: z.string(),
-        agent: agentEnum.optional(),
-        next: z.array(z.string()).optional(),
-      }),
-    ),
+    schema: z.object({
+      id: z.string(),
+      name: z.string(),
+      description: z.string(),
+      nodes: z.array(
+        z.object({
+          id: z.string(),
+          data: z.object({
+            type: z.enum(['human-input', 'agent-task']),
+            agent: z.string(),
+            description: z.string(),
+          }),
+          type: z.string(),
+          position: z.object({
+            x: z.number(),
+            y: z.number(),
+          }),
+        }),
+      ),
+      edges: z.array(
+        z.object({
+          id: z.string(),
+          type: z.string(),
+          source: z.string(),
+          target: z.string(),
+        }),
+      ),
+    }),
+    createdAt: z.string(),
+    updatedAt: z.string(),
   }),
   execute: async ({ context, runtimeContext }) => {
     try {
@@ -101,19 +122,54 @@ export const workflowTool = createTool({
         runtimeContext,
       });
 
+      const edges = nodes.flatMap((node) =>
+        (node.next || []).map((nextId) => ({
+          id: `edge-${node.id}-${nextId}`,
+          type: 'status', // Use the correct edge type
+          source: node.id,
+          target: nextId,
+        })),
+      );
+
+      const formattedNodes = nodes.map((node, index) => ({
+        id: node.id,
+        data: {
+          type: node.type,
+          agent: node.agent || '',
+          description: node.description,
+        },
+        type: node.type === 'human-input' ? 'generate-text' : 'generate-text',
+        position: { x: 250, y: 100 + index * 200 },
+      }));
+
       return {
         id: workflowId,
         name: context.name,
         description: context.description,
-        nodes,
+        schema: {
+          id: workflowId,
+          name: context.name,
+          description: context.description,
+          nodes: formattedNodes,
+          edges,
+        },
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
       };
     } catch (e) {
-      console.error("Workflow generation failed:", e);
       return {
-        id: "",
-        name: "",
-        description: "",
-        nodes: [],
+        id: '',
+        name: '',
+        description: '',
+        schema: {
+          id: '',
+          name: '',
+          description: '',
+          nodes: [],
+          edges: [],
+        },
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
       };
     }
   },

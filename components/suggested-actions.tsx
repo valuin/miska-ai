@@ -1,14 +1,14 @@
-"use client";
+'use client';
 
-import { motion } from "framer-motion";
-import { Button } from "./ui/button";
-import { memo } from "react";
-import type { UseChatHelpers } from "@ai-sdk/react";
-import type { VisibilityType } from "./visibility-selector";
+import { motion } from 'framer-motion';
+import { Button } from './ui/button';
+import { memo } from 'react';
+import type { UseChatHelpers } from '@ai-sdk/react';
+import type { VisibilityType } from './visibility-selector';
 
 interface SuggestedActionsProps {
   chatId: string;
-  append: UseChatHelpers["append"];
+  append: UseChatHelpers['append'];
   selectedVisibilityType: VisibilityType;
 }
 
@@ -19,24 +19,24 @@ function PureSuggestedActions({
 }: SuggestedActionsProps) {
   const suggestedActions = [
     {
-      title: "Help me research",
-      label: "the competitors of a company",
-      action: "Help me research the competitors of a company",
+      title: 'Help me research',
+      label: 'the competitors of a company',
+      action: 'Help me research the competitors of a company',
     },
     {
-      title: "Draft a financial report",
+      title: 'Draft a financial report',
       label: `for this quarter`,
       action: `Draft a financial report for this quarter`,
     },
     {
-      title: "Help me write an email",
+      title: 'Help me write an email',
       label: `about our new product`,
       action: `Help me write an email about our new product`,
     },
     {
-      title: "Can you find me a file",
-      label: "in my document vault?",
-      action: "Can you find me a file in my document vault?",
+      title: 'Can you find me a file',
+      label: 'in my document vault?',
+      action: 'Can you find me a file in my document vault?',
     },
   ];
 
@@ -52,15 +52,15 @@ function PureSuggestedActions({
           exit={{ opacity: 0, y: 20 }}
           transition={{ delay: 0.05 * index }}
           key={`suggested-action-${suggestedAction.title}-${index}`}
-          className={index > 1 ? "hidden sm:block" : "block"}
+          className={index > 1 ? 'hidden sm:block' : 'block'}
         >
           <Button
             variant="ghost"
             onClick={async () => {
-              window.history.replaceState({}, "", `/chat/${chatId}`);
+              window.history.replaceState({}, '', `/chat/${chatId}`);
 
               append({
-                role: "user",
+                role: 'user',
                 content: suggestedAction.action,
               });
             }}
