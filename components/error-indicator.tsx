@@ -1,14 +1,14 @@
-'use client';
+"use client";
 
-import { AlertCircle } from 'lucide-react';
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
+import { AlertCircle } from "lucide-react";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from '@/components/ui/popover';
-import type { WorkflowError } from '@/lib/utils/workflows/workflow';
+} from "@/components/ui/popover";
+import type { WorkflowError } from "@/lib/utils/workflows/workflow";
 
 interface ErrorIndicatorProps {
   errors: WorkflowError[];
@@ -29,8 +29,8 @@ export function ErrorIndicator({ errors }: ErrorIndicatorProps) {
           size="sm"
           className="text-red-500 hover:text-red-600 hover:bg-red-50"
         >
-          <AlertCircle className="h-4 w-4 mr-1" />
-          {errors.length} {errors.length === 1 ? 'Error' : 'Errors'}
+          <AlertCircle className="size-4 mr-1" />
+          {errors.length} {errors.length === 1 ? "Error" : "Errors"}
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-80" align="end">
