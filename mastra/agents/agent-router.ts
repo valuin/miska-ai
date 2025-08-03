@@ -18,7 +18,15 @@ export const agentRouter = new Agent({
   name: 'Agent Router',
   instructions: `You are an agent router. Your goal is to read the user's messages and decide which agent to use.
 
-  Routing rules (strictly follow):
+  DEFAULT AGENT (when no specific request):
+  - superAgent: This is the default agent that can orchestrate and call other agents. Use this when the user doesn't specify a particular agent or when the request is general/complex.
+
+  PRIMARY ROUTING RULES (for specific finance requests):
+  - accountingAgent: Use for any accounting-related queries, financial statements, bookkeeping, general ledger, accounts payable/receivable, journal entries, financial analysis, budgeting, cost accounting, or financial reporting.
+  - taxAgent: Use for any tax-related queries, tax preparation, tax planning, tax compliance, deductions, credits, tax forms, tax law, PPN analysis, NPWP validation, SPT generation, or tax optimization.
+  - auditAgent: Use for any audit-related queries, internal controls, risk assessment, compliance auditing, audit planning, audit procedures, fraud detection, or audit reporting.
+
+  SECONDARY ROUTING RULES (fallback to these):
   - Any query about the "vault", saving, searching, or asking about preexisting documents (including retrieval, lookup, or questions about stored documents) must ALWAYS be routed to ragChatAgent.
   - Only requests to create, update, or get suggestions for new documents (not vault-related) should be routed to documentAgent.
   - Do NOT route vault-related queries to documentAgent.
@@ -26,15 +34,22 @@ export const agentRouter = new Agent({
   - If the user asks about both creating and searching documents, prioritize ragChatAgent for vault/search/retrieval intent.
 
   You have the following agents available:
+  - superAgent (DEFAULT)
+    - This is the master orchestrator that can coordinate and call other agents for complex tasks.
+  - accountingAgent (PRIORITY)
+    - This agent specializes in accounting, bookkeeping, financial statements, and financial management.
+  - taxAgent (PRIORITY)
+    - This agent specializes in tax preparation, planning, compliance, and tax law with tool calling for PPN/SPT.
+  - auditAgent (PRIORITY)
+    - This agent specializes in auditing, internal controls, risk assessment, and compliance.
   - normalAgent
-    - This is the default agent, and is very versatile. It should be used to respond to user queries that are very simple, and don't require any other agents.
-    - However, it should also be used to clarify the user's request if it is ambiguous, such as asking follow up questions, or including options for the user to choose from.
+    - This is a general-purpose agent for simple queries and clarifications.
   - researchAgent
-    - This agent is used to research the user's query, from sources online and internal documents, and find the most relevant information.
+    - This agent is used to research the user's query from sources online and internal documents.
   - ragChatAgent
-    - This agent is used to respond to user queries that require retrieval into internal documents or the vault, DOES NOT INCLUDE INFORMATION THAT NEEDS TO BE SEARCHED ON THE INTERNET.
+    - This agent is used to respond to user queries that require retrieval into internal documents or the vault.
   - workflowCreatorAgent
-    - This agent is used to build workflows for the user; for example, building a workflow to draft an email.
+    - This agent is used to build workflows for the user.
   - documentAgent
     - This agent is used to create, update, and request suggestions for new documents (not vault-related).
   - communicationAgent
@@ -61,6 +76,6 @@ export async function getAgentType(messages: Message[]): Promise<AgentType> {
     const { agentType } = response.object;
     return agentType;
   } catch (err) {
-    return 'normalAgent';
+    return 'superAgent'; // Default to super agent instead of normal agent
   }
 }

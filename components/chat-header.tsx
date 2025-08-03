@@ -1,19 +1,20 @@
-'use client';
+"use client";
 
-import { useRouter } from 'next/navigation';
-import { useWindowSize } from 'usehooks-ts';
+import { useRouter } from "next/navigation";
+import { useWindowSize } from "usehooks-ts";
 
-import { ModelSelector } from '@/components/model-selector';
-import { SidebarToggle } from '@/components/sidebar-toggle';
-import { Button } from '@/components/ui/button';
-import { PlusIcon } from './icons';
-import { useSidebar } from './ui/sidebar';
-import { memo } from 'react';
-import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
-import { type VisibilityType, VisibilitySelector } from './visibility-selector';
-import type { Session } from 'next-auth';
+import { ModelSelector } from "@/components/model-selector";
+import { SidebarToggle } from "@/components/sidebar-toggle";
+import { Button } from "@/components/ui/button";
+import { PlusIcon } from "./icons";
+import { useSidebar } from "./ui/sidebar";
+import { memo } from "react";
+import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
+import { type VisibilityType, VisibilitySelector } from "./visibility-selector";
+import type { Session } from "next-auth";
+import { PanelRightOpen, PanelRightClose } from "lucide-react";
 
-import { VaultDrawer } from './vault-drawer';
+import { VaultDrawer } from "./vault-drawer";
 
 function PureChatHeader({
   chatId,
@@ -21,12 +22,16 @@ function PureChatHeader({
   selectedVisibilityType,
   isReadonly,
   session,
+  onToggleGenerationSidebar,
+  isGenerationSidebarVisible,
 }: {
   chatId: string;
   selectedModelId: string;
   selectedVisibilityType: VisibilityType;
   isReadonly: boolean;
   session: Session;
+  onToggleGenerationSidebar: () => void;
+  isGenerationSidebarVisible: boolean;
 }) {
   const router = useRouter();
   const { open } = useSidebar();
@@ -44,7 +49,7 @@ function PureChatHeader({
               variant="outline"
               className="order-2 md:order-1 md:px-2 px-2 md:h-fit ml-auto md:ml-0"
               onClick={() => {
-                router.push('/');
+                router.push("/");
                 router.refresh();
               }}
             >
@@ -77,6 +82,29 @@ function PureChatHeader({
           <VaultDrawer />
         </div>
       )}
+
+      <div className="order-1 md:order-5 ml-auto">
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={onToggleGenerationSidebar}
+            >
+              {isGenerationSidebarVisible ? (
+                <PanelRightClose className="h-4 w-4" />
+              ) : (
+                <PanelRightOpen className="h-4 w-4" />
+              )}
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>
+            {isGenerationSidebarVisible
+              ? "Hide Generation Sidebar"
+              : "Show Generation Sidebar"}
+          </TooltipContent>
+        </Tooltip>
+      </div>
     </header>
   );
 }

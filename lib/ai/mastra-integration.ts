@@ -55,7 +55,6 @@ export async function streamWithMastraAgent(
   }
   const agent = mastra.getAgent(selectedAgent);
 
-  // Inject vault context as a system message for all agents if present
   let finalMessages = messages;
   if (vaultFiles && vaultFiles.length > 0) {
     finalMessages = [

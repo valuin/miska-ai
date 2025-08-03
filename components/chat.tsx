@@ -1,26 +1,32 @@
-'use client';
+"use client";
 
-import type { Attachment, UIMessage } from 'ai';
-import { useChat } from '@ai-sdk/react';
-import { useEffect, useState } from 'react';
-import useSWR, { useSWRConfig } from 'swr';
-import { ChatHeader } from '@/components/chat-header';
-import type { Vote } from '@/lib/db/schema';
-import { fetcher, fetchWithErrorHandlers, generateUUID } from '@/lib/utils';
-import { Artifact } from './artifact';
-import { MultimodalInput } from './multimodal-input';
-import { Messages } from './messages';
-import type { VisibilityType } from './visibility-selector';
-import { useArtifactSelector } from '@/hooks/use-artifact';
-import { unstable_serialize } from 'swr/infinite';
-import { getChatHistoryPaginationKey } from './sidebar-history';
-import { toast } from './toast';
-import type { Session } from 'next-auth';
-import { useSearchParams } from 'next/navigation';
-import { useChatVisibility } from '@/hooks/use-chat-visibility';
-import { useAutoResume } from '@/hooks/use-auto-resume';
-import { ChatSDKError } from '@/lib/errors';
-import { useVaultFilesStore } from '@/lib/store/vault-files-store';
+import { ChatHeader } from "@/components/chat-header";
+import { useArtifactSelector } from "@/hooks/use-artifact";
+import { useAutoResume } from "@/hooks/use-auto-resume";
+import { useChatVisibility } from "@/hooks/use-chat-visibility";
+import type { Vote } from "@/lib/db/schema";
+import { ChatSDKError } from "@/lib/errors";
+import { useVaultFilesStore } from "@/lib/store/vault-files-store";
+import { fetcher, fetchWithErrorHandlers, generateUUID } from "@/lib/utils";
+import { useChat } from "@ai-sdk/react";
+import type { Attachment, UIMessage } from "ai";
+import type { Session } from "next-auth";
+import { useSearchParams, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import useSWR, { useSWRConfig } from "swr";
+import { unstable_serialize } from "swr/infinite";
+import { AgentCards } from "./agent-cards";
+import { Artifact } from "./artifact";
+import { ChatHistoryGrid } from "./chat-history-grid";
+import { GenerationSidebar } from "./generation-sidebar";
+import { Messages } from "./messages";
+import { MultimodalInput } from "./multimodal-input";
+import { getChatHistoryPaginationKey } from "./sidebar-history";
+import { SuggestedActions } from "./suggested-actions";
+import { toast } from "./toast";
+import type { VisibilityType } from "./visibility-selector";
+import { useSidebar } from "@/components/ui/sidebar";
+// import { ChainOfThought } from "./chain-of-thought"; // No longer directly used here
 
 export function Chat({
   id,
@@ -40,6 +46,20 @@ export function Chat({
   autoResume: boolean;
 }) {
   const { mutate } = useSWRConfig();
+  const router = useRouter();
+  const { setOpen } = useSidebar();
+
+  // Agent selection state
+  const [selectedAgent, setSelectedAgent] = useState<string | null>(null);
+  const [hasStartedChat, setHasStartedChat] = useState(false);
+
+  // Load persisted agent selection from localStorage on mount
+  useEffect(() => {
+    const persistedAgent = localStorage.getItem("selectedAgent");
+    if (persistedAgent) {
+      setSelectedAgent(persistedAgent);
+    }
+  }, []);
 
   const { visibilityType } = useChatVisibility({
     chatId: id,
@@ -66,11 +86,25 @@ export function Chat({
     fetch: fetchWithErrorHandlers,
     experimental_prepareRequestBody: (body) => {
       const { selectedVaultFileNames } = useVaultFilesStore.getState();
+      const lastMessage = body.messages.at(-1);
+
+      // Add chain-of-thought annotation to the user's message
+      if (lastMessage && lastMessage.role === "user") {
+        lastMessage.annotations = [
+          ...(lastMessage.annotations || []),
+          {
+            type: "chain-of-thought",
+            question: lastMessage.content,
+          },
+        ];
+      }
+
       return {
         id,
         message: {
-          ...body.messages.at(-1),
+          ...lastMessage,
           selectedVaultFileNames: selectedVaultFileNames,
+          selectedAgent: selectedAgent, // Pass selected agent to API
         },
         selectedChatModel: initialChatModel,
         selectedVisibilityType: visibilityType,
@@ -82,7 +116,7 @@ export function Chat({
     onError: (error) => {
       if (error instanceof ChatSDKError) {
         toast({
-          type: 'error',
+          type: "error",
           description: error.message,
         });
       }
@@ -90,25 +124,23 @@ export function Chat({
   });
 
   const searchParams = useSearchParams();
-  const query = searchParams.get('query');
+  const query = searchParams.get("query");
 
   const [hasAppendedQuery, setHasAppendedQuery] = useState(false);
 
   useEffect(() => {
     if (query && !hasAppendedQuery) {
       append({
-        role: 'user',
+        role: "user",
         content: query,
       });
-
       setHasAppendedQuery(true);
-      window.history.replaceState({}, '', `/chat/${id}`);
     }
-  }, [query, append, hasAppendedQuery, id]);
+  }, [query, hasAppendedQuery, append]);
 
-  const { data: votes } = useSWR<Array<Vote>>(
+  const { data: votes } = useSWR<Vote[]>(
     messages.length >= 2 ? `/api/vote?chatId=${id}` : null,
-    fetcher,
+    fetcher
   );
 
   const [attachments, setAttachments] = useState<Array<Attachment>>([]);
@@ -122,6 +154,34 @@ export function Chat({
     setMessages,
   });
 
+  // Handle agent selection
+  const handleAgentSelect = (agentType: string) => {
+    setSelectedAgent(agentType);
+    setHasStartedChat(true);
+
+    // Close left sidebar when chat starts
+    setOpen(false);
+
+    // Add initial message with agent context
+    append({
+      role: "user",
+      content: `Saya ingin menggunakan ${agentType} untuk membantu saya.`,
+    });
+  };
+
+  // Handle chat history navigation
+  const handleChatHistoryClick = (chatId: string) => {
+    router.push(`/chat/${chatId}`);
+  };
+
+  // Determine if generation sidebar should be visible
+  const isGenerating = status === "submitted" || status === "streaming";
+  const currentAgentType = selectedAgent || "superAgent";
+  const [showGenerationSidebar, setShowGenerationSidebar] = useState(false);
+
+  // Show initial layout if no messages and no agent selected
+  const showInitialLayout = messages.length === 0 && !hasStartedChat;
+
   return (
     <>
       <div className="flex flex-col min-w-0 h-dvh bg-background">
@@ -131,38 +191,94 @@ export function Chat({
           selectedVisibilityType={initialVisibilityType}
           isReadonly={isReadonly}
           session={session}
+          onToggleGenerationSidebar={() =>
+            setShowGenerationSidebar(!showGenerationSidebar)
+          }
+          isGenerationSidebarVisible={showGenerationSidebar}
         />
 
-        <Messages
-          chatId={id}
-          status={status}
-          votes={votes}
-          messages={messages}
-          setMessages={setMessages}
-          reload={reload}
-          isReadonly={isReadonly}
-          isArtifactVisible={isArtifactVisible}
-          append={append}
-        />
+        {showInitialLayout ? (
+          <div className="flex-1 flex flex-col p-6 space-y-6">
+            {/* Agent Cards Row */}
+            <div className="mb-6">
+              <h2 className="text-2xl font-bold mb-4">Pilih Agent</h2>
+              <AgentCards
+                onAgentSelect={handleAgentSelect}
+                selectedAgent={selectedAgent}
+              />
+            </div>
 
-        <form className="flex mx-auto px-4 bg-background pb-4 md:pb-6 gap-2 w-full md:max-w-3xl">
-          {!isReadonly && (
-            <MultimodalInput
+            {/* Chat Input */}
+            <div className="flex-1 flex flex-col justify-end">
+              <div className="max-w-4xl mx-auto w-full space-y-4">
+                <form className="flex gap-2" onSubmit={handleSubmit}>
+                  {!isReadonly && (
+                    <MultimodalInput
+                      chatId={id}
+                      input={input}
+                      setInput={setInput}
+                      handleSubmit={handleSubmit}
+                      status={status}
+                      stop={stop}
+                      attachments={attachments}
+                      setAttachments={setAttachments}
+                      messages={messages}
+                      setMessages={setMessages}
+                      append={append}
+                      selectedVisibilityType={visibilityType}
+                    />
+                  )}
+                </form>
+
+                <div className="px-4 pb-4">
+                  {/* <SuggestedActions
+                    chatId={id}
+                    append={append}
+                    selectedVisibilityType={visibilityType}
+                    onActionClick={() => setOpen(false)}
+                  /> */}
+                </div>
+                <ChatHistoryGrid onChatClick={handleChatHistoryClick} />
+              </div>
+            </div>
+          </div>
+        ) : (
+          <>
+            <Messages
               chatId={id}
-              input={input}
-              setInput={setInput}
-              handleSubmit={handleSubmit}
               status={status}
-              stop={stop}
-              attachments={attachments}
-              setAttachments={setAttachments}
+              votes={votes}
               messages={messages}
               setMessages={setMessages}
+              reload={reload}
+              isReadonly={isReadonly}
+              isArtifactVisible={isArtifactVisible}
               append={append}
-              selectedVisibilityType={visibilityType}
             />
-          )}
-        </form>
+
+            <form
+              className="flex mx-auto px-4 bg-background pb-4 md:pb-6 gap-2 w-full md:max-w-3xl"
+              onSubmit={handleSubmit}
+            >
+              {!isReadonly && (
+                <MultimodalInput
+                  chatId={id}
+                  input={input}
+                  setInput={setInput}
+                  handleSubmit={handleSubmit}
+                  status={status}
+                  stop={stop}
+                  attachments={attachments}
+                  setAttachments={setAttachments}
+                  messages={messages}
+                  setMessages={setMessages}
+                  append={append}
+                  selectedVisibilityType={visibilityType}
+                />
+              )}
+            </form>
+          </>
+        )}
       </div>
 
       <Artifact
@@ -182,6 +298,8 @@ export function Chat({
         isReadonly={isReadonly}
         selectedVisibilityType={visibilityType}
       />
+
+      <GenerationSidebar isVisible={showGenerationSidebar} isWide={true} />
     </>
   );
 }
