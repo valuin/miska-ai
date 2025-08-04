@@ -62,6 +62,7 @@ const PurePreviewMessage = ({
   const rearrangeParts = (parts: UIMessage["parts"]) =>
     parts.slice().sort((a, b) => {
       const score = (item: typeof a) =>
+        // if the tool invocation is a clarification or options, it should be at the bottom of the message
         item.type === "tool-invocation" &&
         (item.toolInvocation.toolName === "clarificationTool" ||
           item.toolInvocation.toolName === "optionsTool")
@@ -137,6 +138,7 @@ const PurePreviewMessage = ({
                       />
                     );
                   }
+                  // Render ChainOfThought if annotation type is "chain-of-thought"
                   if (annotation.type === "chain-of-thought") {
                     const cotAnnotation =
                       annotation as ChainOfThoughtAnnotation;
@@ -412,7 +414,7 @@ export const PreviewMessage = memo(
   }
 );
 
-export const ThinkingMessage = () => {
+export const ThinkingMessage = ({ question }: { question: string }) => {
   const role = "assistant";
 
   return (
@@ -437,7 +439,7 @@ export const ThinkingMessage = () => {
 
         <div className="flex flex-col gap-2 w-full">
           <div className="flex flex-col gap-4 text-muted-foreground">
-            Hmm...
+            <ChainOfThought isVisible={true} question={question} />
           </div>
         </div>
       </div>

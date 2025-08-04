@@ -26,7 +26,7 @@ import { SuggestedActions } from "./suggested-actions";
 import { toast } from "./toast";
 import type { VisibilityType } from "./visibility-selector";
 import { useSidebar } from "@/components/ui/sidebar";
-// import { ChainOfThought } from "./chain-of-thought"; // No longer directly used here
+import { useChainOfThought } from "@/hooks/useChainOfThought"; // Import useChainOfThought
 
 export function Chat({
   id,
@@ -53,6 +53,17 @@ export function Chat({
   const [selectedAgent, setSelectedAgent] = useState<string | null>(null);
   const [hasStartedChat, setHasStartedChat] = useState(false);
 
+  // Chain of Thought states
+  const {
+    response: cotResponse,
+    loading: cotLoading,
+    error: cotError,
+    askQuestion: askCotQuestion,
+    clearResponse: clearCotResponse,
+    setQuestion: setCotQuestion,
+    finalAnswer: cotFinalAnswer, // Get final answer from CoT hook
+  } = useChainOfThought();
+
   // Load persisted agent selection from localStorage on mount
   useEffect(() => {
     const persistedAgent = localStorage.getItem("selectedAgent");
@@ -69,7 +80,7 @@ export function Chat({
   const {
     messages,
     setMessages,
-    handleSubmit,
+    handleSubmit: originalHandleSubmit, // Rename original handleSubmit
     input,
     setInput,
     append,
@@ -88,15 +99,16 @@ export function Chat({
       const { selectedVaultFileNames } = useVaultFilesStore.getState();
       const lastMessage = body.messages.at(-1);
 
-      // Add chain-of-thought annotation to the user's message
-      if (lastMessage && lastMessage.role === "user") {
-        lastMessage.annotations = [
-          ...(lastMessage.annotations || []),
-          {
-            type: "chain-of-thought",
-            question: lastMessage.content,
-          },
-        ];
+      // Prepend CoT final answer as a system message if available
+      const messagesToSend = [...body.messages];
+      if (cotFinalAnswer) {
+        messagesToSend.unshift({
+          id: generateUUID(),
+          role: "system",
+          content: `Chain of Thought Final Answer for previous user query: ${cotFinalAnswer}`,
+          createdAt: new Date(),
+          parts: [],
+        });
       }
 
       return {
@@ -106,12 +118,14 @@ export function Chat({
           selectedVaultFileNames: selectedVaultFileNames,
           selectedAgent: selectedAgent, // Pass selected agent to API
         },
+        messages: messagesToSend, // Send modified messages array
         selectedChatModel: initialChatModel,
         selectedVisibilityType: visibilityType,
       };
     },
     onFinish: () => {
       mutate(unstable_serialize(getChatHistoryPaginationKey));
+      clearCotResponse(); // Clear CoT response after main AI finishes
     },
     onError: (error) => {
       if (error instanceof ChatSDKError) {
@@ -120,6 +134,7 @@ export function Chat({
           description: error.message,
         });
       }
+      clearCotResponse(); // Clear CoT response on error
     },
   });
 
@@ -179,6 +194,21 @@ export function Chat({
   const currentAgentType = selectedAgent || "superAgent";
   const [showGenerationSidebar, setShowGenerationSidebar] = useState(false);
 
+  // Custom handleSubmit to orchestrate CoT and main AI
+  const handleOrchestratedSubmit = async (
+    e: React.FormEvent<HTMLFormElement>
+  ) => {
+    e.preventDefault();
+
+    // 1. Trigger CoT generation
+    setCotQuestion(input); // Set the question for CoT
+    await askCotQuestion(); // Wait for CoT to complete
+
+    // 2. Then, trigger the original handleSubmit for main AI
+    // The experimental_prepareRequestBody will now include cotFinalAnswer
+    originalHandleSubmit(e);
+  };
+
   // Show initial layout if no messages and no agent selected
   const showInitialLayout = messages.length === 0 && !hasStartedChat;
 
@@ -211,13 +241,16 @@ export function Chat({
             {/* Chat Input */}
             <div className="flex-1 flex flex-col justify-end">
               <div className="max-w-4xl mx-auto w-full space-y-4">
-                <form className="flex gap-2" onSubmit={handleSubmit}>
+                <form
+                  className="flex gap-2"
+                  onSubmit={handleOrchestratedSubmit}
+                >
                   {!isReadonly && (
                     <MultimodalInput
                       chatId={id}
                       input={input}
                       setInput={setInput}
-                      handleSubmit={handleSubmit}
+                      handleSubmit={handleOrchestratedSubmit}
                       status={status}
                       stop={stop}
                       attachments={attachments}
@@ -258,14 +291,14 @@ export function Chat({
 
             <form
               className="flex mx-auto px-4 bg-background pb-4 md:pb-6 gap-2 w-full md:max-w-3xl"
-              onSubmit={handleSubmit}
+              onSubmit={handleOrchestratedSubmit}
             >
               {!isReadonly && (
                 <MultimodalInput
                   chatId={id}
                   input={input}
                   setInput={setInput}
-                  handleSubmit={handleSubmit}
+                  handleSubmit={handleOrchestratedSubmit}
                   status={status}
                   stop={stop}
                   attachments={attachments}
@@ -285,7 +318,7 @@ export function Chat({
         chatId={id}
         input={input}
         setInput={setInput}
-        handleSubmit={handleSubmit}
+        handleSubmit={handleOrchestratedSubmit}
         status={status}
         stop={stop}
         attachments={attachments}
