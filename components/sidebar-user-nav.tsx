@@ -16,7 +16,7 @@ import {
 import {
   SidebarMenu,
   SidebarMenuButton,
-  SidebarMenuItem,
+  SidebarMenuSubItem,
 } from '@/components/ui/sidebar';
 import { useRouter } from 'next/navigation';
 import { toast } from './toast';
@@ -32,25 +32,29 @@ export function SidebarUserNav({ user }: { user: User }) {
 
   return (
     <SidebarMenu>
-      <SidebarMenuItem>
+      <div data-sidebar="menu-item" className="group/menu-item relative">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             {status === 'loading' ? (
-              <SidebarMenuButton className="data-[state=open]:bg-sidebar-accent bg-background data-[state=open]:text-sidebar-accent-foreground h-10 justify-between">
-                <div className="flex flex-row gap-2">
+              <button
+                data-sidebar="menu-button"
+                className="peer/menu-button flex w-full items-center gap-2 overflow-hidden rounded-md p-2 text-left text-sm outline-none ring-sidebar-ring transition-[width,height,padding] hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 group-data-[collapsible=icon]:!size-8 group-data-[collapsible=icon]:!p-2 bg-background data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground h-10 justify-between"
+              >
+                <div className="flex flex-row gap-2 items-center">
                   <div className="size-6 bg-zinc-500/30 rounded-full animate-pulse" />
-                  <span className="bg-zinc-500/30 text-transparent rounded-md animate-pulse">
+                  <span className="bg-zinc-500/30 text-transparent rounded-md animate-pulse group-data-[collapsible=icon]:hidden">
                     Loading auth status
                   </span>
                 </div>
-                <div className="animate-spin text-zinc-500">
+                <div className="animate-spin text-zinc-500 group-data-[collapsible=icon]:hidden">
                   <LoaderIcon />
                 </div>
-              </SidebarMenuButton>
+              </button>
             ) : (
-              <SidebarMenuButton
+              <button
                 data-testid="user-nav-button"
-                className="data-[state=open]:bg-sidebar-accent bg-background data-[state=open]:text-sidebar-accent-foreground h-10"
+                data-sidebar="menu-button"
+                className="peer/menu-button flex w-full items-center gap-2 overflow-hidden rounded-md p-2 text-left text-sm outline-none ring-sidebar-ring transition-[width,height,padding] hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 group-data-[collapsible=icon]:!size-8 group-data-[collapsible=icon]:!p-2 bg-background data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground h-10"
               >
                 <Image
                   src={`https://avatar.vercel.sh/${user.email}`}
@@ -59,11 +63,11 @@ export function SidebarUserNav({ user }: { user: User }) {
                   height={24}
                   className="rounded-full"
                 />
-                <span data-testid="user-email" className="truncate">
+                <span data-testid="user-email" className="truncate group-data-[collapsible=icon]:hidden">
                   {isGuest ? 'Guest' : user?.email}
                 </span>
-                <ChevronUp className="ml-auto" />
-              </SidebarMenuButton>
+                <ChevronUp className="ml-auto group-data-[collapsible=icon]:hidden" />
+              </button>
             )}
           </DropdownMenuTrigger>
           <DropdownMenuContent
@@ -110,7 +114,7 @@ export function SidebarUserNav({ user }: { user: User }) {
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
-      </SidebarMenuItem>
+      </div>
     </SidebarMenu>
   );
 }

@@ -1,15 +1,15 @@
 import { Toaster } from "sonner";
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono, Manrope } from "next/font/google";
 import { ThemeProvider } from "@/components/theme-provider";
 
 import "./globals.css";
 import { SessionProvider } from "next-auth/react";
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://futurity.ai"),
-  title: "Futurity",
-  description: "Futurity Testing",
+  metadataBase: new URL("https://miska.ai"),
+  title: "Miska",
+  description: "Miska AI Agent",
 };
 
 export const viewport = {
@@ -26,6 +26,12 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
   display: "swap",
   variable: "--font-geist-mono",
+});
+
+const manrope = Manrope({
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-manrope",
 });
 
 const LIGHT_THEME_COLOR = "hsl(0 0% 100%)";
@@ -61,7 +67,7 @@ export default async function RootLayout({
       // prop is necessary to avoid the React hydration mismatch warning.
       // https://github.com/pacocoursey/next-themes?tab=readme-ov-file#with-app
       suppressHydrationWarning
-      className={`${geist.variable} ${geistMono.variable}`}
+      className={`${manrope.variable} ${geistMono.variable}`}
     >
       <head>
         <script
@@ -71,15 +77,8 @@ export default async function RootLayout({
         />
       </head>
       <body className="antialiased">
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-        >
-          <Toaster position="top-center" />
-          <SessionProvider>{children}</SessionProvider>
-        </ThemeProvider>
+        <Toaster position="top-center" />
+        <SessionProvider>{children}</SessionProvider>
       </body>
     </html>
   );
