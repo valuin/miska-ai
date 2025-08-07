@@ -28,178 +28,7 @@ import { Button } from "./ui/button";
 import { Textarea } from "./ui/textarea";
 import type { UserUpload } from "./vault-drawer";
 import type { VisibilityType } from "./visibility-selector";
-
-export function FileUploadSection({
-  onAttachmentsChange,
-  disabled,
-}: {
-  onAttachmentsChange?: (attachments: Array<Attachment>) => void;
-  disabled?: boolean;
-}) {
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [attachments, setAttachments] = useState<Array<Attachment>>([]);
-  const [uploadQueue, setUploadQueue] = useState<Array<string>>([]);
-
-  // Notify parent when attachments change
-  useEffect(() => {
-    onAttachmentsChange?.(attachments);
-  }, [attachments, onAttachmentsChange]);
-
-  const uploadFile = async (file: File): Promise<Attachment | undefined> => {
-    // Show uploading toast
-    const toastId = toast.loading(`Uploading "${file.name}"...`);
-    try {
-      const newBlob = await upload(file.name, file, {
-        access: "public",
-        handleUploadUrl: "/api/files/upload-blob",
-        multipart: true,
-      });
-      const processResponse = await fetch("/api/files/process-document", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          fileUrl: newBlob.url,
-          filename: file.name,
-          contentType: file.type,
-        }),
-      });
-
-      if (!processResponse.ok) {
-        throw new Error("Failed to process document");
-      }
-
-      const processResult = await processResponse.json();
-
-      if (processResult.success && processResult.document.canSaveToVault) {
-        // Immediately save to vault
-        try {
-          const saveResponse = await fetch("/api/vault/save", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              tempDocumentId: processResult.document.id,
-            }),
-          });
-
-          if (saveResponse.ok) {
-            toast.success(
-              `Document "${file.name}" uploaded and saved to vault.`
-            );
-          } else {
-            toast.error(
-              `Document "${file.name}" uploaded, but failed to save to vault.`
-            );
-          }
-        } catch (error) {
-          toast.error(
-            `Document "${file.name}" uploaded, but failed to save to vault.`
-          );
-        }
-      } else if (processResult.success) {
-        toast.success(`Document "${file.name}" uploaded successfully.`);
-      }
-
-      return {
-        url: newBlob.url,
-        name: file.name,
-        contentType: file.type,
-      };
-    } catch (error) {
-      toast.error("Failed to upload and process file, please try again!");
-    } finally {
-      toast.dismiss(toastId);
-    }
-  };
-
-  const handleFileChange = useCallback(
-    async (event: ChangeEvent<HTMLInputElement>) => {
-      const files = Array.from(event.target.files || []);
-
-      setUploadQueue(files.map((file) => file.name));
-
-      try {
-        const uploadPromises = files.map((file) => uploadFile(file));
-        const uploadedAttachments = await Promise.all(uploadPromises);
-        const successfullyUploadedAttachments = uploadedAttachments.filter(
-          (attachment) => attachment !== undefined
-        );
-
-        setAttachments((currentAttachments) => [
-          ...currentAttachments,
-          ...successfullyUploadedAttachments,
-        ]);
-
-        // Auto-select uploaded files in the vault
-        if (successfullyUploadedAttachments.length > 0) {
-          // Use the vault store to add filenames
-          const uploadedNames = successfullyUploadedAttachments
-            .map((att) => att.name)
-            .filter(Boolean);
-          // Use window.dispatchEvent to notify VaultFilesSection
-          window.dispatchEvent(
-            new CustomEvent("vault-autoselect", { detail: uploadedNames })
-          );
-        }
-      } catch (error) {
-      } finally {
-        setUploadQueue([]);
-      }
-    },
-    []
-  );
-
-  const unattachFile = (name: string) => {
-    setAttachments((currentAttachments) =>
-      currentAttachments.filter((a) => a.name !== name)
-    );
-  };
-
-  return (
-    <>
-      <input
-        type="file"
-        className="fixed -top-4 -left-4 size-0.5 opacity-0 pointer-events-none"
-        ref={fileInputRef}
-        multiple
-        onChange={handleFileChange}
-        tabIndex={-1}
-      />
-      {(attachments.length > 0 || uploadQueue.length > 0) && (
-        <div
-          data-testid="attachments-preview"
-          className="flex flex-row gap-2 overflow-x-scroll items-end"
-        >
-          {attachments.map((attachment) => (
-            <PreviewAttachment
-              key={attachment.url}
-              attachment={attachment}
-              unattachFile={() => unattachFile(attachment.name ?? "")}
-            />
-          ))}
-          {uploadQueue.map((filename) => (
-            <PreviewAttachment
-              key={filename}
-              unattachFile={() => unattachFile(filename)}
-              attachment={{
-                url: "",
-                name: filename,
-                contentType: "",
-              }}
-              isUploading={true}
-            />
-          ))}
-        </div>
-      )}
-      <div className="absolute bottom-0 p-2 w-fit flex flex-row justify-start">
-        <AttachmentsButton fileInputRef={fileInputRef} disabled={disabled} />
-      </div>
-    </>
-  );
-}
+import { VaultDrawer } from "./vault-drawer";
 
 // MessageInputSection: handles textarea, input, and keyboard events
 function MessageInputSection({
@@ -286,6 +115,74 @@ function PureMultimodalInput({
 }) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { width } = useWindowSize();
+
+  // --- Start of logic lifted from FileUploadSection ---
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploadQueue, setUploadQueue] = useState<Array<string>>([]);
+
+  const uploadFile = async (file: File): Promise<Attachment | undefined> => {
+    const toastId = toast.loading(`Uploading "${file.name}"...`);
+    try {
+      const newBlob = await upload(file.name, file, {
+        access: "public",
+        handleUploadUrl: "/api/files/upload-blob",
+        multipart: true,
+      });
+      const processResponse = await fetch("/api/files/process-document", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          fileUrl: newBlob.url,
+          filename: file.name,
+          contentType: file.type,
+        }),
+      });
+
+      if (!processResponse.ok) throw new Error("Failed to process document");
+
+      const processResult = await processResponse.json();
+
+      if (processResult.success && processResult.document.canSaveToVault) {
+        toast.success(`"${file.name}" uploaded and processed.`);
+      } else if (processResult.success) {
+        toast.success(`"${file.name}" uploaded successfully.`);
+      }
+
+      return { url: newBlob.url, name: file.name, contentType: file.type };
+    } catch (error) {
+      toast.error("Failed to upload and process file.");
+    } finally {
+      toast.dismiss(toastId);
+    }
+  };
+
+  const handleFileChange = useCallback(
+    async (event: ChangeEvent<HTMLInputElement>) => {
+      const files = Array.from(event.target.files || []);
+      setUploadQueue(files.map((file) => file.name));
+      try {
+        const uploadedAttachments = await Promise.all(files.map(uploadFile));
+        const successfulUploads = uploadedAttachments.filter(
+          (att): att is Attachment => att !== undefined
+        );
+        setAttachments((curr) => [...curr, ...successfulUploads]);
+      } catch (error) {
+      } finally {
+        setUploadQueue([]);
+        if (event.target) {
+          event.target.value = ""; // Clear the file input
+        }
+      }
+    },
+    [setAttachments]
+  );
+  
+  const unattachFile = (name: string) => {
+    setAttachments((currentAttachments) =>
+      currentAttachments.filter((a) => a.name !== name)
+    );
+  };
+  // --- End of logic lifted from FileUploadSection ---
 
   useEffect(() => {
     if (textareaRef.current) {
@@ -417,11 +314,28 @@ function PureMultimodalInput({
         onAttachmentsChange={setAttachments}
         disabled={status !== "ready"}
       />
-      {/* File upload section (self-contained) */}
-      <FileUploadSection
-        onAttachmentsChange={setAttachments}
-        disabled={status !== "ready"}
-      />
+      
+      {/* Attachment Previews */}
+      {(attachments.length > 0 || uploadQueue.length > 0) && (
+        <div data-testid="attachments-preview" className="flex flex-row gap-2 overflow-x-scroll items-end">
+          {attachments.map((attachment) => (
+            <PreviewAttachment
+              key={attachment.url}
+              attachment={attachment}
+              unattachFile={() => unattachFile(attachment.name ?? "")}
+            />
+          ))}
+          {uploadQueue.map((filename) => (
+            <PreviewAttachment
+              key={filename}
+              unattachFile={() => unattachFile(filename)}
+              attachment={{ url: "", name: filename, contentType: "" }}
+              isUploading={true}
+            />
+          ))}
+        </div>
+      )}
+
       {/* Message input section */}
       <MessageInputSection
         input={input}
@@ -434,13 +348,39 @@ function PureMultimodalInput({
         )}
         submitForm={submitForm}
       />
-      <div className="absolute bottom-0 right-0 p-2 w-fit flex flex-row justify-end">
+      
+      {/* Hidden file input */}
+       <input
+        type="file"
+        className="fixed -top-4 -left-4 size-0.5 opacity-0 pointer-events-none"
+        ref={fileInputRef}
+        multiple
+        onChange={handleFileChange}
+        tabIndex={-1}
+      />
+
+      {/* Consolidated Action Buttons */}
+       <div className="flex flex-row items-center justify-between w-full">
+         <div className="flex items-center gap-2">
+           <VaultDrawer />
+           <Button
+            data-testid="upload-button"
+            size="sm"
+            variant="ghost"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={status !== "ready"}
+           >
+             <PaperclipIcon />
+             Upload File
+           </Button>
+         </div>
+
         {status === "submitted" ? (
           <StopButton stop={stop} setMessages={setMessages} />
         ) : (
           <SendButton input={input} submitForm={submitForm} />
         )}
-      </div>
+        </div>
     </div>
   );
 }
@@ -472,6 +412,7 @@ function VaultFilesSection({
     window.addEventListener("vault-autoselect", handler);
     return () => window.removeEventListener("vault-autoselect", handler);
   }, []);
+
   const [isLoading, setIsLoading] = useState(false);
 
   const fetchUserUploads = async () => {
@@ -545,33 +486,6 @@ export const MultimodalInput = memo(
     return true;
   }
 );
-
-function PureAttachmentsButton({
-  fileInputRef,
-  disabled,
-}: {
-  fileInputRef: React.MutableRefObject<HTMLInputElement | null>;
-  disabled?: boolean;
-}) {
-  return (
-    <Button
-      data-testid="attachments-button"
-      className="rounded-md rounded-bl-lg p-0 h-fit dark:border-zinc-700 hover:dark:bg-zinc-900 hover:bg-zinc-200 w-full"
-      onClick={(event) => {
-        event.preventDefault();
-        fileInputRef.current?.click();
-      }}
-      disabled={disabled}
-      variant="ghost"
-    >
-      <div className="p-[7px]">
-        <PaperclipIcon size={14} />
-      </div>
-    </Button>
-  );
-}
-
-const AttachmentsButton = memo(PureAttachmentsButton);
 
 function PureStopButton({
   stop,

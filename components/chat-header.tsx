@@ -56,12 +56,6 @@ function PureChatHeader({
         </Tooltip>
       )}
 
-      {!isReadonly && (
-        <div className="order-1 md:order-4">
-          <VaultDrawer />
-        </div>
-      )}
-
       <div className="order-1 md:order-5 ml-auto">
         <Tooltip>
           <TooltipTrigger asChild>

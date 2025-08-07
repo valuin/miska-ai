@@ -189,21 +189,16 @@ export function Chat({
         {showInitialLayout ? (
           <div className="flex-1 flex flex-col p-6 space-y-6">
             {/* Agent Cards Row */}
-            <div className="mb-6">
-              <h2 className="text-2xl font-bold mb-4">Pilih Agent</h2>
-              <AgentCards
-                onAgentSelect={handleAgentSelect}
-                selectedAgent={selectedAgent}
-              />
-            </div>
+            <h1 className="text-[3.25rem] mt-20 font-bold text-center whitespace-pre-wrap">
+              <span className="bg-[radial-gradient(circle_at_center,_#A6E564,_#054135_40%,_#054135_80%)] bg-clip-text text-transparent inline-block">
+                {"Selamat Pagi, User\nApa yang bisa saya bantu hari ini?"}
+              </span>
+            </h1>
 
             {/* Chat Input */}
             <div className="flex-1 flex flex-col justify-end">
               <div className="max-w-4xl mx-auto w-full space-y-4">
-                <form
-                  className="flex gap-2"
-                  onSubmit={handleSubmit}
-                >
+                <form className="flex gap-2" onSubmit={handleSubmit}>
                   {!isReadonly && (
                     <MultimodalInput
                       chatId={id}
@@ -221,6 +216,13 @@ export function Chat({
                     />
                   )}
                 </form>
+
+                <div className="mt-12">
+                  <AgentCards
+                    onAgentSelect={handleAgentSelect}
+                    selectedAgent={selectedAgent}
+                  />
+                </div>
 
                 <div className="px-4 pb-4">
                   {/* <SuggestedActions
