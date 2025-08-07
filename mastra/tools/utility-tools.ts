@@ -51,6 +51,52 @@ const bypassTool = createTool({
   outputSchema: z.object({}),
 });
 
+export const planTodosTool = createTool({
+  id: 'planTodos',
+  description:
+    'Generate a concise, ordered list of todo titles to accomplish the given task. Keep items action-oriented and high-level.',
+  inputSchema: z.object({
+    task: z
+      .string()
+      .describe('The overall task or goal to break down into actionable todo titles.'),
+  }),
+  outputSchema: z.object({
+    todos: z
+      .array(z.string().describe('A concise, action-oriented todo title.'))
+      .describe('Ordered list of todos to complete the task.'),
+  }),
+  execute: async ({ context }) => {
+    const { task } = context as { task: string };
+
+    const base = [
+      'Clarify requirements and constraints',
+      'Outline key steps and milestones',
+      'Prepare necessary resources and access',
+      'Execute the plan step-by-step',
+      'Review results and iterate if needed',
+    ];
+
+    const prefix =
+      typeof task === 'string' && task.trim().length > 0
+        ? [`Define scope for: ${task.trim()}`]
+        : [];
+
+    const todos = [...prefix, ...base];
+
+    return { todos };
+  },
+});
+
+export const planTodosAgent = new Agent({
+  name: 'plan-todos-agent',
+  instructions: `
+You are a planning assistant. Your ONLY job is to plan out a concise, ordered list of actionable todo titles to accomplish the user's task.
+Do NOT execute tasks, do NOT provide explanations or reasoning, and do NOT include extra commentary.
+Return only clear, high-level, action-oriented todo titles that cover the full path to completion.`,
+  model: openai(TINY_MODEL),
+  tools: { planTodosTool },
+});
+
 export const workflowModifierAgent = new Agent({
   name: 'workflow-modifier',
   instructions: `

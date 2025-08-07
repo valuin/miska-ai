@@ -1,31 +1,31 @@
-"use client";
+'use client';
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { File, UploadCloud, Trash2 } from "lucide-react"; // Added Trash2
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { toast } from "sonner";
-import { useState } from "react";
-import { useWorkflow } from "@/hooks/use-workflow";
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { File, UploadCloud, Trash2 } from 'lucide-react'; // Added Trash2
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { toast } from 'sonner';
+import { useState } from 'react';
+import { useWorkflow } from '@/hooks/use-workflow';
 import {
   Dropzone,
   DropzoneContent,
   DropzoneEmptyState,
-} from "@/components/ui/dropzone";
+} from '@/components/ui/dropzone';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { z } from "zod";
-import { AGENT_TYPES } from "@/lib/constants";
+} from '@/components/ui/select';
+import { z } from 'zod';
+import { AGENT_TYPES } from '@/lib/constants';
 
 export const WorkflowDetails = () => {
-  const [prompt, setPrompt] = useState("");
+  const [prompt, setPrompt] = useState('');
   const [file, setFile] = useState<File | undefined>();
   const {
     generateWorkflow,
@@ -49,7 +49,7 @@ export const WorkflowDetails = () => {
 
   const handleGenerate = () => {
     if (!prompt) {
-      toast.error("Please enter a prompt to generate the workflow.");
+      toast.error('Please enter a prompt to generate the workflow.');
       return;
     }
     generateWorkflow(prompt, file);
@@ -107,10 +107,10 @@ export const WorkflowDetails = () => {
               setFile(acceptedFiles[0]);
             }}
             accept={{
-              "text/plain": [".txt"],
-              "application/pdf": [".pdf"],
-              "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
-                [".docx"],
+              'text/plain': ['.txt'],
+              'application/pdf': ['.pdf'],
+              'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
+                ['.docx'],
             }}
             maxFiles={1}
           >
@@ -131,7 +131,7 @@ export const WorkflowDetails = () => {
           )}
         </div>
         <Button onClick={handleGenerate} className="w-full">
-          {showGenerationProgress ? "Generating..." : "Generate Workflow"}
+          {showGenerationProgress ? 'Generating...' : 'Generate Workflow'}
         </Button>
       </CardContent>
     </Card>
@@ -139,8 +139,8 @@ export const WorkflowDetails = () => {
 };
 
 const nodeSchema = z.object({
-  currentNodeDescription: z.string().min(1, "Node description is required."),
-  currentNodeAgent: z.string().min(1, "An agent is required."),
+  currentNodeDescription: z.string().min(1, 'Node description is required.'),
+  currentNodeAgent: z.string().min(1, 'An agent is required.'),
 });
 
 export function NodeBuilder() {
@@ -192,12 +192,12 @@ export function NodeBuilder() {
               >
                 <span className="w-full">
                   <span className="text-xs bg-white rounded-lg px-1 py-px text-[#27272a] mr-1">
-                    {"agent" in n.data && n.data.agent
+                    {'agent' in n.data && n.data.agent
                       ? n.data.agent
-                      : "Human Input"}
+                      : 'Human Input'}
                   </span>
                   <span className="text-xs">
-                    {"description" in n.data && n.data.description}
+                    {'description' in n.data && n.data.description}
                   </span>
                 </span>
                 <Button
@@ -261,7 +261,7 @@ export const WorkflowReview = () => (
 );
 
 export const steps = [
-  { id: 1, title: "Details", description: "Configure basic settings" },
-  { id: 2, title: "Build", description: "Add and connect nodes" },
-  { id: 3, title: "Review", description: "Review and test" },
+  { id: 1, title: 'Details', description: 'Configure basic settings' },
+  { id: 2, title: 'Build', description: 'Add and connect nodes' },
+  { id: 3, title: 'Review', description: 'Review and test' },
 ];

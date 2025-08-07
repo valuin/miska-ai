@@ -1,12 +1,12 @@
-import { useState } from "react";
-import { useWorkflow } from "../use-workflow";
-import { parseDataStreamPart } from "ai";
+import { useState } from 'react';
+import { useWorkflow } from '../use-workflow';
+import { parseDataStreamPart } from 'ai';
 
 export const useWorkflowGeneration = () => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [generationError, setGenerationError] = useState<string | null>(null);
   const [generationProgress, setGenerationProgress] = useState(0);
-  const [generationMessage, setGenerationMessage] = useState("");
+  const [generationMessage, setGenerationMessage] = useState('');
   const initializeWorkflow = useWorkflow((state) => state.initializeWorkflow);
 
   const generateWorkflow = async (prompt: string, file?: File) => {
@@ -15,20 +15,20 @@ export const useWorkflowGeneration = () => {
 
     try {
       const headers: HeadersInit = {
-        "Content-Type": "application/json",
+        'Content-Type': 'application/json',
       };
       let body: BodyInit = JSON.stringify({ prompt });
 
       if (file) {
         const formData = new FormData();
-        formData.append("prompt", prompt);
-        formData.append("file", file);
+        formData.append('prompt', prompt);
+        formData.append('file', file);
         body = formData;
-        headers["Content-Type"] = "";
+        headers['Content-Type'] = '';
       }
 
-      const response = await fetch("/api/workflows/generate", {
-        method: "POST",
+      const response = await fetch('/api/workflows/generate', {
+        method: 'POST',
         headers: headers,
         body: body,
       });
@@ -37,7 +37,7 @@ export const useWorkflowGeneration = () => {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      let fullSchema = "";
+      let fullSchema = '';
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
 
@@ -52,53 +52,53 @@ export const useWorkflowGeneration = () => {
               initializeWorkflow(
                 finalSchema.schema.nodes,
                 finalSchema.schema.edges,
-                finalSchema.schema.name || "Generated Workflow",
+                finalSchema.schema.name || 'Generated Workflow',
                 finalSchema.schema.description ||
-                  "Workflow generated from prompt",
+                  'Workflow generated from prompt',
               );
             } else {
-              throw new Error("Invalid workflow schema received.");
+              throw new Error('Invalid workflow schema received.');
             }
           } catch (parseError) {
-            setGenerationError("Failed to parse workflow schema.");
+            setGenerationError('Failed to parse workflow schema.');
           }
           setIsGenerating(false);
           return;
         }
 
         const chunk = decoder.decode(value, { stream: true });
-        const parts = chunk.split("\n").filter(Boolean);
+        const parts = chunk.split('\n').filter(Boolean);
 
         for (const part of parts) {
           try {
             const parsed = parseDataStreamPart(part);
             switch (parsed.type) {
-              case "message_annotations":
+              case 'message_annotations':
                 for (const annotation of parsed.value) {
                   if (
                     annotation &&
-                    typeof annotation === "object" &&
-                    "type" in annotation &&
-                    (annotation as any).type === "progress" &&
-                    "message" in annotation &&
-                    typeof (annotation as any).message === "string" &&
-                    "progress" in annotation &&
-                    typeof (annotation as any).progress === "number"
+                    typeof annotation === 'object' &&
+                    'type' in annotation &&
+                    (annotation as any).type === 'progress' &&
+                    'message' in annotation &&
+                    typeof (annotation as any).message === 'string' &&
+                    'progress' in annotation &&
+                    typeof (annotation as any).progress === 'number'
                   ) {
                     setGenerationMessage((annotation as any).message);
                     setGenerationProgress((annotation as any).progress);
                   }
                 }
                 break;
-              case "data":
+              case 'data':
                 for (const data of parsed.value) {
                   if (
                     data &&
-                    typeof data === "object" &&
-                    "type" in data &&
-                    (data as any).type === "schema_chunk" &&
-                    "chunk" in data &&
-                    typeof (data as any).chunk === "string"
+                    typeof data === 'object' &&
+                    'type' in data &&
+                    (data as any).type === 'schema_chunk' &&
+                    'chunk' in data &&
+                    typeof (data as any).chunk === 'string'
                   ) {
                     fullSchema += (data as any).chunk;
                   }
@@ -106,7 +106,7 @@ export const useWorkflowGeneration = () => {
                 break;
             }
           } catch (error) {
-            setGenerationError("Error processing workflow generation stream.");
+            setGenerationError('Error processing workflow generation stream.');
           }
         }
 
@@ -114,7 +114,7 @@ export const useWorkflowGeneration = () => {
           .read()
           .then(processStream)
           .catch((error) => {
-            setGenerationError("Error reading workflow generation stream.");
+            setGenerationError('Error reading workflow generation stream.');
             setIsGenerating(false);
           });
       };
@@ -123,11 +123,11 @@ export const useWorkflowGeneration = () => {
         .read()
         .then(processStream)
         .catch((error) => {
-          setGenerationError("Failed to start workflow generation stream.");
+          setGenerationError('Failed to start workflow generation stream.');
           setIsGenerating(false);
         });
     } catch (error: any) {
-      setGenerationError(error.message || "Failed to generate workflow.");
+      setGenerationError(error.message || 'Failed to generate workflow.');
       setIsGenerating(false);
     }
   };

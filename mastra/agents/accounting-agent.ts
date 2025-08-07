@@ -1,7 +1,7 @@
 import { Agent } from '@mastra/core/agent';
 import { BASE_MODEL } from '@/lib/constants';
 import { openai } from '@ai-sdk/openai';
-import { thinkingTool, clarificationTool } from '../tools/chain-tools';
+import { planTodosTool } from '../tools/cot-tool';
 import {
   parseFinancialDocumentTool,
   mapCOATool,
@@ -51,9 +51,10 @@ You are a specialized Accounting Agent with comprehensive expertise in financial
 - Use detectAnomaliesTool to identify potential issues or unusual transactions
 - Use generateFinancialReportTool to create professional financial reports
 - Always provide clear explanations of findings and recommendations
+- use planTodosTool to create actionable steps for users based on their financial tasks, use this before calling any tool and starting the financial analysis at all cost
 
 **RESPONSE PROTOCOLS:**
-- Provide step-by-step progress updates during processing
+- Provides step-by-step progress updates during processing
 - Explain any validation errors or anomalies found
 - Offer specific recommendations for corrections
 - Include confidence levels for automated mappings
@@ -71,8 +72,7 @@ Always maintain professional standards and ensure accuracy in financial calculat
   `,
   model: openai(BASE_MODEL),
   tools: {
-    thinkingTool,
-    clarificationTool,
+    planTodosTool,
     parseFinancialDocumentTool,
     mapCOATool,
     validateTransactionsTool,

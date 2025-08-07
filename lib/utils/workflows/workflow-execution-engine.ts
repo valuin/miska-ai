@@ -4,13 +4,13 @@ import type {
   MissingConnectionError,
   MultipleSourcesError,
   WorkflowDefinition,
-} from "@/lib/utils/workflows/workflow";
+} from '@/lib/utils/workflows/workflow';
 
 // Processing
 
 export type ProcessingNodeError = {
   message: string;
-  type: "processing-node";
+  type: 'processing-node';
 };
 
 export type ProcessedData = Record<string, string> | undefined;
@@ -22,7 +22,7 @@ export type NodeProcessor = (
 
 // Node Execution State
 
-export type NodeExecutionStatus = "completed" | "error" | "running" | "idle";
+export type NodeExecutionStatus = 'completed' | 'error' | 'running' | 'idle';
 
 export type NodeExecutionState = {
   timestamp: string;
@@ -91,17 +91,17 @@ export const createWorkflowExecutionEngine = (context: ExecutionContext) => {
   const checkBranchNodeStatus = (nodeId: string): NodeExecutionStatus => {
     const node = context.workflow.nodes.find((n) => n.id === nodeId);
     if (!node) {
-      return "idle";
+      return 'idle';
     }
 
     // If this node is processing, the whole branch is processing
     if (processingNodes.has(nodeId)) {
-      return "running";
+      return 'running';
     }
 
     // If this node has failed, the branch has failed
     if (failedNodes.has(nodeId)) {
-      return "error";
+      return 'error';
     }
 
     // Get all nodes that this node depends on
@@ -110,26 +110,26 @@ export const createWorkflowExecutionEngine = (context: ExecutionContext) => {
     // If this node has no dependencies, check its own status
     if (dependencies.length === 0) {
       if (completedNodes.has(nodeId) && node.data.executionState?.sources) {
-        return "completed";
+        return 'completed';
       }
-      return "idle";
+      return 'idle';
     }
 
     // Check status of all dependencies recursively
     for (const dep of dependencies) {
       const depStatus = checkBranchNodeStatus(dep.node);
       // If any dependency is running or has error, propagate that status
-      if (depStatus === "running" || depStatus === "error") {
+      if (depStatus === 'running' || depStatus === 'error') {
         return depStatus;
       }
     }
 
     // If we got here and the node is complete with data, the branch is successful
     if (completedNodes.has(nodeId) && node.data.executionState?.sources) {
-      return "completed";
+      return 'completed';
     }
 
-    return "idle";
+    return 'idle';
   };
 
   const getBranchStatus = (
@@ -138,7 +138,7 @@ export const createWorkflowExecutionEngine = (context: ExecutionContext) => {
   ): NodeExecutionStatus => {
     const node = context.workflow.nodes.find((n) => n.id === nodeId);
     if (!node) {
-      return "idle";
+      return 'idle';
     }
 
     // Get all edges that connect to this handle
@@ -149,12 +149,12 @@ export const createWorkflowExecutionEngine = (context: ExecutionContext) => {
     // For each incoming edge, check the status of its source node and all its descendants
     for (const edge of incomingEdges) {
       const branchStatus = checkBranchNodeStatus(edge.source);
-      if (branchStatus !== "idle") {
+      if (branchStatus !== 'idle') {
         return branchStatus;
       }
     }
 
-    return "idle";
+    return 'idle';
   };
 
   const canProcessNode = (nodeId: string) => {
@@ -164,10 +164,10 @@ export const createWorkflowExecutionEngine = (context: ExecutionContext) => {
     }
 
     // Special handling for prompt-crafter nodes
-    if (node.type === "prompt-crafter") {
+    if (node.type === 'prompt-crafter') {
       // Get all target handles from dynamic handles
       const targetHandles = (
-        node.data.dynamicHandles?.["template-tags"] || []
+        node.data.dynamicHandles?.['template-tags'] || []
       ).map((handle) => handle.id);
 
       // Check each target handle's branch status
@@ -177,10 +177,10 @@ export const createWorkflowExecutionEngine = (context: ExecutionContext) => {
 
       // Node can process if ALL branches are complete and NONE are processing
       const allBranchesComplete = branchStatuses.every(
-        (status) => status === "completed",
+        (status) => status === 'completed',
       );
       const hasProcessingBranch = branchStatuses.some(
-        (status) => status === "running",
+        (status) => status === 'running',
       );
 
       return allBranchesComplete && !hasProcessingBranch;
@@ -210,7 +210,7 @@ export const createWorkflowExecutionEngine = (context: ExecutionContext) => {
 
       context.updateNodeExecutionState(nodeId, {
         timestamp: new Date().toISOString(),
-        status: "running",
+        status: 'running',
         targets: targetsData,
       });
 
@@ -220,7 +220,7 @@ export const createWorkflowExecutionEngine = (context: ExecutionContext) => {
         timestamp: new Date().toISOString(),
         targets: targetsData,
         sources: result,
-        status: "completed",
+        status: 'completed',
       });
 
       completedNodes.add(nodeId);
@@ -228,10 +228,10 @@ export const createWorkflowExecutionEngine = (context: ExecutionContext) => {
     } catch (error) {
       context.updateNodeExecutionState(nodeId, {
         timestamp: new Date().toISOString(),
-        status: "error",
+        status: 'error',
         error: {
-          type: "processing-node",
-          message: error instanceof Error ? error.message : "Unknown error",
+          type: 'processing-node',
+          message: error instanceof Error ? error.message : 'Unknown error',
         },
       });
       console.error(error);

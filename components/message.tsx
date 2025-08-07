@@ -28,7 +28,7 @@ import ToolCallBadge from "./tool-call-badge";
 import type { UIMessage } from "ai";
 import type { UseChatHelpers } from "@ai-sdk/react";
 import type { Vote } from "@/lib/db/schema";
-import { ChainOfThought } from "./chain-of-thought";
+import { PlanDisplay } from "./plan-display";
 
 // Define annotation for Chain of Thought
 interface ChainOfThoughtAnnotation {
@@ -138,23 +138,9 @@ const PurePreviewMessage = ({
                       />
                     );
                   }
-                  // Render ChainOfThought if annotation type is "chain-of-thought"
-                  if (annotation.type === "chain-of-thought") {
-                    const cotAnnotation =
-                      annotation as ChainOfThoughtAnnotation;
-                    return (
-                      <div key={index} className="w-full">
-                        <ChainOfThought
-                          isVisible={isLoading} // Show CoT while message is loading
-                          question={cotAnnotation.question}
-                        />
-                      </div>
-                    );
-                  }
                   return null;
                 }
               )}
-
             {message.experimental_attachments &&
               message.experimental_attachments.length > 0 && (
                 <div
@@ -339,6 +325,8 @@ const PurePreviewMessage = ({
                         <WorkflowDisplay result={result} />
                       ) : toolName === "clarificationTool" ? (
                         <ClarificationMessage result={result} append={append} />
+                      ) : toolName === "planTodosTool" ? (
+                        <PlanDisplay data={result} />
                       ) : toolName === "createDocument" ? (
                         <DocumentPreview
                           isReadonly={isReadonly}
@@ -414,7 +402,7 @@ export const PreviewMessage = memo(
   }
 );
 
-export const ThinkingMessage = ({ question }: { question: string }) => {
+export const ThinkingMessage = ({}: {}) => {
   const role = "assistant";
 
   return (
@@ -439,7 +427,7 @@ export const ThinkingMessage = ({ question }: { question: string }) => {
 
         <div className="flex flex-col gap-2 w-full">
           <div className="flex flex-col gap-4 text-muted-foreground">
-            <ChainOfThought isVisible={true} question={question} />
+            Thinking...
           </div>
         </div>
       </div>
