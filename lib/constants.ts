@@ -13,6 +13,10 @@ export const BASE_MODEL = 'gpt-4.1-mini';
 export const TINY_MODEL = 'gpt-4.1-nano';
 
 export const AGENT_NAMES = {
+  superAgent: 'Super Agent',
+  accountingAgent: 'Accounting Agent',
+  taxAgent: 'Tax Agent',
+  auditAgent: 'Audit Agent',
   documentAgent: 'Document Agent',
   normalAgent: 'Normal Agent',
   ragChatAgent: 'Vault Search Agent',
@@ -24,6 +28,10 @@ export const AGENT_NAMES = {
 } as const;
 
 export const AGENT_TYPES = [
+  'superAgent',
+  'accountingAgent',
+  'taxAgent',
+  'auditAgent',
   'documentAgent',
   'normalAgent',
   'ragChatAgent',

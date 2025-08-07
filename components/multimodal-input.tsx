@@ -1,34 +1,33 @@
-'use client';
+"use client";
 
-import type { Attachment, UIMessage } from 'ai';
-import cx from 'classnames';
+import { useScrollToBottom } from "@/hooks/use-scroll-to-bottom";
+import { useVaultFilesStore } from "@/lib/store/vault-files-store";
+import type { UseChatHelpers } from "@ai-sdk/react";
+import { upload } from "@vercel/blob/client";
+import type { Attachment, UIMessage } from "ai";
+import cx from "classnames";
+import equal from "fast-deep-equal";
+import { AnimatePresence, motion } from "framer-motion";
+import { ArrowDown } from "lucide-react";
 import {
-  useRef,
-  useEffect,
-  useState,
+  memo,
   useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type ChangeEvent,
   type Dispatch,
   type SetStateAction,
-  type ChangeEvent,
-  memo,
-} from 'react';
-import { toast } from 'sonner';
-import { useLocalStorage, useWindowSize } from 'usehooks-ts';
-import { ArrowUpIcon, PaperclipIcon, StopIcon } from './icons';
-import { PreviewAttachment } from './preview-attachment';
-import { Button } from './ui/button';
-import { Textarea } from './ui/textarea';
-import { SuggestedActions } from './suggested-actions';
-import equal from 'fast-deep-equal';
-import type { UseChatHelpers } from '@ai-sdk/react';
-import { AnimatePresence, motion } from 'framer-motion';
-import { ArrowDown } from 'lucide-react';
-import { useScrollToBottom } from '@/hooks/use-scroll-to-bottom';
-import type { VisibilityType } from './visibility-selector';
-import { upload } from '@vercel/blob/client';
-import { MultiSelect } from './multi-select';
-import type { UserUpload } from './vault-drawer';
-import { useVaultFilesStore } from '@/lib/store/vault-files-store';
+} from "react";
+import { toast } from "sonner";
+import { useLocalStorage, useWindowSize } from "usehooks-ts";
+import { ArrowUpIcon, PaperclipIcon, StopIcon } from "./icons";
+import { MultiSelect } from "./multi-select";
+import { PreviewAttachment } from "./preview-attachment";
+import { Button } from "./ui/button";
+import { Textarea } from "./ui/textarea";
+import type { UserUpload } from "./vault-drawer";
+import type { VisibilityType } from "./visibility-selector";
 
 export function FileUploadSection({
   onAttachmentsChange,
@@ -51,14 +50,14 @@ export function FileUploadSection({
     const toastId = toast.loading(`Uploading "${file.name}"...`);
     try {
       const newBlob = await upload(file.name, file, {
-        access: 'public',
-        handleUploadUrl: '/api/files/upload-blob',
+        access: "public",
+        handleUploadUrl: "/api/files/upload-blob",
         multipart: true,
       });
-      const processResponse = await fetch('/api/files/process-document', {
-        method: 'POST',
+      const processResponse = await fetch("/api/files/process-document", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           fileUrl: newBlob.url,
@@ -68,7 +67,7 @@ export function FileUploadSection({
       });
 
       if (!processResponse.ok) {
-        throw new Error('Failed to process document');
+        throw new Error("Failed to process document");
       }
 
       const processResult = await processResponse.json();
@@ -76,10 +75,10 @@ export function FileUploadSection({
       if (processResult.success && processResult.document.canSaveToVault) {
         // Immediately save to vault
         try {
-          const saveResponse = await fetch('/api/vault/save', {
-            method: 'POST',
+          const saveResponse = await fetch("/api/vault/save", {
+            method: "POST",
             headers: {
-              'Content-Type': 'application/json',
+              "Content-Type": "application/json",
             },
             body: JSON.stringify({
               tempDocumentId: processResult.document.id,
@@ -88,16 +87,16 @@ export function FileUploadSection({
 
           if (saveResponse.ok) {
             toast.success(
-              `Document "${file.name}" uploaded and saved to vault.`,
+              `Document "${file.name}" uploaded and saved to vault.`
             );
           } else {
             toast.error(
-              `Document "${file.name}" uploaded, but failed to save to vault.`,
+              `Document "${file.name}" uploaded, but failed to save to vault.`
             );
           }
         } catch (error) {
           toast.error(
-            `Document "${file.name}" uploaded, but failed to save to vault.`,
+            `Document "${file.name}" uploaded, but failed to save to vault.`
           );
         }
       } else if (processResult.success) {
@@ -110,7 +109,7 @@ export function FileUploadSection({
         contentType: file.type,
       };
     } catch (error) {
-      toast.error('Failed to upload and process file, please try again!');
+      toast.error("Failed to upload and process file, please try again!");
     } finally {
       toast.dismiss(toastId);
     }
@@ -126,7 +125,7 @@ export function FileUploadSection({
         const uploadPromises = files.map((file) => uploadFile(file));
         const uploadedAttachments = await Promise.all(uploadPromises);
         const successfullyUploadedAttachments = uploadedAttachments.filter(
-          (attachment) => attachment !== undefined,
+          (attachment) => attachment !== undefined
         );
 
         setAttachments((currentAttachments) => [
@@ -142,7 +141,7 @@ export function FileUploadSection({
             .filter(Boolean);
           // Use window.dispatchEvent to notify VaultFilesSection
           window.dispatchEvent(
-            new CustomEvent('vault-autoselect', { detail: uploadedNames }),
+            new CustomEvent("vault-autoselect", { detail: uploadedNames })
           );
         }
       } catch (error) {
@@ -150,12 +149,12 @@ export function FileUploadSection({
         setUploadQueue([]);
       }
     },
-    [],
+    []
   );
 
   const unattachFile = (name: string) => {
     setAttachments((currentAttachments) =>
-      currentAttachments.filter((a) => a.name !== name),
+      currentAttachments.filter((a) => a.name !== name)
     );
   };
 
@@ -178,7 +177,7 @@ export function FileUploadSection({
             <PreviewAttachment
               key={attachment.url}
               attachment={attachment}
-              unattachFile={() => unattachFile(attachment.name ?? '')}
+              unattachFile={() => unattachFile(attachment.name ?? "")}
             />
           ))}
           {uploadQueue.map((filename) => (
@@ -186,9 +185,9 @@ export function FileUploadSection({
               key={filename}
               unattachFile={() => unattachFile(filename)}
               attachment={{
-                url: '',
+                url: "",
                 name: filename,
-                contentType: '',
+                contentType: "",
               }}
               isUploading={true}
             />
@@ -212,38 +211,46 @@ function MessageInputSection({
   submitForm,
 }: {
   input: string;
-  status: UseChatHelpers['status'];
+  status: UseChatHelpers["status"];
   textareaRef: React.MutableRefObject<HTMLTextAreaElement | null>;
   handleInput: (event: React.ChangeEvent<HTMLTextAreaElement>) => void;
   className?: string;
   submitForm: () => void;
 }) {
   return (
-    <div className="w-full">
+    <div className="w-full relative">
       <Textarea
         data-testid="multimodal-input"
         ref={textareaRef}
-        placeholder="Send a message..."
+        placeholder="Ask me anything about accounting, tax, or audit..."
         value={input}
         onChange={handleInput}
-        className={className}
+        className={cx(
+          className,
+          "min-h-[60px] max-h-[200px] resize-none border-2 border-gray-200 dark:border-gray-700 focus:border-blue-500 dark:focus:border-blue-400 transition-colors duration-200",
+          "text-base leading-relaxed placeholder:text-gray-500 dark:placeholder:text-gray-400",
+          "shadow-sm hover:shadow-md focus:shadow-lg transition-shadow duration-200"
+        )}
         rows={2}
         autoFocus
         onKeyDown={(event) => {
           if (
-            event.key === 'Enter' &&
+            event.key === "Enter" &&
             !event.shiftKey &&
             !event.nativeEvent.isComposing
           ) {
             event.preventDefault();
-            if (status !== 'ready') {
-              toast.error('Please wait for the model to finish its response!');
+            if (status !== "ready") {
+              toast.error("Please wait for the model to finish its response!");
             } else {
               submitForm();
             }
           }
         }}
       />
+      <div className="absolute bottom-2 right-2 text-xs text-gray-400 dark:text-gray-500">
+        Press Enter to send, Shift+Enter for new line
+      </div>
     </div>
   );
 }
@@ -264,16 +271,16 @@ function PureMultimodalInput({
   selectedVisibilityType,
 }: {
   chatId: string;
-  input: UseChatHelpers['input'];
-  setInput: UseChatHelpers['setInput'];
-  status: UseChatHelpers['status'];
+  input: UseChatHelpers["input"];
+  setInput: UseChatHelpers["setInput"];
+  status: UseChatHelpers["status"];
   stop: () => void;
   attachments: Array<Attachment>;
   setAttachments: Dispatch<SetStateAction<Array<Attachment>>>;
   messages: Array<UIMessage>;
-  setMessages: UseChatHelpers['setMessages'];
-  append: UseChatHelpers['append'];
-  handleSubmit: UseChatHelpers['handleSubmit'];
+  setMessages: UseChatHelpers["setMessages"];
+  append: UseChatHelpers["append"];
+  handleSubmit: UseChatHelpers["handleSubmit"];
   className?: string;
   selectedVisibilityType: VisibilityType;
 }) {
@@ -288,28 +295,28 @@ function PureMultimodalInput({
 
   const adjustHeight = () => {
     if (textareaRef.current) {
-      textareaRef.current.style.height = 'auto';
+      textareaRef.current.style.height = "auto";
       textareaRef.current.style.height = `${textareaRef.current.scrollHeight + 2}px`;
     }
   };
 
   const resetHeight = () => {
     if (textareaRef.current) {
-      textareaRef.current.style.height = 'auto';
-      textareaRef.current.style.height = '98px';
+      textareaRef.current.style.height = "auto";
+      textareaRef.current.style.height = "98px";
     }
   };
 
   const [localStorageInput, setLocalStorageInput] = useLocalStorage(
-    'input',
-    '',
+    "input",
+    ""
   );
 
   useEffect(() => {
     if (textareaRef.current) {
       const domValue = textareaRef.current.value;
       // Prefer DOM value over localStorage to handle hydration
-      const finalValue = domValue || localStorageInput || '';
+      const finalValue = domValue || localStorageInput || "";
       setInput(finalValue);
       adjustHeight();
     }
@@ -329,19 +336,19 @@ function PureMultimodalInput({
   const { selectedVaultFileNames } = useVaultFilesStore();
 
   const submitForm = useCallback(() => {
-    window.history.replaceState({}, '', `/chat/${chatId}`);
+    window.history.replaceState({}, "", `/chat/${chatId}`);
 
     let userPrompt = input;
     let restoreInput = false;
     if (selectedVaultFileNames && selectedVaultFileNames.length > 0) {
-      userPrompt = `[Vault Files Selected: ${selectedVaultFileNames.join(', ')}]\n${input}`;
+      userPrompt = `[Vault Files Selected: ${selectedVaultFileNames.join(", ")}]\n${input}`;
       setInput(userPrompt);
       restoreInput = true;
     }
 
     let systemPrompt: string | undefined = undefined;
     if (selectedVaultFileNames && selectedVaultFileNames.length > 0) {
-      systemPrompt = `Vault Files Selected: ${selectedVaultFileNames.join(', ')}`;
+      systemPrompt = `Vault Files Selected: ${selectedVaultFileNames.join(", ")}`;
     }
 
     handleSubmit(undefined, {
@@ -350,11 +357,11 @@ function PureMultimodalInput({
     });
 
     if (restoreInput) {
-      setTimeout(() => setInput(''), 0);
+      setTimeout(() => setInput(""), 0);
     }
 
     setAttachments([]);
-    setLocalStorageInput('');
+    setLocalStorageInput("");
     resetHeight();
 
     if (width && width > 768) {
@@ -375,7 +382,7 @@ function PureMultimodalInput({
   const { isAtBottom, scrollToBottom } = useScrollToBottom();
 
   useEffect(() => {
-    if (status === 'submitted') {
+    if (status === "submitted") {
       scrollToBottom();
     }
   }, [status, scrollToBottom]);
@@ -388,7 +395,7 @@ function PureMultimodalInput({
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 10 }}
-            transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+            transition={{ type: "spring", stiffness: 300, damping: 20 }}
             className="absolute left-1/2 bottom-28 -translate-x-1/2 z-50"
           >
             <Button
@@ -406,21 +413,14 @@ function PureMultimodalInput({
           </motion.div>
         )}
       </AnimatePresence>
-      {messages.length === 0 && (
-        <SuggestedActions
-          append={append}
-          chatId={chatId}
-          selectedVisibilityType={selectedVisibilityType}
-        />
-      )}
       <VaultFilesSection
         onAttachmentsChange={setAttachments}
-        disabled={status !== 'ready'}
+        disabled={status !== "ready"}
       />
       {/* File upload section (self-contained) */}
       <FileUploadSection
         onAttachmentsChange={setAttachments}
-        disabled={status !== 'ready'}
+        disabled={status !== "ready"}
       />
       {/* Message input section */}
       <MessageInputSection
@@ -429,13 +429,13 @@ function PureMultimodalInput({
         textareaRef={textareaRef}
         handleInput={handleInput}
         className={cx(
-          'min-h-[24px] max-h-[calc(75dvh)] overflow-hidden resize-none rounded-2xl !text-base bg-muted dark:border-zinc-700 p-4',
-          className,
+          "min-h-[24px] max-h-[calc(75dvh)] overflow-hidden resize-none rounded-2xl !text-base bg-muted dark:border-zinc-700 p-4",
+          className
         )}
         submitForm={submitForm}
       />
       <div className="absolute bottom-0 right-0 p-2 w-fit flex flex-row justify-end">
-        {status === 'submitted' ? (
+        {status === "submitted" ? (
           <StopButton stop={stop} setMessages={setMessages} />
         ) : (
           <SendButton input={input} submitForm={submitForm} />
@@ -456,7 +456,7 @@ function VaultFilesSection({
   const { selectedVaultFileNames, setSelectedVaultFileNames } =
     useVaultFilesStore();
   const [selectedVaultFiles, setSelectedVaultFiles] = useState<string[]>(
-    selectedVaultFileNames,
+    selectedVaultFileNames
   );
 
   // Listen for auto-select events from FileUploadSection
@@ -465,28 +465,28 @@ function VaultFilesSection({
       const detail = (e as CustomEvent<string[]>).detail;
       if (Array.isArray(detail) && detail.length > 0) {
         setSelectedVaultFiles((prev) =>
-          Array.from(new Set([...prev, ...detail])),
+          Array.from(new Set([...prev, ...detail]))
         );
       }
     };
-    window.addEventListener('vault-autoselect', handler);
-    return () => window.removeEventListener('vault-autoselect', handler);
+    window.addEventListener("vault-autoselect", handler);
+    return () => window.removeEventListener("vault-autoselect", handler);
   }, []);
   const [isLoading, setIsLoading] = useState(false);
 
   const fetchUserUploads = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch('/api/vault/documents');
+      const response = await fetch("/api/vault/documents");
       if (!response.ok) {
-        throw new Error('Failed to fetch vault documents');
+        throw new Error("Failed to fetch vault documents");
       }
       const data = await response.json();
       // Filter out duplicates based on name
       const uniqueDocuments = Array.from(
         new Map(
-          (data.documents as UserUpload[]).map((doc) => [doc.filename, doc]),
-        ).values(),
+          (data.documents as UserUpload[]).map((doc) => [doc.filename, doc])
+        ).values()
       );
       setVaultFiles(uniqueDocuments || []);
     } catch (error) {
@@ -501,11 +501,11 @@ function VaultFilesSection({
       selectedVaultFiles.map((fileId) => {
         const file = vaultFiles.find((f) => f.id === fileId);
         return {
-          url: file?.url || '',
-          name: file?.filename || '',
-          contentType: '',
+          url: file?.url || "",
+          name: file?.filename || "",
+          contentType: "",
         };
-      }),
+      })
     );
     setSelectedVaultFileNames(selectedVaultFiles);
   }, [
@@ -543,7 +543,7 @@ export const MultimodalInput = memo(
       return false;
 
     return true;
-  },
+  }
 );
 
 function PureAttachmentsButton({
@@ -578,7 +578,7 @@ function PureStopButton({
   setMessages,
 }: {
   stop: () => void;
-  setMessages: UseChatHelpers['setMessages'];
+  setMessages: UseChatHelpers["setMessages"];
 }) {
   return (
     <Button

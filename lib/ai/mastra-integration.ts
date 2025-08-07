@@ -3,7 +3,7 @@ import { generateUUID } from '@/lib/utils';
 import { getAgentType } from '@/mastra/agents/agent-router';
 import { mastra, type MastraRuntimeContext } from '@/mastra';
 import { saveMessages } from '@/lib/db/queries';
-import { workflowModifierAgent } from '@/mastra/tools/utility-tools';
+import { workflowModifierAgent, planTodosAgent } from '@/mastra/tools/utility-tools';
 import type { DataStreamWriter, Message, StepResult } from 'ai';
 import type { RuntimeContext } from '@mastra/core/di';
 
@@ -55,7 +55,6 @@ export async function streamWithMastraAgent(
   }
   const agent = mastra.getAgent(selectedAgent);
 
-  // Inject vault context as a system message for all agents if present
   let finalMessages = messages;
   if (vaultFiles && vaultFiles.length > 0) {
     finalMessages = [

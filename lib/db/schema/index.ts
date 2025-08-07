@@ -12,6 +12,7 @@ export * from './ai/stream.schema';
 export * from './ai/upload.schema';
 export * from './ai/document-vault.schema';
 export * from './ai/workflow.schema';
+export * from './ai/financial.schema';
 
 // Mastra schemas
 export * from './mastra/mastra';
