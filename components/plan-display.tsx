@@ -1,7 +1,8 @@
 "use client";
 
-import { CheckSquare, ChevronDown } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import Image from "next/image";
+import { CheckCircle, ChevronDown } from "lucide-react";
+import { CardContent } from "@/components/ui/card";
 import {
   Collapsible,
   CollapsibleContent,
@@ -31,26 +32,32 @@ export function PlanDisplay({ data }: PlanDisplayProps) {
       <h3 className="text-lg font-semibold">
         I have created a plan to assist you:
       </h3>
+
       {todos.map((todo, index) => (
-        <Collapsible
-          key={index}
-          className="bg-muted/20 border-l-4 border-primary rounded-lg"
-        >
+        <Collapsible key={index} className="rounded-xl overflow-hidden">
           <CollapsibleTrigger className="w-full">
-            <Card className="bg-transparent border-none shadow-none">
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <div className="flex items-center space-x-3">
-                  <CheckSquare className="size-5 text-primary" />
-                  <CardTitle className="text-base font-medium">
-                    {todo.title}
-                  </CardTitle>
+            <div className="bg-[#054135] text-white flex items-center justify-between p-4 rounded-xl">
+              <div className="flex items-center space-x-3">
+                <CheckCircle className="size-5 text-white" />
+                <div className="flex flex-col">
+                  <span className="text-sm font-semibold">{todo.title}</span>
+                  <span className="text-xs opacity-80">{todo.description}</span>
                 </div>
-                <ChevronDown className="size-4 text-muted-foreground transition-transform data-[state=open]:rotate-180" />
-              </CardHeader>
-            </Card>
+              </div>
+              <div className="flex items-center">
+                <Image
+                  src="/images/collapsible-coin.png"
+                  alt="Coin"
+                  width={60}
+                  height={200}
+                />
+                <ChevronDown className="size-6 transition-transform text-white data-[state=open]:rotate-180" />
+              </div>
+            </div>
           </CollapsibleTrigger>
+
           <CollapsibleContent>
-            <CardContent>
+            <CardContent className="bg-muted/20 p-4">
               <p className="text-sm text-muted-foreground">
                 {todo.description}
               </p>
