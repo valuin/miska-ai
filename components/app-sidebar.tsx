@@ -1,8 +1,6 @@
 "use client";
 
 import type { User } from "next-auth";
-
-import { LineChart } from "lucide-react";
 import { SidebarHistory } from "@/components/sidebar-history";
 import { SidebarUserNav } from "@/components/sidebar-user-nav";
 import Integrations from "./integrations";
@@ -19,7 +17,13 @@ import {
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { Home, MessageSquarePlus, FolderLock, Plug } from "lucide-react";
+import {
+  Home,
+  MessageSquarePlus,
+  FolderLock,
+  Plug,
+  LineChart,
+} from "lucide-react";
 import Image from "next/image";
 
 function SidebarItem({
@@ -98,7 +102,11 @@ export function AppSidebar({ user }: { user: User | undefined }) {
         <SidebarMenu>
           <div className="flex flex-col justify-start items-start gap-2">
             {/* Home */}
-            <SidebarItem path="/" icon={<Home className="size-4" />} label="Home" />
+            <SidebarItem
+              path="/home"
+              icon={<Home className="size-4" />}
+              label="Home"
+            />
             {/* New Chat */}
             <SidebarItem
               path="/chat"
