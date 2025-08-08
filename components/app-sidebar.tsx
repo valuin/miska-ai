@@ -103,7 +103,7 @@ export function AppSidebar({ user }: { user: User | undefined }) {
             <SidebarItem path="/" icon={<Home className="size-4" />} label="Home" />
             {/* New Chat */}
             <SidebarItem
-              path="/chat/new"
+              path="/chat"
               icon={<MessageSquarePlus className="size-4" />}
               label="New Chat"
             />

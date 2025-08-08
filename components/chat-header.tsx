@@ -11,15 +11,9 @@ import { memo } from "react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 import { type VisibilityType } from "./visibility-selector";
 import type { Session } from "next-auth";
-import { PanelRightOpen, PanelRightClose } from "lucide-react";
 
-import { VaultDrawer } from "./vault-drawer";
 
-function PureChatHeader({
-  isReadonly,
-  onToggleGenerationSidebar,
-  isGenerationSidebarVisible,
-}: {
+function PureChatHeader({}: {
   chatId: string;
   selectedModelId: string;
   selectedVisibilityType: VisibilityType;
@@ -55,29 +49,6 @@ function PureChatHeader({
           <TooltipContent>New Chat</TooltipContent>
         </Tooltip>
       )}
-
-      <div className="order-1 md:order-5 ml-auto">
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={onToggleGenerationSidebar}
-            >
-              {isGenerationSidebarVisible ? (
-                <PanelRightClose className="h-4 w-4" />
-              ) : (
-                <PanelRightOpen className="h-4 w-4" />
-              )}
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>
-            {isGenerationSidebarVisible
-              ? "Hide Generation Sidebar"
-              : "Show Generation Sidebar"}
-          </TooltipContent>
-        </Tooltip>
-      </div>
     </header>
   );
 }

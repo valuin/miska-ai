@@ -24,9 +24,10 @@ export const postRequestBodySchema = z.object({
       )
       .optional(),
     selectedVaultFileNames: z.array(z.string()).optional(),
+    documentPreview: z.any().optional(),
   }),
   selectedChatModel: z.enum(['chat-model', 'chat-model-reasoning']),
   selectedVisibilityType: z.enum(['public', 'private']),
 });
-
+ 
 export type PostRequestBody = z.infer<typeof postRequestBodySchema>;

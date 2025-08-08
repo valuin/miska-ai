@@ -18,14 +18,13 @@ import { unstable_serialize } from "swr/infinite";
 import { AgentCards } from "./agent-cards";
 import { Artifact } from "./artifact";
 import { ChatHistoryGrid } from "./chat-history-grid";
-import { GenerationSidebar } from "./generation-sidebar";
 import { Messages } from "./messages";
 import { MultimodalInput } from "./multimodal-input";
 import { getChatHistoryPaginationKey } from "./sidebar-history";
-import { SuggestedActions } from "./suggested-actions";
 import { toast } from "./toast";
 import type { VisibilityType } from "./visibility-selector";
 import { useSidebar } from "@/components/ui/sidebar";
+import { useDocumentPreviewStore } from "@/lib/store/document-preview-store";
 
 export function Chat({
   id,
@@ -35,6 +34,7 @@ export function Chat({
   isReadonly,
   session,
   autoResume,
+  onChatStarted,
 }: {
   id: string;
   initialMessages: Array<UIMessage>;
@@ -43,6 +43,7 @@ export function Chat({
   isReadonly: boolean;
   session: Session;
   autoResume: boolean;
+  onChatStarted?: () => void;
 }) {
   const { mutate } = useSWRConfig();
   const router = useRouter();
@@ -85,6 +86,7 @@ export function Chat({
     fetch: fetchWithErrorHandlers,
     experimental_prepareRequestBody: (body) => {
       const { selectedVaultFileNames } = useVaultFilesStore.getState();
+      const { documentPreview } = useDocumentPreviewStore.getState();
       const lastMessage = body.messages.at(-1);
 
       return {
@@ -92,7 +94,8 @@ export function Chat({
         message: {
           ...lastMessage,
           selectedVaultFileNames: selectedVaultFileNames,
-          selectedAgent: selectedAgent, // Pass selected agent to API
+          selectedAgent: selectedAgent,
+          documentPreview,
         },
         messages: body.messages, // Send original messages array
         selectedChatModel: initialChatModel,
@@ -170,6 +173,13 @@ export function Chat({
 
   // Show initial layout if no messages and no agent selected
   const showInitialLayout = messages.length === 0 && !hasStartedChat;
+
+  // Notify when the chat has started (first user message sent)
+  useEffect(() => {
+    if (messages.length > 0) {
+      onChatStarted?.();
+    }
+  }, [messages.length, onChatStarted]);
 
   return (
     <>
@@ -292,8 +302,6 @@ export function Chat({
         isReadonly={isReadonly}
         selectedVisibilityType={visibilityType}
       />
-
-      <GenerationSidebar isVisible={showGenerationSidebar} isWide={true} />
     </>
   );
 }

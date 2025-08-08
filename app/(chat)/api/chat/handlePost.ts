@@ -1,13 +1,13 @@
-import { auth } from '@/app/(auth)/auth';
-import { ChatSDKError } from '@/lib/errors';
-import { generateTitleFromUserMessage } from '../../actions';
-import { generateUUID } from '@/lib/utils';
-import { getAttachmentText } from '@/lib/utils/text-extraction';
-import { getStreamContext } from './streamUtils';
-import { postRequestBodySchema, type PostRequestBody } from './schema';
-import { streamWithMastraAgent } from '@/lib/ai/mastra-integration';
-import type { DBMessage } from '@/lib/db/schema';
-import type { Session } from 'next-auth';
+import { auth } from "@/app/(auth)/auth";
+import { ChatSDKError } from "@/lib/errors";
+import { generateTitleFromUserMessage } from "../../actions";
+import { generateUUID } from "@/lib/utils";
+import { getAttachmentText } from "@/lib/utils/text-extraction";
+import { getStreamContext } from "./streamUtils";
+import { postRequestBodySchema, type PostRequestBody } from "./schema";
+import { streamWithMastraAgent } from "@/lib/ai/mastra-integration";
+import type { DBMessage } from "@/lib/db/schema";
+import type { Session } from "next-auth";
 import {
   createStreamId,
   getChatById,
@@ -15,7 +15,7 @@ import {
   saveChat,
   saveMessages,
   uploadFile,
-} from '@/lib/db/queries';
+} from "@/lib/db/queries";
 import {
   createDataStream,
   type DataStreamWriter,
@@ -40,13 +40,13 @@ async function processAttachments({
       try {
         await uploadFile({
           name: file.name || `attachment-${Date.now()}-${index}`,
-          url: file.url || '',
-          text: text || '',
+          url: file.url || "",
+          text: text || "",
           userId: session.user.id,
         });
       } catch (error) {}
       return text;
-    }) ?? [],
+    }) ?? []
   );
 }
 
@@ -56,6 +56,7 @@ interface HandleChatStreamingParams {
   session: Session;
   id: string;
   selectedVaultFileNames?: string[];
+  documentPreview?: any;
 }
 
 async function handleChatStreaming({
@@ -64,6 +65,7 @@ async function handleChatStreaming({
   session,
   id,
   selectedVaultFileNames, // Extract from parameters
+  documentPreview,
 }: HandleChatStreamingParams) {
   const files = messages.at(-1)?.experimental_attachments;
   await processAttachments({ files, session });
@@ -75,6 +77,13 @@ async function handleChatStreaming({
     'selectedVaultFileNames',
     selectedVaultFileNames ?? [],
   ); // Use nullish coalescing for clarity
+  if (documentPreview) {
+    mastraRuntimeContext.set('documentPreview', documentPreview);
+    console.log(
+      '[Mastra HandleChat] successfully set documentPreview in runtimeContext:',
+      JSON.stringify(documentPreview, null, 2),
+    );
+  }
 
   await streamWithMastraAgent(id, messages, {
     responsePipe,
@@ -83,22 +92,33 @@ async function handleChatStreaming({
 }
 
 export async function handlePost(request: Request) {
-  let requestBody: PostRequestBody;
   try {
     const json = await request.json();
-    requestBody = postRequestBodySchema.parse(json);
-  } catch (error) {
-    if (error instanceof Error) {
-    }
-    return new ChatSDKError('bad_request:api').toResponse();
-  }
-
-  try {
-    const { id, message, selectedVisibilityType } = requestBody;
-    const selectedVaultFileNames = message.selectedVaultFileNames ?? [];
-
+    const { id, message, selectedVisibilityType } =
+       postRequestBodySchema.parse(json);
+     const { documentPreview } = message;
+ 
+     // Debug: Show what we will forward to the streaming handler
+     try {
+       console.log(
+         '[handlePost] message selectedVaultFileNames:', 
+         JSON.stringify(message.selectedVaultFileNames, null, 2),
+       );
+     } catch {}
+  
+    // Debug: Show what we will forward to the streaming handler
+    try {
+      console.log(
+        '[handlePost] extracted data for streaming',
+        JSON.stringify({ 
+          selectedVaultFileNames: message.selectedVaultFileNames,
+          documentPreview,
+        }, null, 2)
+      );
+    } catch {}
+    
     const session = await auth();
-
+  
     if (!session?.user)
       return new ChatSDKError('unauthorized:chat').toResponse();
 
@@ -120,7 +140,6 @@ export async function handlePost(request: Request) {
 
     const previousMessages: DBMessage[] = await getMessagesByChatId({ id });
     const dbMessage: DBMessage = {
-      // Add type annotation here
       chatId: id,
       id: message.id,
       agentName: null,
@@ -135,24 +154,57 @@ export async function handlePost(request: Request) {
     const streamId = generateUUID();
     await createStreamId({ streamId, chatId: id });
 
-    const uiMessages: Message[] = messages.map((msg) => ({
-      // Renamed arg to msg to avoid conflict
-      id: msg.id,
-      role: msg.role as Message['role'],
-      content: Array.isArray(msg.parts)
-        ? msg.parts.map((part) => part?.text ?? '').join('')
-        : '',
-      createdAt: msg.createdAt,
-    }));
-
+    const uiMessages: Message[] = messages.map((msg) => {
+       const content = Array.isArray(msg.parts)
+         ? msg.parts.map((part) => (part as any)?.text ?? '').join('')
+         : '';
+       return {
+         id: msg.id,
+         role: msg.role as Message['role'],
+         content,
+         createdAt: msg.createdAt,
+       };
+     });
+     let finalUiMessages = uiMessages;
+ 
+     // Attempt to recover documentPreview from hidden marker if body dropped by client
+     const markerRegex = /\[\[__DOC_PREVIEW__:(.*?)\]\]/s;
+     try {
+       const lastIdx = finalUiMessages.length - 1;
+       if (lastIdx >= 0) {
+         const last = finalUiMessages[lastIdx];
+         const m = markerRegex.exec(last.content || '');
+         if (m && m[1]) {
+           // Strip marker from the last message before sending to agent
+           finalUiMessages = finalUiMessages.map((msg, i) =>
+             i === lastIdx
+               ? { ...msg, content: (msg.content || '').replace(markerRegex, '').trim() }
+               : msg,
+           );
+         }
+       }
+     } catch (e) {
+       console.log('[handlePost] Error parsing __DOC_PREVIEW__ marker:', e);
+     }
+ 
+     try {
+       console.log(
+         '[handlePost] Final docPreview forwarded:',
+         typeof documentPreview === 'object'
+           ? JSON.stringify(documentPreview).slice(0, 400) + '…'
+           : typeof documentPreview,
+       );
+     } catch { }
+ 
     const stream = createDataStream({
       execute: (dataStream) =>
         handleChatStreaming({
           responsePipe: dataStream,
-          messages: uiMessages,
+          messages: finalUiMessages,
           session,
           id,
-          selectedVaultFileNames, // Pass the extracted value
+          selectedVaultFileNames: message.selectedVaultFileNames ?? [],
+          documentPreview,
         }),
       onError: () => 'Oops, an error occurred!',
     });

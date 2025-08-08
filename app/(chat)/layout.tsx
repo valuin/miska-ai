@@ -5,7 +5,6 @@ import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { auth } from "../(auth)/auth";
 import Script from "next/script";
 import { QueryProvider } from "./query-provider";
-import { GenerationSidebar } from "@/components/generation-sidebar";
 
 export const experimental_ppr = true;
 
@@ -28,7 +27,6 @@ export default async function Layout({
           <AppSidebar user={session?.user} />
           <SidebarInset>{children}</SidebarInset>
         </SidebarProvider>
-        <GenerationSidebar isVisible={false} />
       </QueryProvider>
     </>
   );

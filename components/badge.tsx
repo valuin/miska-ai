@@ -10,7 +10,7 @@ export default function Badge({
   return (
     <div
       className={cn(
-        'w-fit rounded-full border border-muted-foreground/20 hover:bg-muted-foreground/20',
+        'w-fit rounded-full bg-white border border-[#054135] hover:bg-muted-foreground/20',
         'flex flex-row items-center justify-center gap-2 py-2 px-[9px] cursor-pointer whitespace-nowrap',
       )}
     >

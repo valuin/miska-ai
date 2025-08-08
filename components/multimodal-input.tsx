@@ -1,6 +1,7 @@
 "use client";
 
 import { useScrollToBottom } from "@/hooks/use-scroll-to-bottom";
+import { useArtifact } from "@/hooks/use-artifact";
 import { useVaultFilesStore } from "@/lib/store/vault-files-store";
 import type { UseChatHelpers } from "@ai-sdk/react";
 import { upload } from "@vercel/blob/client";
@@ -29,6 +30,7 @@ import { Textarea } from "./ui/textarea";
 import type { UserUpload } from "./vault-drawer";
 import type { VisibilityType } from "./visibility-selector";
 import { VaultDrawer } from "./vault-drawer";
+import { useMessageCountStore } from "./chat-with-preview";
 
 // MessageInputSection: handles textarea, input, and keyboard events
 function MessageInputSection({
@@ -84,6 +86,12 @@ function MessageInputSection({
   );
 }
 
+declare global {
+  interface Window {
+    __documentPreviewContext?: any;
+  }
+}
+
 function PureMultimodalInput({
   chatId,
   input,
@@ -115,8 +123,8 @@ function PureMultimodalInput({
 }) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { width } = useWindowSize();
+  const { messageCount, increment } = useMessageCountStore();
 
-  // --- Start of logic lifted from FileUploadSection ---
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploadQueue, setUploadQueue] = useState<Array<string>>([]);
 
@@ -235,22 +243,35 @@ function PureMultimodalInput({
   const submitForm = useCallback(() => {
     window.history.replaceState({}, "", `/chat/${chatId}`);
 
+    if (messageCount < 4) {
+      increment();
+    }
+
     let userPrompt = input;
     let restoreInput = false;
     if (selectedVaultFileNames && selectedVaultFileNames.length > 0) {
-      userPrompt = `[Vault Files Selected: ${selectedVaultFileNames.join(", ")}]\n${input}`;
-      setInput(userPrompt);
-      restoreInput = true;
-    }
+      userPrompt = `[Vault Files Selected: ${selectedVaultFileNames.join(
+         ", ",
+       )}]\n${input}`;
+       setInput(userPrompt);
+       restoreInput = true;
+     }
 
     let systemPrompt: string | undefined = undefined;
     if (selectedVaultFileNames && selectedVaultFileNames.length > 0) {
-      systemPrompt = `Vault Files Selected: ${selectedVaultFileNames.join(", ")}`;
-    }
+      systemPrompt = `Vault Files Selected: ${selectedVaultFileNames.join(
+         ", ",
+       )}`;
+     }
+   
+     const body: { systemPrompt?: string } = {};
+     if (systemPrompt) {
+       body.systemPrompt = systemPrompt;
+     }
 
     handleSubmit(undefined, {
       experimental_attachments: attachments.filter((att) => !!att.url),
-      body: systemPrompt ? { systemPrompt } : undefined,
+      body,
     });
 
     if (restoreInput) {
@@ -274,6 +295,8 @@ function PureMultimodalInput({
     input,
     selectedVaultFileNames,
     setInput,
+    messageCount,
+    increment,
   ]);
 
   const { isAtBottom, scrollToBottom } = useScrollToBottom();

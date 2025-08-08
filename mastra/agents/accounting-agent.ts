@@ -4,11 +4,10 @@ import { openai } from '@ai-sdk/openai';
 import { planTodosTool } from '../tools/cot-tool';
 import {
   parseFinancialDocumentTool,
-  mapCOATool,
-  validateTransactionsTool,
-  generateFinancialReportTool,
-  detectAnomaliesTool,
 } from '../tools/accounting-tools';
+import {
+  queryVaultDocumentsTool,
+} from '../tools/document-vault-tools';
 
 export const accountingAgent = new Agent({
   name: 'Accounting Agent',
@@ -51,7 +50,9 @@ You are a specialized Accounting Agent with comprehensive expertise in financial
 - Use detectAnomaliesTool to identify potential issues or unusual transactions
 - Use generateFinancialReportTool to create professional financial reports
 - Always provide clear explanations of findings and recommendations
-- use planTodosTool to create actionable steps for users based on their financial tasks, use this before calling any tool and starting the financial analysis at all cost
+- Always use planTodosTool to create actionable steps for users based on their financial tasks **before** calling any other tool or starting financial analysis
+- Use listVaultDocumentsTool to list all available documents in the vault when needed
+- Use queryVaultDocumentsTool to perform semantic searches on vault documents for relevant financial data
 
 **RESPONSE PROTOCOLS:**
 - Provides step-by-step progress updates during processing
@@ -68,15 +69,18 @@ You are a specialized Accounting Agent with comprehensive expertise in financial
 - Flag any potential issues requiring human review
 - Follow Indonesian accounting standards and regulations
 
-Always maintain professional standards and ensure accuracy in financial calculations and advice. When in doubt, recommend consulting with qualified accounting professionals for complex situations.
+**DOCUMENT PREVIEW RUNTIME CONTEXT:**
+- The system prompt may include a section titled "Current Document Context (from preview)" which is provided at runtime.
+- When present, you must explicitly acknowledge this current document at the start of your reply and use it as the primary context for any analysis, references, calculations, or tool usage.
+- If the provided context is insufficient or ambiguous, state precisely what additional details are required from the current document to proceed.
+
+ Always maintain professional standards and ensure accuracy in financial calculations and advice. When in doubt, recommend consulting with qualified accounting professionals for complex situations.
   `,
   model: openai(BASE_MODEL),
   tools: {
+    queryVaultDocumentsTool,
     planTodosTool,
     parseFinancialDocumentTool,
-    mapCOATool,
-    validateTransactionsTool,
-    generateFinancialReportTool,
-    detectAnomaliesTool,
   },
+  defaultGenerateOptions: { maxSteps: 5 },
 }); 

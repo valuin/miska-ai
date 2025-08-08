@@ -44,29 +44,79 @@ export async function streamWithMastraAgent(
   const { responsePipe, runtimeContext } = options;
   // Check for selectedVaultFileNames in runtimeContext
   let vaultFiles: string[] | undefined = undefined;
-  if (runtimeContext) {
-    vaultFiles = runtimeContext.get('selectedVaultFileNames');
-    runtimeContext.set('mastra', mastra);
+
+  if (!runtimeContext) {
+    throw new Error('Runtime context is required for Mastra agent streaming');
   }
 
+  vaultFiles = runtimeContext.get('selectedVaultFileNames');
+  const docPreview = runtimeContext.get('documentPreview');
+  runtimeContext.set('mastra', mastra);
+
+  
   let selectedAgent = await getAgentType(messages);
+  const initialAgent = selectedAgent;
   if (vaultFiles && Array.isArray(vaultFiles) && vaultFiles.length > 0) {
-    selectedAgent = 'ragChatAgent';
+    selectedAgent = 'accountingAgent';
   }
-  const agent = mastra.getAgent(selectedAgent);
+  if (docPreview) {
+    selectedAgent = 'accountingAgent';
+  }
+  console.log('[Mastra Integration] Agent routing:', {
+    initialAgent,
+    hasVaultFiles: Array.isArray(vaultFiles) && vaultFiles.length > 0,
+    hasDocPreview: Boolean(docPreview),
+    finalAgent: selectedAgent,
+  });
+  const agent = mastra.getAgent(
+    selectedAgent as keyof ReturnType<typeof mastra.getAgents>,
+  );
 
+  // Build system-prefix messages from runtime context
   let finalMessages = messages;
+  const prefixMessages: Message[] = [];
+
   if (vaultFiles && vaultFiles.length > 0) {
-    finalMessages = [
-      {
-        id: 'system-vault-context',
-        role: 'system',
-        content: `Vault Files Selected: ${vaultFiles.join(', ')}`,
-        createdAt: new Date(),
-      },
-      ...messages,
-    ];
+    prefixMessages.push({
+      id: 'system-vault-context',
+      role: 'system',
+      content: `Vault Files Selected: ${vaultFiles.join(', ')}`,
+      createdAt: new Date(),
+    });
   }
+
+  if (selectedAgent === 'accountingAgent' && docPreview) {
+    const safeStringify = (obj: any, maxLen = 2000) => {
+      try {
+        const json = JSON.stringify(obj);
+        return json.length > maxLen ? json.slice(0, maxLen) + '…(truncated)' : json;
+      } catch {
+        return '[Unserializable documentPreview]';
+      }
+    };
+    console.log(
+      '[Mastra Integration] docPreview detected; injecting into system prompt.',
+    );
+    const previewSummary = safeStringify(docPreview);
+    prefixMessages.push({
+      id: 'system-document-preview',
+      role: 'system',
+      content:
+        `Current Document Context (from preview):\n${previewSummary}\n\n` +
+        `You must acknowledge this current document in your response and use it as primary context for accounting analysis.`,
+      createdAt: new Date(),
+    });
+    console.log('[Mastra Integration] Injected document preview system prompt.');
+  }
+
+  if (prefixMessages.length > 0) {
+    finalMessages = [...prefixMessages, ...messages];
+  }
+
+  console.log(
+    '[Mastra Integration] Final messages before sending to agent:',
+    JSON.stringify(finalMessages, null, 2),
+  );
 
   if (selectedAgent !== 'normalAgent') {
     const agentChoice = `Initiating ${AGENT_NAMES[selectedAgent]}...`;

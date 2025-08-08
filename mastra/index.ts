@@ -21,6 +21,7 @@ export type MastraRuntimeContext = {
   session: Session;
   dataStream: DataStreamWriter;
   selectedVaultFileNames: string[];
+  documentPreview: any;
   mastra: Mastra<any>;
 };
 
@@ -31,18 +32,9 @@ export const memory = new Memory({
 });
 
 export const agents = {
-  superAgent,
   accountingAgent,
   taxAgent,
-  auditAgent,
-  researchAgent,
-  ragChatAgent,
   normalAgent,
-  workflowCreatorAgent,
-  documentAgent,
-  communicationAgent,
-  gmailAgent,
-  driveAgent,
 };
 
 export const mastra = new Mastra({

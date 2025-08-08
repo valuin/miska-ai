@@ -122,11 +122,11 @@ const PurePreviewMessage = ({
                         text={
                           <GradientText
                             colors={[
-                              "#154fc2",
-                              "#9b61e8",
-                              "#4bdee2",
-                              "#9b61e8",
-                              "#154fc2",
+                              "#537332",
+                              "#537332",
+                              "#054135",
+                              "#054135",
+                              "#054135",
                             ]}
                             animationSpeed={3}
                             showBorder={false}
