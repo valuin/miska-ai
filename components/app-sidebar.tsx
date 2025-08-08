@@ -98,7 +98,11 @@ export function AppSidebar({ user }: { user: User | undefined }) {
         <SidebarMenu>
           <div className="flex flex-col justify-start items-start gap-2">
             {/* Home */}
-            <SidebarItem path="/" icon={<Home className="size-4" />} label="Home" />
+            <SidebarItem
+              path="/home"
+              icon={<Home className="size-4" />}
+              label="Home"
+            />
             {/* New Chat */}
             <SidebarItem
               path="/chat"

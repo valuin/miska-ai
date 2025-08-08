@@ -86,7 +86,6 @@ export async function POST(req: Request) {
           (node: WorkflowNode) => {
             if (node.type === 'workflowNode') {
               const agent = node.data.agent || 'normalAgent';
-              // Determine the new type based on the agent
               const newType =
                 agent === 'human' || agent === 'user'
                   ? 'text-input'
