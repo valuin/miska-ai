@@ -191,7 +191,6 @@ export function Step3FileUpload({
 
   return (
     <div className="space-y-8">
-      {/* Grid untuk semua kotak upload file */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-8">
         {requiredDocuments.map((docTitle) => {
           const uploadedFile = data.uploadedFiles?.find(
