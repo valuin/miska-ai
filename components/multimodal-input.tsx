@@ -1,7 +1,6 @@
 "use client";
 
 import { useScrollToBottom } from "@/hooks/use-scroll-to-bottom";
-import { useArtifact } from "@/hooks/use-artifact";
 import { useVaultFilesStore } from "@/lib/store/vault-files-store";
 import type { UseChatHelpers } from "@ai-sdk/react";
 import { upload } from "@vercel/blob/client";

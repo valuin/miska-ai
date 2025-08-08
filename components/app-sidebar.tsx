@@ -2,7 +2,7 @@
 
 import type { User } from "next-auth";
 
-import { Bot, LineChart } from "lucide-react";
+import { LineChart } from "lucide-react";
 import { SidebarHistory } from "@/components/sidebar-history";
 import { SidebarUserNav } from "@/components/sidebar-user-nav";
 import Integrations from "./integrations";
@@ -12,8 +12,6 @@ import {
   SidebarFooter,
   SidebarHeader,
   SidebarMenu,
-  // Remove primitives causing runtime issues
-  SidebarMenuSubItem,
   // SidebarMenuButton,
   SidebarMenuIcon,
   useSidebar,

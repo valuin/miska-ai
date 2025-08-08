@@ -15,8 +15,6 @@ import {
 } from '@/components/ui/dropdown-menu';
 import {
   SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuSubItem,
 } from '@/components/ui/sidebar';
 import { useRouter } from 'next/navigation';
 import { toast } from './toast';

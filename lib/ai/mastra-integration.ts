@@ -3,7 +3,7 @@ import { generateUUID } from '@/lib/utils';
 import { getAgentType } from '@/mastra/agents/agent-router';
 import { mastra, type MastraRuntimeContext } from '@/mastra';
 import { saveMessages } from '@/lib/db/queries';
-import { workflowModifierAgent, planTodosAgent } from '@/mastra/tools/utility-tools';
+import { workflowModifierAgent, } from '@/mastra/tools/utility-tools';
 import type { DataStreamWriter, Message, StepResult } from 'ai';
 import type { RuntimeContext } from '@mastra/core/di';
 
@@ -89,7 +89,7 @@ export async function streamWithMastraAgent(
     const safeStringify = (obj: any, maxLen = 2000) => {
       try {
         const json = JSON.stringify(obj);
-        return json.length > maxLen ? json.slice(0, maxLen) + '…(truncated)' : json;
+        return json.length > maxLen ? `${json.slice(0, maxLen)}…(truncated)` : json;
       } catch {
         return '[Unserializable documentPreview]';
       }
@@ -102,8 +102,7 @@ export async function streamWithMastraAgent(
       id: 'system-document-preview',
       role: 'system',
       content:
-        `Current Document Context (from preview):\n${previewSummary}\n\n` +
-        `You must acknowledge this current document in your response and use it as primary context for accounting analysis.`,
+        `Current Document Context (from preview):\n${previewSummary}\n\nYou must acknowledge this current document in your response and use it as primary context for accounting analysis.`,
       createdAt: new Date(),
     });
     console.log('[Mastra Integration] Injected document preview system prompt.');

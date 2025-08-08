@@ -4,7 +4,7 @@ import { generateTitleFromUserMessage } from "../../actions";
 import { generateUUID } from "@/lib/utils";
 import { getAttachmentText } from "@/lib/utils/text-extraction";
 import { getStreamContext } from "./streamUtils";
-import { postRequestBodySchema, type PostRequestBody } from "./schema";
+import { postRequestBodySchema, } from "./schema";
 import { streamWithMastraAgent } from "@/lib/ai/mastra-integration";
 import type { DBMessage } from "@/lib/db/schema";
 import type { Session } from "next-auth";
@@ -174,7 +174,7 @@ export async function handlePost(request: Request) {
        if (lastIdx >= 0) {
          const last = finalUiMessages[lastIdx];
          const m = markerRegex.exec(last.content || '');
-         if (m && m[1]) {
+         if (m?.[1]) {
            // Strip marker from the last message before sending to agent
            finalUiMessages = finalUiMessages.map((msg, i) =>
              i === lastIdx
@@ -191,7 +191,7 @@ export async function handlePost(request: Request) {
        console.log(
          '[handlePost] Final docPreview forwarded:',
          typeof documentPreview === 'object'
-           ? JSON.stringify(documentPreview).slice(0, 400) + '…'
+           ? `${JSON.stringify(documentPreview).slice(0, 400)}…`
            : typeof documentPreview,
        );
      } catch { }

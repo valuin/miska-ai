@@ -32,7 +32,8 @@
         "noAutofocus": "off",
         "useFocusableInteractive": "off",
         "useAriaPropsForRole": "off",
-        "useKeyWithClickEvents": "off"
+        "useKeyWithClickEvents": "off",
+        "useButtonType": "off"
       },
       "complexity": {
         "noUselessStringConcat": "warn",
@@ -46,7 +47,8 @@
         "noUnusedImports": "warn",
         "useJsxKeyInIterable": "off",
         "useExhaustiveDependencies": "off",
-        "noUnusedVariables": "off"
+        "noUnusedVariables": "off",
+        "noEmptyPattern": "off"
       },
       "security": {
         "noDangerouslySetInnerHtml": "off"

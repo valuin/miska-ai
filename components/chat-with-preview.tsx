@@ -1,12 +1,12 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, } from "react";
 import { Chat } from "@/components/chat";
 import { DocumentPreview } from "@/components/document-preview";
 import type { Session } from "next-auth";
 import type { UIMessage } from "ai";
 import { create } from "zustand";
-import {
+import type {
   VisibilityType,
 } from "@/components/visibility-selector";
 
