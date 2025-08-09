@@ -22,7 +22,6 @@ import {
   MessageSquarePlus,
   FolderLock,
   Plug,
-  LineChart,
 } from "lucide-react";
 import Image from "next/image";
 

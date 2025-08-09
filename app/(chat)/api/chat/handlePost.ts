@@ -191,7 +191,7 @@ export async function handlePost(request: Request) {
        console.log(
          '[handlePost] Final docPreview forwarded:',
          typeof documentPreview === 'object'
-           ? JSON.stringify(documentPreview).slice(0, 400) + '…'
+           ? `${JSON.stringify(documentPreview).slice(0, 400)}…`
            : typeof documentPreview,
        );
      } catch { }

@@ -36,7 +36,6 @@ import { useDocumentPreviewStore } from "@/lib/store/document-preview-store";
 import { Input } from "./ui/input";
 import { Button } from "./ui/button";
 import { Download } from "lucide-react";
-import Image from "next/image";
 import { CardPersediaan } from "./analytics/card-persediaan";
 import {
   ResponsiveContainer,
@@ -48,7 +47,6 @@ import {
   YAxis,
   Tooltip,
 } from "recharts";
-import { Progress } from "./ui/progress";
 
 interface DocumentPreviewProps {
   isReadonly: boolean;
@@ -1093,13 +1091,13 @@ const StepFourPreview = () => {
             {/* Legend */}
             <div className="flex items-center justify-center gap-6 mt-4">
               <div className="flex items-center gap-2">
-                <div className="w-4 h-4 bg-green-600 rounded"></div>
+                <div className="w-4 h-4 bg-green-600 rounded" />
                 <span className="text-sm text-gray-600 dark:text-gray-400">
                   Total Pendapatan
                 </span>
               </div>
               <div className="flex items-center gap-2">
-                <div className="w-4 h-1 bg-lime-500 rounded"></div>
+                <div className="w-4 h-1 bg-lime-500 rounded" />
                 <span className="text-sm text-gray-600 dark:text-gray-400">
                   Laba Bersih
                 </span>
@@ -1129,7 +1127,7 @@ const StepFourPreview = () => {
                 <div
                   className="bg-green-600 h-2 rounded-full"
                   style={{ width: "85%" }}
-                ></div>
+                />
               </div>
             </div>
           </div>
@@ -1153,7 +1151,7 @@ const StepFourPreview = () => {
                 <div
                   className="bg-orange-500 h-2 rounded-full"
                   style={{ width: "45%" }}
-                ></div>
+                />
               </div>
             </div>
           </div>
@@ -1177,7 +1175,7 @@ const StepFourPreview = () => {
                 <div
                   className="bg-green-600 h-2 rounded-full"
                   style={{ width: "78%" }}
-                ></div>
+                />
               </div>
             </div>
           </div>
