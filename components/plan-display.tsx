@@ -38,18 +38,23 @@ export function PlanDisplay({ data }: PlanDisplayProps) {
           <CollapsibleTrigger className="w-full">
             <div className="bg-[#054135] text-white flex items-center justify-between p-4 rounded-xl">
               <div className="flex items-center space-x-3">
-                <CheckCircle className="size-5 text-white" />
                 <div className="flex flex-col">
                   <span className="text-sm font-semibold">{todo.title}</span>
-                  <span className="text-xs opacity-80">{todo.description}</span>
+                  <div className="flex">
+                    <CheckCircle className="size-5 text-white" />
+                    <span className="text-xs opacity-80">
+                      {todo.description}
+                    </span>
+                  </div>
                 </div>
               </div>
               <div className="flex items-center">
                 <Image
                   src="/images/collapsible-coin.png"
                   alt="Coin"
-                  width={60}
+                  width={100}
                   height={200}
+                  className="mt-6"
                 />
                 <ChevronDown className="size-6 transition-transform text-white data-[state=open]:rotate-180" />
               </div>

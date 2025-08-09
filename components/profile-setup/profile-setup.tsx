@@ -23,7 +23,6 @@ import {
   StepperTrigger,
   StepperIndicator,
   StepperTitle,
-  StepperDescription,
   StepperSeparator,
 } from "@/components/ui/stepper";
 import { Step3FileUpload } from "./step-3-file-upload";
@@ -233,7 +232,7 @@ export function ProfileSetup({ session }: ProfileSetupProps) {
               <BreadcrumbLink href="/">Home</BreadcrumbLink>
             </BreadcrumbItem>
             {pathSegments.map((segment, index) => {
-              const href = "/" + pathSegments.slice(0, index + 1).join("/");
+              const href = `/${pathSegments.slice(0, index + 1).join("/")}`;
               const isLast = index === pathSegments.length - 1;
               return (
                 <div key={segment} className="flex items-center">
