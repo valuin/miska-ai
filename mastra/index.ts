@@ -16,12 +16,6 @@ export type MastraRuntimeContext = {
   mastra: Mastra<any>;
 };
 
-export const memory = new Memory({
-  storage: new PostgresStore({
-    connectionString: process.env.POSTGRES_URL || '',
-  }),
-});
-
 export const agents = {
   accountingAgent,
   taxAgent,

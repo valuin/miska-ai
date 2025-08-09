@@ -105,25 +105,19 @@ export function AppSidebar({ user }: { user: User | undefined }) {
             <SidebarItem
               path="/home"
               icon={<Home className="size-4" />}
-              label="Home"
+              label="Beranda"
             />
             {/* New Chat */}
             <SidebarItem
               path="/chat"
               icon={<MessageSquarePlus className="size-4" />}
-              label="New Chat"
-            />
-            {/* Analytics */}
-            <SidebarItem
-              path="/analytics"
-              icon={<LineChart className="size-4" />}
-              label="Analytics"
+              label="Obrolan Baru"
             />
             {/* Vault Documents */}
             <SidebarItem
               path="/vault/documents"
               icon={<FolderLock className="size-4" />}
-              label="Vault Documents"
+              label="Arsip Dokumen"
             />
           </div>
         </SidebarMenu>
