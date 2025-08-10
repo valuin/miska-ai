@@ -1,6 +1,5 @@
 "use client";
 
-import type { User } from "next-auth";
 import { SidebarUserNav } from "@/components/sidebar-user-nav";
 import {
   Sidebar,
@@ -9,11 +8,12 @@ import {
   SidebarMenu,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { cn } from "@/lib/utils";
+import { Clock, FolderLock, Home, MessageSquarePlus } from "lucide-react";
+import type { User } from "next-auth";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { cn } from "@/lib/utils";
-import { Home, MessageSquarePlus, FolderLock, Plug } from "lucide-react";
-import Image from "next/image";
 
 function SidebarItem({
   path,
@@ -102,9 +102,19 @@ export function AppSidebar({ user }: { user: User | undefined }) {
               label="Obrolan Baru"
             />
             <SidebarItem
+              path="/home"
+              icon={<Home className="size-4" />}
+              label="Beranda"
+            />
+            <SidebarItem
               path="/vault"
               icon={<FolderLock className="size-4" />}
               label="Arsip Dokumen"
+            />
+            <SidebarItem
+              path="/history"
+              icon={<Clock className="size-4" />}
+              label="Riwayat"
             />
           </div>
         </SidebarMenu>
