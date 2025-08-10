@@ -10,8 +10,7 @@ import type { DBMessage } from "@/lib/db/schema";
 import type { Attachment, UIMessage } from "ai";
 import { DocumentPreview } from "@/components/document-preview";
 
-export default async function Page(props: { params: Promise<{ id: string }> }) {
-  const params = await props.params;
+export default async function Page({ params }: any) {
   const { id } = params;
   const chat = await getChatById({ id });
 
