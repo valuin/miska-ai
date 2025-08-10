@@ -1,6 +1,5 @@
-import { AGENT_NAMES } from '@/lib/constants';
+
 import { generateUUID } from '@/lib/utils';
-import { getAgentType } from '@/mastra/agents/agent-router';
 import { mastra, type MastraRuntimeContext } from '@/mastra';
 import { saveMessages } from '@/lib/db/queries';
 import { workflowModifierAgent, } from '@/mastra/tools/utility-tools';
@@ -54,7 +53,7 @@ export async function streamWithMastraAgent(
   runtimeContext.set('mastra', mastra);
 
   
-  let selectedAgent = await getAgentType(messages);
+  let selectedAgent = 'accountingAgent';
   const initialAgent = selectedAgent;
   if (vaultFiles && Array.isArray(vaultFiles) && vaultFiles.length > 0) {
     selectedAgent = 'accountingAgent';
@@ -116,15 +115,6 @@ export async function streamWithMastraAgent(
     '[Mastra Integration] Final messages before sending to agent:',
     JSON.stringify(finalMessages, null, 2),
   );
-
-  if (selectedAgent !== 'normalAgent') {
-    const agentChoice = `Initiating ${AGENT_NAMES[selectedAgent]}...`;
-    if (!agentChoice) return;
-    responsePipe.writeMessageAnnotation({
-      type: 'agent-choice',
-      agentChoice,
-    });
-  }
 
   const resourceId = chatId || generateUUID();
   const threadId = generateUUID();

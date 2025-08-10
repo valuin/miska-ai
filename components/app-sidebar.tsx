@@ -16,7 +16,6 @@ import {
   Home,
   MessageSquarePlus,
   FolderLock,
-  LineChart,
 } from "lucide-react";
 import Image from "next/image";
 
@@ -94,6 +93,14 @@ export function AppSidebar({ user }: { user: User | undefined }) {
         </div>
         <SidebarMenu>
           <div className="flex flex-col justify-start items-start gap-2">
+
+            {/* Home */}
+            <SidebarItem
+              path="/home"
+              icon={<Home className="size-4" />}
+              label="Beranda"
+            />
+            {/* New Chat */}
             <SidebarItem
               path="/chat"
               icon={<MessageSquarePlus className="size-4" />}
@@ -113,6 +120,7 @@ export function AppSidebar({ user }: { user: User | undefined }) {
               path="/history"
               icon={<LineChart className="size-4" />}
               label="Riwayat"
+
             />
           </div>
         </SidebarMenu>

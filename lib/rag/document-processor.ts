@@ -38,11 +38,29 @@ export class DocumentProcessor {
       source: fileUrl,
     });
 
-    const chunks = await doc.chunk({
-      strategy: this.getChunkingStrategy(contentType),
-      size: 512,
-      overlap: 50,
-    });
+    const strategy = this.getChunkingStrategy(contentType);
+
+    let chunks;
+    if (strategy === 'markdown') {
+      chunks = await doc.chunk({
+        strategy: 'markdown',
+        size: 512,
+        overlap: 50,
+      });
+    } else if (strategy === 'html') {
+      chunks = await doc.chunk({
+        strategy: 'html',
+        size: 512,
+        overlap: 50,
+        sections: [],
+      });
+    } else {
+      chunks = await doc.chunk({
+        strategy: 'recursive',
+        size: 512,
+        overlap: 50,
+      });
+    }
 
     // Generate embeddings using AI SDK
     const { embeddings } = await embedMany({

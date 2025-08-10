@@ -402,7 +402,7 @@ export const PreviewMessage = memo(
   }
 );
 
-export const ThinkingMessage = ({}: {}) => {
+export const ThinkingMessage = ({ question }: { question: string }) => {
   const role = "assistant";
 
   return (

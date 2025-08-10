@@ -65,7 +65,8 @@
       "suspicious": {
         "noExplicitAny": "off",
         "noArrayIndexKey": "off",
-        "noRedeclare": "off"
+        "noRedeclare": "off",
+        "noImplicitAnyLet": "off"
       },
       "nursery": {
         "recommended": true
