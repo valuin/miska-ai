@@ -12,7 +12,6 @@ import {
   Scale,
   Percent,
 } from "lucide-react";
-import { CardPersediaan } from "../analytics/card-persediaan";
 import {
   ResponsiveContainer,
   ComposedChart,
@@ -89,19 +88,19 @@ export const StepFourPreview = () => {
               <span>Filter</span>
             </Button>
           </div>
-          <Button className="bg-green-950 hover:bg-green-900">
-            <Download size={16} className="mr-2" />
-            <span className="text-white">Unduh File</span>
+          <Button className="bg-green-950 hover:bg-green-900 text-white">
+            <Download size={16} className="mr-2 fill-white" />
+            <span>Unduh File</span>
           </Button>
         </div>
       </div>
 
       {/* Top Stats Cards */}
       <div className="grid grid-cols-2 gap-4">
-        <div className="bg-green-100 dark:bg-green-900/20 rounded-xl p-6 relative overflow-hidden">
+        <div className="bg-[#EDFAE0] dark:bg-green-900/20 rounded-xl p-6 relative overflow-hidden">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <div className="size-12 bg-gradient-to-b from-green-400 to-green-700  rounded-full flex items-center justify-center">
+              <div className="size-12 bg-gradient-to-b from-[#A6E564] to-[#054135]  rounded-full flex items-center justify-center">
                 <DollarSign className="text-white text-xl" />
               </div>
               <div>
@@ -113,15 +112,15 @@ export const StepFourPreview = () => {
                 </p>
               </div>
             </div>
-            <div className="bg-green-500 text-white px-3 py-1 rounded-full text-sm">
+            <div className="text-green-700 px-3 py-1 rounded-full text-sm border border-green-700">
               ↗ 12.5%
             </div>
           </div>
         </div>
 
-        <div className="bg-green-100 dark:bg-green-900/20 rounded-xl p-6 relative overflow-hidden">
+        <div className="bg-[#EDFAE0] dark:bg-green-900/20 rounded-xl p-6 relative overflow-hidden">
           <div className="flex items-center gap-4">
-            <div className="size-12 bg-gradient-to-b from-green-400 to-green-700  rounded-full flex items-center justify-center">
+            <div className="size-12 bg-gradient-to-b from-[#A6E564] to-[#054135]  rounded-full flex items-center justify-center">
               <BarChart className="text-white text-xl" />
             </div>
             <div>
@@ -142,7 +141,7 @@ export const StepFourPreview = () => {
         <div className="col-span-2">
           <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
             <div className="flex items-center gap-4 mb-6">
-              <div className="size-10 bg-gradient-to-b from-green-400 to-green-700  rounded-full flex items-center justify-center">
+              <div className="size-10 bg-gradient-to-b from-[#A6E564] to-[#054135]  rounded-full flex items-center justify-center">
                 <TrendingUp className="text-white" />
               </div>
               <div>
@@ -200,13 +199,13 @@ export const StepFourPreview = () => {
             {/* Legend */}
             <div className="flex items-center justify-center gap-6 mt-4">
               <div className="flex items-center gap-2">
-                <div className="size-4 bg-green-600 rounded"></div>
+                <div className="size-4 bg-green-600 rounded" />
                 <span className="text-sm text-gray-600 dark:text-gray-400">
                   Total Pendapatan
                 </span>
               </div>
               <div className="flex items-center gap-2">
-                <div className="w-4 h-1 bg-lime-500 rounded"></div>
+                <div className="w-4 h-1 bg-lime-500 rounded" />
                 <span className="text-sm text-gray-600 dark:text-gray-400">
                   Laba Bersih
                 </span>
@@ -220,7 +219,7 @@ export const StepFourPreview = () => {
           {/* Current Ratio */}
           <div className="bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-700">
             <div className="flex items-center gap-3 mb-3">
-              <div className="size-8 bg-gradient-to-b from-green-400 to-green-700  rounded-full flex items-center justify-center">
+              <div className="size-8 bg-gradient-to-b from-[#A6E564] to-[#054135]  rounded-full flex items-center justify-center">
                 <Scale className="text-white text-sm" />
               </div>
               <h4 className="font-semibold text-black dark:text-white">
@@ -264,7 +263,7 @@ export const StepFourPreview = () => {
           {/* ROE */}
           <div className="bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-700">
             <div className="flex items-center gap-3 mb-3">
-              <div className="size-8 bg-green-700 rounded-full flex items-center justify-center">
+              <div className="size-8 bg-gradient-to-b from-[#A6E564] to-[#054135] rounded-full flex items-center justify-center">
                 <BarChart className="text-white text-sm" />
               </div>
               <h4 className="font-semibold text-black dark:text-white">
@@ -286,7 +285,7 @@ export const StepFourPreview = () => {
       </div>
 
       {/* Analysis Section */}
-      <div className="bg-green-50 dark:bg-green-900/10 rounded-xl p-6 border border-green-200 dark:border-green-800">
+      <div className="">
         <div className="flex items-center gap-3 mb-4">
           <TrendingUp className="text-green-700 text-2xl" />
           <h3 className="text-lg font-semibold text-black dark:text-white">
@@ -294,7 +293,7 @@ export const StepFourPreview = () => {
           </h3>
         </div>
 
-        <div className="bg-green-100 dark:bg-green-900/20 rounded-lg p-4 mb-4">
+        <div className="bg-gradient-to-r from-[#D2F2B1] to-[#A6E564] rounded-lg p-4 mb-4">
           <p className="text-sm text-black dark:text-white">
             Analisis menunjukkan tahun 2024 adalah tahun pertumbuhan yang kuat
             untuk PT KKP, dengan posisi keuangan perusahaan sangat sehat dan
@@ -302,7 +301,7 @@ export const StepFourPreview = () => {
           </p>
         </div>
 
-        <div className="space-y-3">
+        <div className="space-y-3 rounded-xl p-6 border border-gray-200">
           <div className="flex items-start gap-3">
             <Scale className="text-lg mt-0.5 text-green-700" />
             <div>

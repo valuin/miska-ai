@@ -78,7 +78,7 @@ const useSyncBoundingBox = (
         },
       }));
     }
-  }, [artifact.documentId]);
+  }, [hitboxRef, setArtifact, artifact.documentId]);
 };
 
 export function DocumentPreview({
@@ -96,14 +96,11 @@ export function DocumentPreview({
   const previewDocument = useMemo(() => documents?.[0], [documents]);
   const hitboxRef = useRef<HTMLDivElement>(null);
 
-  // Keep bounding box in sync when artifact visibility changes
   useSyncBoundingBox(artifact, setArtifact, hitboxRef);
 
-  // Early return for message count guided previews
   const previewNode = renderPreviewForMessageCount(messageCount);
   if (previewNode) return previewNode;
 
-  // Show tool result / tool call overlays while artifact is visible
   if (artifact.isVisible) {
     if (result) {
       return (
@@ -125,7 +122,6 @@ export function DocumentPreview({
     }
   }
 
-  // Loading state for server documents fetch
   if (isDocumentsFetching) {
     const kind: ArtifactKind = (result?.kind ??
       args?.kind ??

@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import { useState, useEffect, useRef, useCallback } from 'react';
-import type { ChangeEvent, Dispatch, SetStateAction } from 'react';
+import { useState, useEffect, useRef, useCallback } from "react";
+import type { ChangeEvent, Dispatch, SetStateAction } from "react";
 import {
   Drawer,
   DrawerTrigger,
@@ -11,15 +11,15 @@ import {
   DrawerDescription,
   DrawerClose,
   DrawerFooter,
-} from '@/components/ui/drawer';
-import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
-import { cn } from '@/lib/utils';
-import { FileIcon, LoaderIcon, PlusIcon, TrashIcon } from 'lucide-react';
-import { Skeleton } from '@/components/ui/skeleton';
-import { toast } from 'sonner';
-import { upload } from '@vercel/blob/client';
-import type { Attachment } from 'ai';
+} from "@/components/ui/drawer";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { cn } from "@/lib/utils";
+import { FileIcon, LoaderIcon, PlusIcon, TrashIcon } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from "sonner";
+import { upload } from "@vercel/blob/client";
+import type { Attachment } from "ai";
 
 function VaultUploadingList({ uploads }: { uploads: Attachment[] }) {
   return (
@@ -69,21 +69,21 @@ export function VaultList({
 
   const handleDelete = async (id: string) => {
     if (!isDeletable || !setUploads) return;
-    const response = await fetch('/api/vault/documents', {
-      method: 'DELETE',
+    const response = await fetch("/api/vault/documents", {
+      method: "DELETE",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
       body: JSON.stringify({ documentId: id }),
     });
 
     if (response.ok) {
-      toast.success('Document deleted from vault');
+      toast.success("Document deleted from vault");
       setUploads((currentUploads) =>
-        currentUploads.filter((upload) => upload.id !== id),
+        currentUploads.filter((upload) => upload.id !== id)
       );
     } else {
-      toast.error('Failed to delete document from vault');
+      toast.error("Failed to delete document from vault");
     }
   };
 
@@ -174,15 +174,15 @@ function FileUpload({ fetchUserUploads }: { fetchUserUploads: () => void }) {
   const uploadFile = async (file: File): Promise<Attachment | undefined> => {
     try {
       const newBlob = await upload(file.name, file, {
-        access: 'public',
-        handleUploadUrl: '/api/files/upload-blob',
+        access: "public",
+        handleUploadUrl: "/api/files/upload-blob",
         multipart: true,
       });
 
-      const processResponse = await fetch('/api/files/process-document', {
-        method: 'POST',
+      const processResponse = await fetch("/api/files/process-document", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           fileUrl: newBlob.url,
@@ -192,15 +192,15 @@ function FileUpload({ fetchUserUploads }: { fetchUserUploads: () => void }) {
       });
 
       if (!processResponse.ok) {
-        throw new Error('Failed to process document');
+        throw new Error("Failed to process document");
       }
 
       const processResult = await processResponse.json();
 
-      const saveResponse = await fetch('/api/vault/save', {
-        method: 'POST',
+      const saveResponse = await fetch("/api/vault/save", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           tempDocumentId: processResult.document.id,
@@ -208,10 +208,10 @@ function FileUpload({ fetchUserUploads }: { fetchUserUploads: () => void }) {
       });
 
       if (saveResponse.ok) {
-        toast.success('Document saved to vault successfully!');
+        toast.success("Document saved to vault successfully!");
         fetchUserUploads();
       } else {
-        toast.error('Failed to save document to vault');
+        toast.error("Failed to save document to vault");
       }
 
       return {
@@ -220,7 +220,7 @@ function FileUpload({ fetchUserUploads }: { fetchUserUploads: () => void }) {
         contentType: file.type,
       };
     } catch (error) {
-      toast.error('Failed to process file, please try again!');
+      toast.error("Failed to process file, please try again!");
     }
   };
 
@@ -234,12 +234,12 @@ function FileUpload({ fetchUserUploads }: { fetchUserUploads: () => void }) {
         const uploadPromises = files.map((file) => uploadFile(file));
 
         // clear the input
-        event.target.value = '';
+        event.target.value = "";
         event.target.files = null;
 
         const uploadedAttachments = await Promise.all(uploadPromises);
         const successfullyUploadedAttachments = uploadedAttachments.filter(
-          (attachment) => attachment !== undefined,
+          (attachment) => attachment !== undefined
         );
 
         setAttachments((currentAttachments) => [
@@ -252,7 +252,7 @@ function FileUpload({ fetchUserUploads }: { fetchUserUploads: () => void }) {
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [],
+    []
   );
 
   return (
@@ -270,8 +270,8 @@ function FileUpload({ fetchUserUploads }: { fetchUserUploads: () => void }) {
       )}
       <div
         className={cn(
-          'relative w-full rounded-lg border border-dashed border-muted-foreground/20',
-          'flex flex-row gap-2 items-center cursor-pointer justify-center h-24',
+          "relative w-full rounded-lg border border-dashed border-muted-foreground/20",
+          "flex flex-row gap-2 items-center cursor-pointer justify-center h-24"
         )}
         onClick={() => fileInputRef.current?.click()}
       >
@@ -282,7 +282,7 @@ function FileUpload({ fetchUserUploads }: { fetchUserUploads: () => void }) {
   );
 }
 
-export function VaultDrawer() {
+export function VaultDrawer({ width }: { width?: number }) {
   const [uploads, setUploads] = useState<UserUpload[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
@@ -290,9 +290,9 @@ export function VaultDrawer() {
   const fetchUserUploads = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch('/api/vault/documents');
+      const response = await fetch("/api/vault/documents");
       if (!response.ok) {
-        throw new Error('Failed to fetch vault documents');
+        throw new Error("Failed to fetch vault documents");
       }
       const data = await response.json();
       setUploads(data.documents || []);
@@ -321,13 +321,12 @@ export function VaultDrawer() {
           className="flex items-center gap-2 h-[34px] px-2"
         >
           <FileIcon className="size-4" />
-          Open Vault
         </Button>
       </DrawerTrigger>
       <DrawerContent
         direction="right"
         className="fixed right-0 top-0 h-full w-[90vw] pl-4 pt-4 max-w-sm z-50 bg-background border-l flex flex-col"
-        style={{ borderRadius: 0, left: 'auto' }}
+        style={{ borderRadius: 0, left: "auto" }}
       >
         <DrawerHeader>
           <DrawerTitle>Document Vault</DrawerTitle>

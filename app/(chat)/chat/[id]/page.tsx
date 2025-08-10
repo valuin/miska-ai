@@ -84,8 +84,8 @@ export default async function Page(props: { params: Promise<{ id: string }> }) {
 
   return (
     <>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 p-2 md:p-4">
-        <div className="md:col-span-1 min-w-0">
+      <div className="bg-slate-100 grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 p-2 md:p-4">
+        <div className="md:col-span-1 min-w-0 rounded-t-lg">
           <Chat
             id={chat.id}
             initialMessages={convertToUIMessages(messagesFromDb)}
@@ -98,7 +98,7 @@ export default async function Page(props: { params: Promise<{ id: string }> }) {
         </div>
 
         <div className="md:col-span-2">
-          <div className="h-dvh flex flex-col rounded-2xl border bg-card">
+          <div className="bg-white h-dvh flex flex-col rounded-2xl border">
             <div className="flex items-center justify-between px-4 md:px-6 py-3 border-b">
               <div className="text-sm font-medium text-muted-foreground">
                 Preview

@@ -12,7 +12,6 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 import type { VisibilityType } from "./visibility-selector";
 import type { Session } from "next-auth";
 
-
 function PureChatHeader({}: {
   chatId: string;
   selectedModelId: string;

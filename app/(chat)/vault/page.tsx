@@ -1,8 +1,8 @@
 "use client";
 
 import Image from "next/image";
-import { FolderOpen, FileText, MoreHorizontal } from "lucide-react";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { FolderOpen, MoreHorizontal } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -347,7 +347,7 @@ export default function VaultPage() {
                     <TableHead className="font-semibold text-gray-700">
                       Tipe Dokumen
                     </TableHead>
-                    <TableHead className="w-12"></TableHead>
+                    <TableHead className="w-12" />
                   </TableRow>
                 </TableHeader>
                 <TableBody>

@@ -48,7 +48,7 @@ export function AgentCards({ onAgentSelect, selectedAgent }: AgentCardsProps) {
             key={agent.id}
             className={`cursor-pointer hover:shadow-lg transition-all duration-200 rounded-full flex flex-col items-center justify-center ${
               isSelected ? agent.selectedColor : agent.color
-            } w-24 h-24 border-2`}
+            } size-24 border-2`}
             onClick={() => onAgentSelect(agent.id)}
           >
             <div className="text-2xl mb-1">{agent.icon}</div>

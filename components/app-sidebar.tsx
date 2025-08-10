@@ -1,17 +1,12 @@
 "use client";
 
 import type { User } from "next-auth";
-import { SidebarHistory } from "@/components/sidebar-history";
 import { SidebarUserNav } from "@/components/sidebar-user-nav";
-import Integrations from "./integrations";
 import {
   Sidebar,
-  SidebarContent,
   SidebarFooter,
   SidebarHeader,
   SidebarMenu,
-  // SidebarMenuButton,
-  SidebarMenuIcon,
   useSidebar,
 } from "@/components/ui/sidebar";
 import Link from "next/link";
@@ -21,7 +16,6 @@ import {
   Home,
   MessageSquarePlus,
   FolderLock,
-  Plug,
   LineChart,
 } from "lucide-react";
 import Image from "next/image";
@@ -54,7 +48,6 @@ function SidebarItem({
         }}
         className="flex flex-row items-center"
       >
-        {/* Icon always visible; text hidden in icon-collapsed via CSS below */}
         {icon}
         <span className="text-base font-semibold px-2 rounded-md cursor-pointer w-full text-left group-data-[collapsible=icon]:hidden">
           {label}
@@ -101,41 +94,29 @@ export function AppSidebar({ user }: { user: User | undefined }) {
         </div>
         <SidebarMenu>
           <div className="flex flex-col justify-start items-start gap-2">
-            {/* Home */}
-            <SidebarItem
-              path="/home"
-              icon={<Home className="size-4" />}
-              label="Home"
-            />
-            {/* New Chat */}
             <SidebarItem
               path="/chat"
               icon={<MessageSquarePlus className="size-4" />}
-              label="New Chat"
+              label="Obrolan Baru"
             />
-            {/* Analytics */}
             <SidebarItem
-              path="/analytics"
-              icon={<LineChart className="size-4" />}
-              label="Analytics"
+              path="/home"
+              icon={<Home className="size-4" />}
+              label="Beranda"
             />
-            {/* Vault Documents */}
             <SidebarItem
               path="/vault"
               icon={<FolderLock className="size-4" />}
-              label="Vault Documents"
+              label="Arsip Dokumen"
+            />
+            <SidebarItem
+              path="/history"
+              icon={<LineChart className="size-4" />}
+              label="Riwayat"
             />
           </div>
         </SidebarMenu>
       </SidebarHeader>
-      <SidebarContent>
-        {/* Integrations with its own icon visible in collapsed state */}
-        <SidebarMenuIcon>
-          <Plug className="size-4" />
-        </SidebarMenuIcon>
-        <Integrations />
-        <SidebarHistory user={user} />
-      </SidebarContent>
       <SidebarFooter>{user && <SidebarUserNav user={user} />}</SidebarFooter>
     </Sidebar>
   );

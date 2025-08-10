@@ -119,7 +119,7 @@ export function ChatHistoryGrid({
           <h3 className="text-lg font-semibold">Riwayat Chat</h3>
         </div>
         <div className="text-center py-8 text-gray-500">
-          <MessageSquare className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+          <MessageSquare className="size-12 mx-auto mb-4 text-gray-300" />
           <p>Belum ada riwayat chat</p>
           <p className="text-sm">Mulai chat untuk melihat riwayat di sini</p>
         </div>
@@ -158,7 +158,7 @@ export function ChatHistoryGrid({
             </CardHeader>
             <CardContent className="pt-0">
               <div className="flex items-center text-xs text-gray-500">
-                <Clock className="w-3 h-3 mr-1" />
+                <Clock className="size-3 mr-1" />
                 {formatDate(chat.createdAt.toString())}
               </div>
             </CardContent>
