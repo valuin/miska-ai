@@ -8,7 +8,6 @@ import type { Attachment, UIMessage } from "ai";
 import cx from "classnames";
 import equal from "fast-deep-equal";
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowDown } from "lucide-react";
 import {
   memo,
   useCallback,
@@ -30,6 +29,7 @@ import type { UserUpload } from "./vault-drawer";
 import type { VisibilityType } from "./visibility-selector";
 import { VaultDrawer } from "./vault-drawer";
 import { useMessageCountStore } from "./chat-with-preview";
+import Integrations from "./integrations";
 
 // MessageInputSection: handles textarea, input, and keyboard events
 function MessageInputSection({
@@ -57,9 +57,9 @@ function MessageInputSection({
         onChange={handleInput}
         className={cx(
           className,
-          "min-h-[60px] max-h-[200px] resize-none border-2 border-gray-200 dark:border-gray-700 focus:border-blue-500 dark:focus:border-blue-400 transition-colors duration-200",
+          "min-h-[200px] max-h-[200px] resize-none border-2 border-gray-200 dark:border-gray-700 focus:border-blue-500 dark:focus:border-blue-400 transition-colors duration-200",
           "text-base leading-relaxed placeholder:text-gray-500 dark:placeholder:text-gray-400",
-          "shadow-sm hover:shadow-md focus:shadow-lg transition-shadow duration-200"
+          "shadow-md hover:shadow-lg focus:shadow-xl transition-shadow duration-200 shadow-[#A6E564]/50"
         )}
         rows={2}
         autoFocus
@@ -78,9 +78,6 @@ function MessageInputSection({
           }
         }}
       />
-      <div className="absolute bottom-2 right-2 text-xs text-gray-400 dark:text-gray-500">
-        Press Enter to send, Shift+Enter for new line
-      </div>
     </div>
   );
 }
@@ -122,6 +119,8 @@ function PureMultimodalInput({
 }) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { width } = useWindowSize();
+  console.log(width);
+
   const { messageCount, increment } = useMessageCountStore();
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -183,13 +182,12 @@ function PureMultimodalInput({
     },
     [setAttachments]
   );
-  
+
   const unattachFile = (name: string) => {
     setAttachments((currentAttachments) =>
       currentAttachments.filter((a) => a.name !== name)
     );
   };
-  // --- End of logic lifted from FileUploadSection ---
 
   useEffect(() => {
     if (textareaRef.current) {
@@ -250,23 +248,23 @@ function PureMultimodalInput({
     let restoreInput = false;
     if (selectedVaultFileNames && selectedVaultFileNames.length > 0) {
       userPrompt = `[Vault Files Selected: ${selectedVaultFileNames.join(
-         ", ",
-       )}]\n${input}`;
-       setInput(userPrompt);
-       restoreInput = true;
-     }
+        ", "
+      )}]\n${input}`;
+      setInput(userPrompt);
+      restoreInput = true;
+    }
 
     let systemPrompt: string | undefined = undefined;
     if (selectedVaultFileNames && selectedVaultFileNames.length > 0) {
       systemPrompt = `Vault Files Selected: ${selectedVaultFileNames.join(
-         ", ",
-       )}`;
-     }
-   
-     const body: { systemPrompt?: string } = {};
-     if (systemPrompt) {
-       body.systemPrompt = systemPrompt;
-     }
+        ", "
+      )}`;
+    }
+
+    const body: { systemPrompt?: string } = {};
+    if (systemPrompt) {
+      body.systemPrompt = systemPrompt;
+    }
 
     handleSubmit(undefined, {
       experimental_attachments: attachments.filter((att) => !!att.url),
@@ -316,30 +314,16 @@ function PureMultimodalInput({
             exit={{ opacity: 0, y: 10 }}
             transition={{ type: "spring", stiffness: 300, damping: 20 }}
             className="absolute left-1/2 bottom-28 -translate-x-1/2 z-50"
-          >
-            <Button
-              data-testid="scroll-to-bottom-button"
-              className="rounded-full"
-              size="icon"
-              variant="outline"
-              onClick={(event) => {
-                event.preventDefault();
-                scrollToBottom();
-              }}
-            >
-              <ArrowDown />
-            </Button>
-          </motion.div>
+          />
         )}
       </AnimatePresence>
-      <VaultFilesSection
-        onAttachmentsChange={setAttachments}
-        disabled={status !== "ready"}
-      />
-      
+
       {/* Attachment Previews */}
       {(attachments.length > 0 || uploadQueue.length > 0) && (
-        <div data-testid="attachments-preview" className="flex flex-row gap-2 overflow-x-scroll items-end">
+        <div
+          data-testid="attachments-preview"
+          className="flex flex-row gap-2 overflow-x-scroll items-end"
+        >
           {attachments.map((attachment) => (
             <PreviewAttachment
               key={attachment.url}
@@ -370,9 +354,9 @@ function PureMultimodalInput({
         )}
         submitForm={submitForm}
       />
-      
+
       {/* Hidden file input */}
-       <input
+      <input
         type="file"
         className="fixed -top-4 -left-4 size-0.5 opacity-0 pointer-events-none"
         ref={fileInputRef}
@@ -381,28 +365,31 @@ function PureMultimodalInput({
         tabIndex={-1}
       />
 
-      {/* Consolidated Action Buttons */}
-       <div className="flex flex-row items-center justify-between w-full">
-         <div className="flex items-center gap-2">
-           <VaultDrawer />
-           <Button
+      {/* Action Buttons inside textarea */}
+      <div className="absolute bottom-2 inset-x-2 flex flex-row items-center justify-between w-auto mb-6 mx-4">
+        <div className="flex items-center gap-2">
+          <VaultDrawer width={width} />
+          <Button
             data-testid="upload-button"
             size="sm"
             variant="ghost"
             onClick={() => fileInputRef.current?.click()}
             disabled={status !== "ready"}
-           >
-             <PaperclipIcon />
-             Upload File
-           </Button>
-         </div>
-
-        {status === "submitted" ? (
-          <StopButton stop={stop} setMessages={setMessages} />
-        ) : (
-          <SendButton input={input} submitForm={submitForm} />
-        )}
+            className="border"
+          >
+            <PaperclipIcon />
+          </Button>
         </div>
+
+        <div className="flex items-center gap-2">
+          <Integrations />
+          {status === "submitted" ? (
+            <StopButton stop={stop} setMessages={setMessages} />
+          ) : (
+            <SendButton input={input} submitForm={submitForm} />
+          )}
+        </div>
+      </div>
     </div>
   );
 }
@@ -519,7 +506,7 @@ function PureStopButton({
   return (
     <Button
       data-testid="stop-button"
-      className="rounded-full p-1.5 h-fit border dark:border-zinc-600"
+      className="p-1.5 h-fit border dark:border-zinc-600 bg-gradient-to-b from-[#054135] to-[#A6E564] text-white"
       onClick={(event) => {
         event.preventDefault();
         stop();
@@ -543,7 +530,7 @@ function PureSendButton({
   return (
     <Button
       data-testid="send-button"
-      className="rounded-full p-1.5 h-fit border dark:border-zinc-600"
+      className="p-1.5 h-fit border-none bg-gradient-to-b from-[#054135] to-[#A6E564] text-white"
       onClick={(event) => {
         event.preventDefault();
         submitForm();

@@ -1,29 +1,19 @@
 "use client";
 
-import type { User } from "next-auth";
-import { SidebarHistory } from "@/components/sidebar-history";
 import { SidebarUserNav } from "@/components/sidebar-user-nav";
-import Integrations from "./integrations";
 import {
   Sidebar,
-  SidebarContent,
   SidebarFooter,
   SidebarHeader,
   SidebarMenu,
-  // SidebarMenuButton,
-  SidebarMenuIcon,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { cn } from "@/lib/utils";
+import { Clock, FolderLock, Home, MessageSquarePlus } from "lucide-react";
+import type { User } from "next-auth";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { cn } from "@/lib/utils";
-import {
-  Home,
-  MessageSquarePlus,
-  FolderLock,
-  Plug,
-} from "lucide-react";
-import Image from "next/image";
 
 function SidebarItem({
   path,
@@ -53,7 +43,6 @@ function SidebarItem({
         }}
         className="flex flex-row items-center"
       >
-        {/* Icon always visible; text hidden in icon-collapsed via CSS below */}
         {icon}
         <span className="text-base font-semibold px-2 rounded-md cursor-pointer w-full text-left group-data-[collapsible=icon]:hidden">
           {label}
@@ -112,23 +101,24 @@ export function AppSidebar({ user }: { user: User | undefined }) {
               icon={<MessageSquarePlus className="size-4" />}
               label="Obrolan Baru"
             />
-            {/* Vault Documents */}
             <SidebarItem
-              path="/vault/documents"
+              path="/home"
+              icon={<Home className="size-4" />}
+              label="Beranda"
+            />
+            <SidebarItem
+              path="/vault"
               icon={<FolderLock className="size-4" />}
               label="Arsip Dokumen"
+            />
+            <SidebarItem
+              path="/history"
+              icon={<Clock className="size-4" />}
+              label="Riwayat"
             />
           </div>
         </SidebarMenu>
       </SidebarHeader>
-      <SidebarContent>
-        {/* Integrations with its own icon visible in collapsed state */}
-        <SidebarMenuIcon>
-          <Plug className="size-4" />
-        </SidebarMenuIcon>
-        <Integrations />
-        <SidebarHistory user={user} />
-      </SidebarContent>
       <SidebarFooter>{user && <SidebarUserNav user={user} />}</SidebarFooter>
     </Sidebar>
   );

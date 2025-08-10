@@ -69,7 +69,7 @@ export function GenerationSidebar({
                 className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
               >
                 <svg
-                  className="w-5 h-5"
+                  className="size-5"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -98,7 +98,7 @@ export function GenerationSidebar({
                   </div>
                   <div className="border rounded-lg p-4">
                     <div className="flex items-center gap-2 mb-2">
-                      <FileIcon className="w-4 h-4" />
+                      <FileIcon className="size-4" />
                       <span className="font-medium">
                         {filePreview.filename}
                       </span>
@@ -158,7 +158,7 @@ export function GenerationSidebar({
               <div className="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400">
                 <span>AI Generation</span>
                 <span className="flex items-center space-x-1">
-                  <Bot className="w-4 h-4" />
+                  <Bot className="size-4" />
                   <span>Powered by AI</span>
                 </span>
               </div>

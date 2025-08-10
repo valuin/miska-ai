@@ -1,30 +1,29 @@
 "use client";
 
 import { ChatHeader } from "@/components/chat-header";
+import { useSidebar } from "@/components/ui/sidebar";
 import { useArtifactSelector } from "@/hooks/use-artifact";
 import { useAutoResume } from "@/hooks/use-auto-resume";
 import { useChatVisibility } from "@/hooks/use-chat-visibility";
 import type { Vote } from "@/lib/db/schema";
 import { ChatSDKError } from "@/lib/errors";
+import { useDocumentPreviewStore } from "@/lib/store/document-preview-store";
 import { useVaultFilesStore } from "@/lib/store/vault-files-store";
 import { fetcher, fetchWithErrorHandlers, generateUUID } from "@/lib/utils";
 import { useChat } from "@ai-sdk/react";
 import type { Attachment, UIMessage } from "ai";
 import type { Session } from "next-auth";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import useSWR, { useSWRConfig } from "swr";
 import { unstable_serialize } from "swr/infinite";
-import { AgentCards } from "./agent-cards";
 import { Artifact } from "./artifact";
-import { ChatHistoryGrid } from "./chat-history-grid";
 import { Messages } from "./messages";
 import { MultimodalInput } from "./multimodal-input";
 import { getChatHistoryPaginationKey } from "./sidebar-history";
+import { SuggestedActions } from "./suggested-actions";
 import { toast } from "./toast";
 import type { VisibilityType } from "./visibility-selector";
-import { useSidebar } from "@/components/ui/sidebar";
-import { useDocumentPreviewStore } from "@/lib/store/document-preview-store";
 
 export function Chat({
   id,
@@ -183,7 +182,7 @@ export function Chat({
 
   return (
     <>
-      <div className="flex flex-col min-w-0 h-dvh bg-background">
+      <div className="flex  flex-col min-w-0 h-dvh bg-background rounded rounded-t-lg">
         <ChatHeader
           chatId={id}
           selectedModelId={initialChatModel}
@@ -198,53 +197,40 @@ export function Chat({
 
         {showInitialLayout ? (
           <div className="flex-1 flex flex-col p-6 space-y-6">
-            {/* Agent Cards Row */}
             <h1 className="text-[3.25rem] mt-20 font-bold text-center whitespace-pre-wrap">
               <span className="bg-[radial-gradient(circle_at_center,_#A6E564,_#054135_40%,_#054135_80%)] bg-clip-text text-transparent inline-block">
                 {"Selamat Pagi, User\nApa yang bisa saya bantu hari ini?"}
               </span>
             </h1>
 
-            {/* Chat Input */}
-            <div className="flex-1 flex flex-col justify-end">
-              <div className="max-w-4xl mx-auto w-full space-y-4">
-                <form className="flex gap-2" onSubmit={handleSubmit}>
-                  {!isReadonly && (
-                    <MultimodalInput
-                      chatId={id}
-                      input={input}
-                      setInput={setInput}
-                      handleSubmit={handleSubmit}
-                      status={status}
-                      stop={stop}
-                      attachments={attachments}
-                      setAttachments={setAttachments}
-                      messages={messages}
-                      setMessages={setMessages}
-                      append={append}
-                      selectedVisibilityType={visibilityType}
-                    />
-                  )}
-                </form>
-
-                <div className="mt-12">
-                  <AgentCards
-                    onAgentSelect={handleAgentSelect}
-                    selectedAgent={selectedAgent}
-                  />
-                </div>
-
-                <div className="px-4 pb-4">
-                  {/* <SuggestedActions
-                    chatId={id}
-                    append={append}
-                    selectedVisibilityType={visibilityType}
-                    onActionClick={() => setOpen(false)}
-                  /> */}
-                </div>
-                <ChatHistoryGrid onChatClick={handleChatHistoryClick} />
-              </div>
+            <div className="px-4 pb-4">
+              <SuggestedActions
+                chatId={id}
+                append={append}
+                selectedVisibilityType={visibilityType}
+                onActionClick={() => setOpen(false)}
+              />
             </div>
+
+            {/* Chat Input */}
+            <form className="flex gap-2" onSubmit={handleSubmit}>
+              {!isReadonly && (
+                <MultimodalInput
+                  chatId={id}
+                  input={input}
+                  setInput={setInput}
+                  handleSubmit={handleSubmit}
+                  status={status}
+                  stop={stop}
+                  attachments={attachments}
+                  setAttachments={setAttachments}
+                  messages={messages}
+                  setMessages={setMessages}
+                  append={append}
+                  selectedVisibilityType={visibilityType}
+                />
+              )}
+            </form>
           </div>
         ) : (
           <>
