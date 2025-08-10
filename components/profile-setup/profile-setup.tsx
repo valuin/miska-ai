@@ -224,7 +224,7 @@ export function ProfileSetup({ session }: ProfileSetupProps) {
   const pathSegments = pathname.split("/").filter(Boolean);
 
   return (
-    <div className="flex flex-col mx-4">
+    <div className="flex flex-col mx-4 p-12">
       <div className="flex justify-between items-center">
         <Breadcrumb className="w-full">
           <BreadcrumbList>

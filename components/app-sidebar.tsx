@@ -12,12 +12,7 @@ import {
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import {
-  Home,
-  MessageSquarePlus,
-  FolderLock,
-  LineChart,
-} from "lucide-react";
+import { Home, MessageSquarePlus, FolderLock, Plug } from "lucide-react";
 import Image from "next/image";
 
 function SidebarItem({
@@ -94,25 +89,22 @@ export function AppSidebar({ user }: { user: User | undefined }) {
         </div>
         <SidebarMenu>
           <div className="flex flex-col justify-start items-start gap-2">
+            {/* Home */}
+            <SidebarItem
+              path="/home"
+              icon={<Home className="size-4" />}
+              label="Beranda"
+            />
+            {/* New Chat */}
             <SidebarItem
               path="/chat"
               icon={<MessageSquarePlus className="size-4" />}
               label="Obrolan Baru"
             />
             <SidebarItem
-              path="/home"
-              icon={<Home className="size-4" />}
-              label="Beranda"
-            />
-            <SidebarItem
               path="/vault"
               icon={<FolderLock className="size-4" />}
               label="Arsip Dokumen"
-            />
-            <SidebarItem
-              path="/history"
-              icon={<LineChart className="size-4" />}
-              label="Riwayat"
             />
           </div>
         </SidebarMenu>

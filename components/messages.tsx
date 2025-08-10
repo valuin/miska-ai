@@ -73,7 +73,9 @@ function PureMessages({
 
       {(status === "submitted" || status === "streaming") &&
         messages.length > 0 &&
-        messages[messages.length - 1].role === "user" && <ThinkingMessage />}
+        messages[messages.length - 1].role === "user" && (
+          <ThinkingMessage question={messages[messages.length - 1].content} />
+        )}
 
       <motion.div
         ref={messagesEndRef}
