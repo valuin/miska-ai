@@ -101,7 +101,7 @@ export const StepFourPreview = () => {
         <div className="bg-green-100 dark:bg-green-900/20 rounded-xl p-6 relative overflow-hidden">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-green-700 rounded-full flex items-center justify-center">
+              <div className="size-12 bg-gradient-to-b from-green-400 to-green-700  rounded-full flex items-center justify-center">
                 <DollarSign className="text-white text-xl" />
               </div>
               <div>
@@ -121,7 +121,7 @@ export const StepFourPreview = () => {
 
         <div className="bg-green-100 dark:bg-green-900/20 rounded-xl p-6 relative overflow-hidden">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-green-700 rounded-full flex items-center justify-center">
+            <div className="size-12 bg-gradient-to-b from-green-400 to-green-700  rounded-full flex items-center justify-center">
               <BarChart className="text-white text-xl" />
             </div>
             <div>
@@ -142,7 +142,7 @@ export const StepFourPreview = () => {
         <div className="col-span-2">
           <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
             <div className="flex items-center gap-4 mb-6">
-              <div className="w-10 h-10 bg-green-700 rounded-full flex items-center justify-center">
+              <div className="size-10 bg-gradient-to-b from-green-400 to-green-700  rounded-full flex items-center justify-center">
                 <TrendingUp className="text-white" />
               </div>
               <div>
@@ -200,7 +200,7 @@ export const StepFourPreview = () => {
             {/* Legend */}
             <div className="flex items-center justify-center gap-6 mt-4">
               <div className="flex items-center gap-2">
-                <div className="w-4 h-4 bg-green-600 rounded"></div>
+                <div className="size-4 bg-green-600 rounded"></div>
                 <span className="text-sm text-gray-600 dark:text-gray-400">
                   Total Pendapatan
                 </span>
@@ -220,7 +220,7 @@ export const StepFourPreview = () => {
           {/* Current Ratio */}
           <div className="bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-700">
             <div className="flex items-center gap-3 mb-3">
-              <div className="w-8 h-8 bg-green-700 rounded-full flex items-center justify-center">
+              <div className="size-8 bg-gradient-to-b from-green-400 to-green-700  rounded-full flex items-center justify-center">
                 <Scale className="text-white text-sm" />
               </div>
               <h4 className="font-semibold text-black dark:text-white">
@@ -242,7 +242,7 @@ export const StepFourPreview = () => {
           {/* Debt to Equity Ratio */}
           <div className="bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-700">
             <div className="flex items-center gap-3 mb-3">
-              <div className="w-8 h-8 bg-red-600 rounded-full flex items-center justify-center">
+              <div className="size-8 bg-red-600 rounded-full flex items-center justify-center">
                 <Percent className="text-white text-sm" />
               </div>
               <h4 className="font-semibold text-black dark:text-white">
@@ -264,7 +264,7 @@ export const StepFourPreview = () => {
           {/* ROE */}
           <div className="bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-700">
             <div className="flex items-center gap-3 mb-3">
-              <div className="w-8 h-8 bg-green-700 rounded-full flex items-center justify-center">
+              <div className="size-8 bg-green-700 rounded-full flex items-center justify-center">
                 <BarChart className="text-white text-sm" />
               </div>
               <h4 className="font-semibold text-black dark:text-white">

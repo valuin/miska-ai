@@ -121,7 +121,7 @@ export function AppSidebar({ user }: { user: User | undefined }) {
             />
             {/* Vault Documents */}
             <SidebarItem
-              path="/vault/documents"
+              path="/vault"
               icon={<FolderLock className="size-4" />}
               label="Vault Documents"
             />

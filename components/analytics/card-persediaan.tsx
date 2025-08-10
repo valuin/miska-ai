@@ -13,7 +13,7 @@ export function CardPersediaan({
 }) {
   return (
     <div className="bg-[#EAF6E5] rounded-xl p-5 flex items-center gap-4">
-      <div className="w-14 h-14 rounded-full bg-gradient-to-b from-green-400 to-green-700 flex items-center justify-center">
+      <div className="size-14 rounded-full bg-gradient-to-b from-green-400 to-green-700 flex items-center justify-center">
         <Image
           src={`${imageUrl}`}
           alt="Icon Persediaan"
