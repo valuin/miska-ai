@@ -95,6 +95,11 @@ export function DocumentPreview({
 
   const previewDocument = useMemo(() => documents?.[0], [documents]);
   const hitboxRef = useRef<HTMLDivElement>(null);
+  
+  // Debugging untuk melihat messageCount
+  useEffect(() => {
+    console.log("Current message count:", messageCount);
+  }, [messageCount]);
 
   useSyncBoundingBox(artifact, setArtifact, hitboxRef);
 

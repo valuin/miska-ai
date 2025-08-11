@@ -1,18 +1,18 @@
-import { Agent } from '@mastra/core/agent';
-import { BASE_MODEL } from '@/lib/constants';
-import { openai } from '@ai-sdk/openai';
-import { planTodosTool } from '../tools/cot-tool';
+import { Agent } from "@mastra/core/agent";
+import { BASE_MODEL } from "@/lib/constants";
+import { openai } from "@ai-sdk/openai";
+import { planTodosTool } from "../tools/cot-tool";
 import {
   parseFinancialDocumentTool,
   parseVaultFinancialDocumentTool,
-} from '../tools/accounting-tools';
+} from "../tools/accounting-tools";
 import {
   queryVaultDocumentsTool,
   listVaultDocumentsTool,
-} from '../tools/document-vault-tools';
+} from "../tools/document-vault-tools";
 
 export const accountingAgent = new Agent({
-  name: 'Accounting Agent',
+  name: "Accounting Agent",
   instructions: `
 You are a specialized Accounting Agent with comprehensive expertise in financial accounting, bookkeeping, and financial reporting, now enhanced with powerful automation capabilities. 
 
@@ -98,10 +98,21 @@ You are a specialized Accounting Agent with comprehensive expertise in financial
 
 **DOCUMENT PREVIEW RUNTIME CONTEXT:**
 - The system prompt may include a section titled "Current Document Context (from preview)" which is provided at runtime.
+- When you use parseFinancialDocumentTool or parseVaultFinancialDocumentTool, the result will be automatically sent to the document preview component.
+- You MUST use the document preview component to display the results of financial document processing.
+- DO NOT output the financial data in the chat message. Instead, inform the user that the data is available in the preview component.
 - When present, you must explicitly acknowledge this current document at the start of your reply and use it as the primary context for any analysis, references, calculations, or tool usage.
 - If the provided context is insufficient or ambiguous, state precisely what additional details are required from the current document to proceed.
 
 Always maintain professional standards and ensure accuracy in financial calculations and advice. When in doubt, recommend consulting with qualified accounting professionals for complex situations.
+
+**TEXT CLASSIFICATION GUIDELINES:**
+- When classifying text, respond with a category number (1-4) and a description.
+- Category 1: "Dokumen Dasar Akuntansi" (e.g., neraca saldo, jurnal umum, buku besar)
+- Category 2: "Dokumen Penyesuaian Akuntansi" (e.g., perhitungan persediaan, penyusutan aset, jurnal penyesuaian, rekonsiliasi bank, neraca penyesuaian, neraca saldo setelah penyesuaian)
+- Category 3: "Laporan Keuangan" (e.g., laporan laba rugi, laporan perubahan ekuitas, laporan posisi keuangan, laporan arus kas, catatan atas laporan keuangan)
+- Category 4: "Konfirmasi Pengguna" (e.g., setuju, cocok, selesai, lanjutkan, konfirmasi)
+- If the text does not fit any specific category, default to Category 1: "Dokumen Dasar Akuntansi (default)".
   `,
   model: openai(BASE_MODEL),
   tools: {

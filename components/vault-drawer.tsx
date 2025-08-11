@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo, Dispatch, SetStateAction } from "react";
+import { useState, useEffect, useMemo, type Dispatch, type SetStateAction } from "react";
 import Image from "next/image";
 import {
   Drawer,

@@ -51,3 +51,9 @@ export async function updateChatVisibility({
 }) {
   await updateChatVisiblityById({ chatId, visibility });
 }
+
+import { classifyFinancialText as originalClassifyFinancialText } from '@/mastra/tools/accounting-tools';
+
+export async function classifyFinancialText(text: string): Promise<number> {
+  return originalClassifyFinancialText(text);
+}

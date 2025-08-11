@@ -14,6 +14,17 @@ export type MastraRuntimeContext = {
   mastra: Mastra<any>;
 };
 
+// Fungsi untuk menginisialisasi runtimeContext dengan documentPreview
+export function initRuntimeContext(session: Session, dataStream: DataStreamWriter): MastraRuntimeContext {
+  return {
+    session,
+    dataStream,
+    selectedVaultFileNames: [],
+    documentPreview: {},
+    mastra: mastra,
+  };
+}
+
 export const agents = {
   accountingAgent,
   taxAgent,

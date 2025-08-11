@@ -2,6 +2,7 @@
 
 import { useScrollToBottom } from "@/hooks/use-scroll-to-bottom";
 import { useVaultFilesStore } from "@/lib/store/vault-files-store";
+import { useMessageCountStore } from "./chat-with-preview";
 import type { UseChatHelpers } from "@ai-sdk/react";
 import { upload } from "@vercel/blob/client";
 import type { Attachment, UIMessage } from "ai";
@@ -29,8 +30,8 @@ import type { UserUpload } from "./vault-drawer";
 import type { VisibilityType } from "./visibility-selector";
 import { VaultDrawer } from "./vault-drawer";
 import Integrations from "./integrations";
+import { classifyFinancialText } from "@/app/(chat)/actions";
 
-// MessageInputSection: handles textarea, input, and keyboard events
 function MessageInputSection({
   input,
   status,
@@ -173,7 +174,7 @@ function PureMultimodalInput({
       } finally {
         setUploadQueue([]);
         if (event.target) {
-          event.target.value = ""; // Clear the file input
+          event.target.value = "";
         }
       }
     },
@@ -214,13 +215,11 @@ function PureMultimodalInput({
   useEffect(() => {
     if (textareaRef.current) {
       const domValue = textareaRef.current.value;
-      // Prefer DOM value over localStorage to handle hydration
+
       const finalValue = domValue || localStorageInput || "";
       setInput(finalValue);
       adjustHeight();
     }
-    // Only run once after hydration
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -234,7 +233,9 @@ function PureMultimodalInput({
 
   const { selectedVaultFileNames } = useVaultFilesStore();
 
-  const submitForm = useCallback(() => {
+  const { setMessageCount } = useMessageCountStore();
+
+  const submitForm = useCallback(async () => {
     window.history.replaceState({}, "", `/chat/${chatId}`);
 
     let userPrompt = input;
@@ -258,6 +259,10 @@ function PureMultimodalInput({
     if (systemPrompt) {
       body.systemPrompt = systemPrompt;
     }
+
+    // Use the classifyFinancialText function to determine message count based on input
+    const category = await classifyFinancialText(input);
+    setMessageCount(category);
 
     handleSubmit(undefined, {
       experimental_attachments: attachments.filter((att) => !!att.url),
@@ -285,6 +290,8 @@ function PureMultimodalInput({
     input,
     selectedVaultFileNames,
     setInput,
+    setMessageCount,
+    classifyFinancialText,
   ]);
 
   const { isAtBottom, scrollToBottom } = useScrollToBottom();
@@ -399,7 +406,6 @@ function VaultFilesSection({
     selectedVaultFileNames
   );
 
-  // Listen for auto-select events from FileUploadSection
   useEffect(() => {
     const handler = (e: Event) => {
       const detail = (e as CustomEvent<string[]>).detail;
@@ -423,7 +429,7 @@ function VaultFilesSection({
         throw new Error("Failed to fetch vault documents");
       }
       const data = await response.json();
-      // Filter out duplicates based on name
+
       const uniqueDocuments = Array.from(
         new Map(
           (data.documents as UserUpload[]).map((doc) => [doc.filename, doc])

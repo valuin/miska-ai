@@ -1,8 +1,10 @@
-import { createTool } from '@mastra/core/tools';
-import { z } from 'zod';
-import { getAttachmentText } from '@/lib/utils/text-extraction';
-import { queryVaultDocumentsTool } from './document-vault-tools';
-import type { RuntimeContext } from '@mastra/core/di';
+import { createTool } from "@mastra/core/tools";
+import { z } from "zod";
+import { getAttachmentText } from "@/lib/utils/text-extraction";
+import { queryVaultDocumentsTool } from "./document-vault-tools";
+import type { RuntimeContext } from "@mastra/core/di";
+import type { MastraRuntimeContext } from "..";
+
 export interface JurnalEntry {
   id: string;
   tanggal: string;
@@ -33,27 +35,66 @@ export interface NeracaSaldoEntry {
   kategori: string;
 }
 const parseFinancialDocumentSchema = z.object({
-  fileUrl: z.string().describe('URL of the uploaded financial document'),
-  filename: z.string().describe('Original filename'),
-  contentType: z.string().describe('MIME type of the file'),
-  documentType: z.enum(['journal', 'ledger', 'mixed']).describe('Type of financial document'),
+  fileUrl: z.string().describe("URL of the uploaded financial document"),
+  filename: z.string().describe("Original filename"),
+  contentType: z.string().describe("MIME type of the file"),
+  documentType: z
+    .enum(["journal", "ledger", "mixed"])
+    .describe("Type of financial document"),
 });
 
+
+import { generateText } from "ai";
+import { useDocumentPreviewStore } from "@/lib/store/document-preview-store";
+import { BASE_MODEL } from "@/lib/constants";
+import { openai } from "@ai-sdk/openai";
+
+export async function classifyFinancialText(
+  text: string,
+  runtimeContext?: RuntimeContext<MastraRuntimeContext>
+): Promise<number> {
+  try {
+    const { text: response } = await generateText({
+      model: openai(BASE_MODEL),
+      system: `You are a specialized Accounting Agent with comprehensive expertise in financial accounting, bookkeeping, and financial reporting. When classifying text, respond with a category number (1-4) and a description.
+- Category 1: "Dokumen Dasar Akuntansi" (e.g., neraca saldo, jurnal umum, buku besar)
+- Category 2: "Dokumen Penyesuaian Akuntansi" (e.g., perhitungan persediaan, penyusutan aset, jurnal penyesuaian, rekonsiliasi bank, neraca penyesuaian, neraca saldo setelah penyesuaian)
+- Category 3: "Laporan Keuangan" (e.g., laporan laba rugi, laporan perubahan ekuitas, laporan posisi keuangan, laporan arus kas, catatan atas laporan keuangan)
+- Category 4: "Konfirmasi Pengguna" (e.g., setuju, cocok, selesai, lanjutkan, konfirmasi)
+- If the text does not fit any specific category, default to Category 1: "Dokumen Dasar Akuntansi (default)".`,
+      prompt: `Classify the following text: ${text}`,
+    });
+    const categoryMatch = response.match(/Category (\d+):/);
+    if (categoryMatch?.[1]) {
+      return Number.parseInt(categoryMatch[1], 10);
+    } else {
+      console.warn("Could not parse category from agent response:", response);
+      return 1; // Default to category 1 if parsing fails
+    }
+  } catch (error) {
+    console.error("Error classifying financial text with agent:", error);
+    return 1; // Default to category 1 in case of error
+  }
+}
+
 export const parseFinancialDocumentTool: any = createTool({
-  id: 'parse-financial-document',
-  description: 'Parse financial documents (CSV, Excel, PDF) containing journal entries and general ledger data',
+  id: "parse-financial-document",
+  description:
+    "Parse financial documents (CSV, Excel, PDF) containing journal entries and general ledger data",
   inputSchema: parseFinancialDocumentSchema,
   outputSchema: z.object({
     success: z.boolean(),
-    transactions: z.array(z.object({
-      date: z.string(),
-      description: z.string(),
-      debit: z.string().optional(),
-      credit: z.string().optional(),
-      account: z.string(),
-      amount: z.string(),
-      documentSource: z.string(),
-    })),
+    transactions: z.array(
+      z.object({
+        date: z.string(),
+        description: z.string(),
+        debit: z.string().optional(),
+        credit: z.string().optional(),
+        account: z.string(),
+        amount: z.string(),
+        documentSource: z.string(),
+      })
+    ),
     metadata: z.object({
       totalTransactions: z.number(),
       dateRange: z.object({
@@ -66,11 +107,16 @@ export const parseFinancialDocumentTool: any = createTool({
     message: z.string(),
     content: z.string().optional(),
   }),
-  execute: async ({ context, runtimeContext }): Promise<any> => {
+  execute: async ({
+    context,
+    runtimeContext,
+  }: {
+    context: any;
+    runtimeContext: RuntimeContext<MastraRuntimeContext>;
+  }): Promise<any> => {
     try {
       const { fileUrl, filename, contentType, documentType } = context;
 
-      
       let extractedContent = null;
       try {
         extractedContent = await getAttachmentText({
@@ -82,44 +128,44 @@ export const parseFinancialDocumentTool: any = createTool({
         console.warn(`Direct text extraction failed for ${filename}:`, error);
       }
 
-      
       if (!extractedContent && runtimeContext) {
         try {
           console.log(`Attempting vault search for ${filename}...`);
-          
-          
+
           const vaultSearchQueries = [
-            'pendapatan revenue income',
-            'perpajakan tax',
-            'arus kas cash flow',
-            'beban operasional operational expense',
-            'aset asset kewajiban liability'
+            "pendapatan revenue income",
+            "perpajakan tax",
+            "arus kas cash flow",
+            "beban operasional operational expense",
+            "aset asset kewajiban liability",
           ];
-          
-          let vaultContent = '';
+
+          let vaultContent = "";
           for (const query of vaultSearchQueries) {
-            if (filename.toLowerCase().includes(query.split(' ')[0])) {
+            if (filename.toLowerCase().includes(query.split(" ")[0])) {
               const vaultResults = await queryVaultDocumentsTool.execute({
-                context: { 
+                context: {
                   query: query,
                   topK: 10,
-                  filenames: [filename] 
+                  filenames: [filename],
                 },
-                runtimeContext
+                runtimeContext,
               });
-              
+
               if (vaultResults.results && vaultResults.results.length > 0) {
                 vaultContent = vaultResults.results
-                  .map(result => result.text)
-                  .join('\n\n');
+                  .map((result) => result.text)
+                  .join("\n\n");
                 break;
               }
             }
           }
-          
+
           if (vaultContent) {
             extractedContent = vaultContent;
-            console.log(`Successfully retrieved content from vault for ${filename}`);
+            console.log(
+              `Successfully retrieved content from vault for ${filename}`
+            );
           }
         } catch (vaultError) {
           console.warn(`Vault search failed for ${filename}:`, vaultError);
@@ -132,7 +178,7 @@ export const parseFinancialDocumentTool: any = createTool({
           transactions: [],
           metadata: {
             totalTransactions: 0,
-            dateRange: { start: '', end: '' },
+            dateRange: { start: "", end: "" },
             documentType,
             parsingConfidence: 0,
           },
@@ -140,10 +186,13 @@ export const parseFinancialDocumentTool: any = createTool({
         };
       }
 
-      
-      const parsedData = parseFinancialContent(extractedContent, filename, documentType);
+      const parsedData = parseFinancialContent(
+        extractedContent,
+        filename,
+        documentType
+      );
 
-      return {
+      const result = {
         success: true,
         transactions: parsedData.transactions,
         metadata: {
@@ -159,6 +208,39 @@ export const parseFinancialDocumentTool: any = createTool({
           neracaData: parsedData.neracaData,
         }),
       };
+
+      if (runtimeContext) {
+        const mastraContext = runtimeContext.get("documentPreview");
+
+        // Use the async classifyFinancialText function
+        const step = documentType
+          ? await classifyFinancialText(documentType, runtimeContext)
+          : 1;
+
+        if (mastraContext) {
+          runtimeContext.set("documentPreview", {
+            step,
+            content: result.content,
+            metadata: result.metadata,
+            jurnalData: parsedData.jurnalData,
+            bukuData: parsedData.bukuData,
+            neracaData: parsedData.neracaData,
+          });
+
+          // Update the Zustand store
+          const { setDocumentPreview } = useDocumentPreviewStore.getState();
+          setDocumentPreview({
+            step,
+            content: result.content,
+            metadata: result.metadata,
+            jurnalData: parsedData.jurnalData,
+            bukuData: parsedData.bukuData,
+            neracaData: parsedData.neracaData,
+          });
+        }
+      }
+
+      return result;
     } catch (error: any) {
       console.error(`Error parsing ${context.filename}:`, error);
       return {
@@ -166,7 +248,7 @@ export const parseFinancialDocumentTool: any = createTool({
         transactions: [],
         metadata: {
           totalTransactions: 0,
-          dateRange: { start: '', end: '' },
+          dateRange: { start: "", end: "" },
           documentType: context.documentType,
           parsingConfidence: 0,
         },
@@ -176,59 +258,221 @@ export const parseFinancialDocumentTool: any = createTool({
   },
 });
 
-
-function parseFinancialContent(content: string, filename: string, documentType: string) {
+function parseFinancialContent(
+  content: string,
+  filename: string,
+  documentType: string
+) {
   const transactions: any[] = [];
   const jurnalData: JurnalEntry[] = [];
   const bukuData: BukuBesarEntry[] = [];
   const neracaData: NeracaSaldoEntry[] = [];
-  
-  
+
   const amountRegex = /Rp[\s]?([0-9.,]+)/g;
-  const amounts:any[] = [];
+  const amounts: any[] = [];
   let match;
-  
-  while ((match = amountRegex.exec(content)) !== null) {
-    const amount = match[1].replace(/[.,]/g, '');
-    amounts.push(parseInt(amount));
+
+  while (true) {
+    match = amountRegex.exec(content);
+    if (match === null) break;
+    const amount = match[1].replace(/[.,]/g, "");
+    amounts.push(Number.parseInt(amount));
   }
 
-  
-  if (filename.toLowerCase().includes('pendapatan')) {
-    
+  const dateRegex = /(\d{1,2}[-/]\d{1,2}[-/]\d{2,4})/g;
+  const dates: string[] = [];
+  let dateMatch;
+
+  while (true) {
+    dateMatch = dateRegex.exec(content);
+    if (dateMatch === null) break;
+    dates.push(dateMatch[1]);
+  }
+
+  const defaultDate = dates.length > 0 ? dates[0] : "01-01-2025";
+
+  if (
+    filename.toLowerCase().includes("pendapatan") ||
+    content.toLowerCase().includes("pendapatan")
+  ) {
     const revenueItems = [
-      'Pendapatan dari Faktur Penagihan',
-      'Penerimaan Uang Muka Proyek',
-      'Pembayaran Berdasarkan Progres',
-      'Retensi Proyek'
+      "Pendapatan dari Faktur Penagihan",
+      "Penerimaan Uang Muka Proyek",
+      "Pembayaran Berdasarkan Progres",
+      "Retensi Proyek",
     ];
-    
+
     revenueItems.forEach((item, index) => {
-      if (content.includes(item) && amounts[index]) {
+      if (content.includes(item) && index < amounts.length) {
+        const amount = amounts[index];
         transactions.push({
-          date: '2025-01-01',
+          date: defaultDate,
           description: item,
-          credit: amounts[index].toString(),
-          account: 'Pendapatan',
-          amount: amounts[index].toString(),
+          credit: amount.toString(),
+          account: "Pendapatan",
+          amount: amount.toString(),
           documentSource: filename,
         });
-        
+
         jurnalData.push({
           id: (index + 1).toString(),
-          tanggal: '2025-01-01',
+          tanggal: defaultDate,
           keterangan: item,
           noAkun: `400${index + 1}`,
-          namaAkun: 'Pendapatan',
-          debit: '0',
-          kredit: amounts[index].toString(),
+          namaAkun: "Pendapatan",
+          debit: "0",
+          kredit: amount.toString(),
+        });
+
+        bukuData.push({
+          id: (index + 1).toString(),
+          tanggal: defaultDate,
+          ref: `REV${index + 1}`,
+          keterangan: item,
+          akun: "Pendapatan",
+          debit: "0",
+          kredit: amount.toString(),
+          saldo: amount.toString(),
+        });
+
+        const existingNeracaEntry = neracaData.find(
+          (entry) => entry.namaAkun === "Pendapatan"
+        );
+        if (existingNeracaEntry) {
+          existingNeracaEntry.kredit = (
+            Number.parseInt(existingNeracaEntry.kredit || "0") + amount
+          ).toString();
+        } else {
+          neracaData.push({
+            kodeAkun: `400${index + 1}`,
+            namaAkun: "Pendapatan",
+            debit: "0",
+            kredit: amount.toString(),
+            total: amount.toString(),
+            kategori: "Pendapatan",
+          });
+        }
+      }
+    });
+  }
+
+  if (
+    filename.toLowerCase().includes("beban") ||
+    content.toLowerCase().includes("beban") ||
+    content.toLowerCase().includes("biaya")
+  ) {
+    const expenseItems = [
+      "Beban Gaji",
+      "Beban Operasional",
+      "Beban Sewa",
+      "Beban Utilitas",
+      "Beban Pemasaran",
+    ];
+
+    expenseItems.forEach((item, index) => {
+      if (
+        (content.includes(item) ||
+          content.toLowerCase().includes(item.toLowerCase())) &&
+        index < amounts.length
+      ) {
+        const amount = amounts[index];
+        transactions.push({
+          date: defaultDate,
+          description: item,
+          debit: amount.toString(),
+          account: item,
+          amount: amount.toString(),
+          documentSource: filename,
+        });
+
+        jurnalData.push({
+          id: (jurnalData.length + 1).toString(),
+          tanggal: defaultDate,
+          keterangan: item,
+          noAkun: `500${index + 1}`,
+          namaAkun: item,
+          debit: amount.toString(),
+          kredit: "0",
+        });
+
+        bukuData.push({
+          id: (bukuData.length + 1).toString(),
+          tanggal: defaultDate,
+          ref: `EXP${index + 1}`,
+          keterangan: item,
+          akun: item,
+          debit: amount.toString(),
+          kredit: "0",
+          saldo: amount.toString(),
+        });
+
+        neracaData.push({
+          kodeAkun: `500${index + 1}`,
+          namaAkun: item,
+          debit: amount.toString(),
+          kredit: "0",
+          total: amount.toString(),
+          kategori: "Beban",
         });
       }
     });
   }
-  
-  
-  
+
+  if (
+    filename.toLowerCase().includes("aset") ||
+    content.toLowerCase().includes("aset") ||
+    content.toLowerCase().includes("asset")
+  ) {
+    const assetItems = ["Kas", "Bank", "Piutang", "Persediaan", "Peralatan"];
+
+    assetItems.forEach((item, index) => {
+      if (
+        (content.includes(item) ||
+          content.toLowerCase().includes(item.toLowerCase())) &&
+        index < amounts.length
+      ) {
+        const amount = amounts[index];
+        transactions.push({
+          date: defaultDate,
+          description: `Pencatatan ${item}`,
+          debit: amount.toString(),
+          account: item,
+          amount: amount.toString(),
+          documentSource: filename,
+        });
+
+        jurnalData.push({
+          id: (jurnalData.length + 1).toString(),
+          tanggal: defaultDate,
+          keterangan: `Pencatatan ${item}`,
+          noAkun: `100${index + 1}`,
+          namaAkun: item,
+          debit: amount.toString(),
+          kredit: "0",
+        });
+
+        bukuData.push({
+          id: (bukuData.length + 1).toString(),
+          tanggal: defaultDate,
+          ref: `AST${index + 1}`,
+          keterangan: `Pencatatan ${item}`,
+          akun: item,
+          debit: amount.toString(),
+          kredit: "0",
+          saldo: amount.toString(),
+        });
+
+        neracaData.push({
+          kodeAkun: `100${index + 1}`,
+          namaAkun: item,
+          debit: amount.toString(),
+          kredit: "0",
+          total: amount.toString(),
+          kategori: "Aset",
+        });
+      }
+    });
+  }
 
   return {
     transactions,
@@ -236,32 +480,35 @@ function parseFinancialContent(content: string, filename: string, documentType: 
     bukuData,
     neracaData,
     dateRange: {
-      start: '2025-01-01',
-      end: '2025-12-31',
+      start: "2025-01-01",
+      end: "2025-12-31",
     },
     confidence: transactions.length > 0 ? 0.8 : 0.3,
   };
 }
 
-
 export const parseVaultFinancialDocumentTool = createTool({
-  id: 'parse-vault-financial-document',
-  description: 'Parse financial documents from vault using semantic search',
+  id: "parse-vault-financial-document",
+  description: "Parse financial documents from vault using semantic search",
   inputSchema: z.object({
-    filename: z.string().describe('Filename to search for'),
-    documentType: z.enum(['journal', 'ledger', 'mixed']).describe('Type of financial document'),
+    filename: z.string().describe("Filename to search for"),
+    documentType: z
+      .enum(["journal", "ledger", "mixed"])
+      .describe("Type of financial document"),
   }),
   outputSchema: z.object({
     success: z.boolean(),
-    transactions: z.array(z.object({
-      date: z.string(),
-      description: z.string(),
-      debit: z.string().optional(),
-      credit: z.string().optional(),
-      account: z.string(),
-      amount: z.string(),
-      documentSource: z.string(),
-    })),
+    transactions: z.array(
+      z.object({
+        date: z.string(),
+        description: z.string(),
+        debit: z.string().optional(),
+        credit: z.string().optional(),
+        account: z.string(),
+        amount: z.string(),
+        documentSource: z.string(),
+      })
+    ),
     metadata: z.object({
       totalTransactions: z.number(),
       dateRange: z.object({
@@ -274,35 +521,38 @@ export const parseVaultFinancialDocumentTool = createTool({
     message: z.string(),
     content: z.string().optional(),
   }),
-  execute: async ({ context, runtimeContext }): Promise<any> => {
+  execute: async ({
+    context,
+    runtimeContext,
+  }: {
+    context: any;
+    runtimeContext: RuntimeContext<MastraRuntimeContext>;
+  }): Promise<any> => {
     try {
       const { filename, documentType } = context;
-      
-      
+
       const searchQueries = [
-        'pendapatan revenue total amount',
-        'kas cash flow arus',
-        'beban expense operasional',
-        'aset asset kewajiban liability',
-        'pajak tax perpajakan'
+        "pendapatan revenue total amount",
+        "kas cash flow arus",
+        "beban expense operasional",
+        "aset asset kewajiban liability",
+        "pajak tax perpajakan",
       ];
-      
-      let allContent = '';
-      
+
+      let allContent = "";
+
       for (const query of searchQueries) {
         const vaultResults = await queryVaultDocumentsTool.execute({
-          context: { 
+          context: {
             query: query,
             topK: 5,
-            filenames: [filename] 
+            filenames: [filename],
           },
-          runtimeContext
+          runtimeContext,
         });
-        
+
         if (vaultResults.results && vaultResults.results.length > 0) {
-          allContent += vaultResults.results
-            .map(result => result.text)
-            .join('\n\n') + '\n\n';
+          allContent += `${vaultResults.results.map((result) => result.text).join("\n\n")}\n\n`;
         }
       }
 
@@ -312,7 +562,7 @@ export const parseVaultFinancialDocumentTool = createTool({
           transactions: [],
           metadata: {
             totalTransactions: 0,
-            dateRange: { start: '', end: '' },
+            dateRange: { start: "", end: "" },
             documentType,
             parsingConfidence: 0,
           },
@@ -320,10 +570,13 @@ export const parseVaultFinancialDocumentTool = createTool({
         };
       }
 
-      
-      const parsedData = parseFinancialContent(allContent, filename, documentType);
+      const parsedData = parseFinancialContent(
+        allContent,
+        filename,
+        documentType
+      );
 
-      return {
+      const result = {
         success: true,
         transactions: parsedData.transactions,
         metadata: {
@@ -339,6 +592,28 @@ export const parseVaultFinancialDocumentTool = createTool({
           neracaData: parsedData.neracaData,
         }),
       };
+
+      if (runtimeContext) {
+        const mastraContext = runtimeContext.get("documentPreview");
+
+        // Use the async classifyFinancialText function
+        const step = documentType
+          ? await classifyFinancialText(documentType, runtimeContext)
+          : 1;
+
+        if (mastraContext) {
+          runtimeContext.set("documentPreview", {
+            step,
+            content: result.content,
+            metadata: result.metadata,
+            jurnalData: parsedData.jurnalData,
+            bukuData: parsedData.bukuData,
+            neracaData: parsedData.neracaData,
+          });
+        }
+      }
+
+      return result;
     } catch (error: any) {
       console.error(`Error parsing vault document ${context.filename}:`, error);
       return {
@@ -346,7 +621,7 @@ export const parseVaultFinancialDocumentTool = createTool({
         transactions: [],
         metadata: {
           totalTransactions: 0,
-          dateRange: { start: '', end: '' },
+          dateRange: { start: "", end: "" },
           documentType: context.documentType,
           parsingConfidence: 0,
         },

@@ -9,7 +9,7 @@ import {
 } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
 import { user } from '../user.schema';
-import { ArtifactKind } from '@/components/artifact';
+import type { ArtifactKind } from '@/components/artifact';
 
 export const documentVault = pgTable('document_vault', {
   id: uuid('id').primaryKey().defaultRandom(),

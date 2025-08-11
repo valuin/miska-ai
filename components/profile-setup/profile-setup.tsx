@@ -205,7 +205,7 @@ export function ProfileSetup({ session }: ProfileSetupProps) {
     console.log("canProceed - currentStep:", currentStep);
     console.log("canProceed - setupData:", setupData);
     switch (currentStep) {
-      case 1:
+      case 1: {
         const step1Valid =
           setupData.profileName &&
           setupData.companyName &&
@@ -215,11 +215,13 @@ export function ProfileSetup({ session }: ProfileSetupProps) {
           setupData.reportCurrency;
         console.log("canProceed - Step 1 Valid:", step1Valid);
         return step1Valid;
-      case 2:
+      }
+      case 2: {
         const step2Valid =
           setupData.returnValuation && setupData.inventoryMethod;
         console.log("canProceed - Step 2 Valid:", step2Valid);
         return step2Valid;
+      }
       case 3:
         console.log("canProceed - Step 3 Valid: true");
         return true;
