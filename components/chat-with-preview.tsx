@@ -87,7 +87,7 @@ export function ChatWithPreview({
         />
       </div>
 
-      <div className="md:col-span-2 flex-1 overflow-hidden">
+      <div className="bg-white md:col-span-2 flex-1 overflow-hidden">
         <div className="h-dvh flex flex-col rounded-2xl border bg-card">
           <div className="flex items-center justify-between px-4 md:px-6 py-3 border-b">
             <div className="text-sm font-medium text-muted-foreground">

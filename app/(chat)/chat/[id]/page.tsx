@@ -2,16 +2,19 @@ import { cookies } from "next/headers";
 import { notFound, redirect } from "next/navigation";
 
 import { auth } from "@/app/(auth)/auth";
-import { Chat } from "@/components/chat";
+import { ChatWithPreview } from "@/components/chat-with-preview"; // Import ChatWithPreview
 import { getChatById, getMessagesByChatId } from "@/lib/db/queries";
 import { DataStreamHandler } from "@/components/data-stream-handler";
 import { DEFAULT_CHAT_MODEL } from "@/lib/ai/models";
 import type { DBMessage } from "@/lib/db/schema";
 import type { Attachment, UIMessage } from "ai";
-import { DocumentPreview } from "@/components/document-preview";
 
-export default async function Page({ params }: any) {
-  const { id } = params;
+export default async function Page({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = await params;
   const chat = await getChatById({ id });
 
   if (!chat) {
@@ -83,31 +86,55 @@ export default async function Page({ params }: any) {
 
   return (
     <>
-      <div className="bg-slate-100 grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 p-2 md:p-4">
+      <div className="bg-slate-100 grid grid-cols-1">
         <div className="md:col-span-1 min-w-0 rounded-t-lg">
-          <Chat
-            id={chat.id}
-            initialMessages={convertToUIMessages(messagesFromDb)}
-            initialChatModel={initialChatModel}
-            initialVisibilityType={chat.visibility}
-            isReadonly={session?.user?.id !== chat.userId}
-            session={session}
-            autoResume={true}
-          />
-        </div>
+          {/* Extract latest document-related tool result or args */}
+          {(() => {
+            let latestDocumentResult: any = null;
+            let latestDocumentArgs: any = null;
 
-        <div className="md:col-span-2">
-          <div className="bg-white h-dvh flex flex-col rounded-2xl border">
-            <div className="flex items-center justify-between px-4 md:px-6 py-3 border-b">
-              <div className="text-sm font-medium text-muted-foreground">
-                Preview
-              </div>
-            </div>
-            <div className="flex-1 overflow-y-auto p-4 md:p-6">
-              {/* Renders active artifact/document preview or a skeleton when none selected */}
-              <DocumentPreview isReadonly={session?.user?.id !== chat.userId} />
-            </div>
-          </div>
+            for (let i = messagesFromDb.length - 1; i >= 0; i--) {
+              const message = messagesFromDb[i];
+              if (message.parts && Array.isArray(message.parts)) {
+                for (let j = message.parts.length - 1; j >= 0; j--) {
+                  const part = message.parts[j];
+                  if (
+                    part.type === "tool-result" &&
+                    [
+                      "createDocument",
+                      "updateDocument",
+                      "queryVaultDocumentsTool",
+                    ].includes(part.toolName)
+                  ) {
+                    latestDocumentResult = part.result;
+                    break;
+                  }
+                  if (
+                    part.type === "tool-call" &&
+                    ["createDocument", "updateDocument"].includes(part.toolName)
+                  ) {
+                    latestDocumentArgs = part.args;
+                    break;
+                  }
+                }
+              }
+              if (latestDocumentResult || latestDocumentArgs) {
+                break;
+              }
+            }
+
+            return (
+              <ChatWithPreview // Use ChatWithPreview
+                id={chat.id}
+                initialMessages={convertToUIMessages(messagesFromDb)}
+                initialChatModel={initialChatModel}
+                initialVisibilityType={chat.visibility}
+                isReadonly={session?.user?.id !== chat.userId}
+                session={session}
+                autoResume={true}
+              />
+            );
+          })()}
         </div>
       </div>
       <DataStreamHandler id={id} />

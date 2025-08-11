@@ -5,9 +5,11 @@ import {
   timestamp,
   jsonb,
   uuid,
+  varchar,
 } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
 import { user } from '../user.schema';
+import { ArtifactKind } from '@/components/artifact';
 
 export const documentVault = pgTable('document_vault', {
   id: uuid('id').primaryKey().defaultRandom(),
@@ -19,6 +21,9 @@ export const documentVault = pgTable('document_vault', {
   fileSize: integer('file_size'),
   fileUrl: text('file_url').notNull(),
   contentPreview: text('content_preview'),
+  kind: varchar('kind', { enum: ['text', 'code', 'image', 'sheet'] as [ArtifactKind, ...ArtifactKind[]] })
+    .notNull()
+    .default('text'),
   metadata: jsonb('metadata').default({}),
   vectorIndexName: text('vector_index_name')
     .notNull()

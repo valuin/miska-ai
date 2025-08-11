@@ -9,6 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useEffect } from "react";
 
 export interface SetupData {
   profileName: string;
@@ -25,6 +26,16 @@ interface Step1CompanyDataProps {
 }
 
 export function Step1CompanyData({ data, onUpdate }: Step1CompanyDataProps) {
+  useEffect(() => {
+    // Set default values if they are not already set
+    if (!data.reportPeriod) {
+      onUpdate({ reportPeriod: "jan-dec" });
+    }
+    if (!data.reportCurrency) {
+      onUpdate({ reportCurrency: "IDR" });
+    }
+  }, [data.reportPeriod, data.reportCurrency, onUpdate]);
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
       <div>

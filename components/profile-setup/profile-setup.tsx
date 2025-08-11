@@ -93,7 +93,7 @@ export interface SetupData {
 export function ProfileSetup({ session }: ProfileSetupProps) {
   const router = useRouter();
   const pathname = usePathname();
-  const [showStepper, setShowStepper] = useState(false);
+  const [showStepper, setShowStepper] = useState(true); // Set to true for testing
   const [companies, setCompanies] = useState<Company[]>([]);
 
   const [currentStep, setCurrentStep] = useState(1);
@@ -202,21 +202,29 @@ export function ProfileSetup({ session }: ProfileSetupProps) {
   };
 
   const canProceed = () => {
+    console.log("canProceed - currentStep:", currentStep);
+    console.log("canProceed - setupData:", setupData);
     switch (currentStep) {
       case 1:
-        return (
+        const step1Valid =
           setupData.profileName &&
           setupData.companyName &&
           setupData.address &&
           setupData.npwp &&
           setupData.reportPeriod &&
-          setupData.reportCurrency
-        );
+          setupData.reportCurrency;
+        console.log("canProceed - Step 1 Valid:", step1Valid);
+        return step1Valid;
       case 2:
-        return setupData.returnValuation && setupData.inventoryMethod;
+        const step2Valid =
+          setupData.returnValuation && setupData.inventoryMethod;
+        console.log("canProceed - Step 2 Valid:", step2Valid);
+        return step2Valid;
       case 3:
+        console.log("canProceed - Step 3 Valid: true");
         return true;
       default:
+        console.log("canProceed - Default: false");
         return false;
     }
   };
@@ -304,7 +312,7 @@ export function ProfileSetup({ session }: ProfileSetupProps) {
                       </p>
                       <Ellipsis color="#000" size={24} />
                     </div>
-                    <Badge className="bg-[#EDFAE0] mt-2">
+                    <Badge className="bg-lime-50 mt-2">
                       Periode: {company.period}
                     </Badge>
                   </div>
@@ -413,7 +421,7 @@ export function ProfileSetup({ session }: ProfileSetupProps) {
             <Button
               onClick={handleNext}
               disabled={!canProceed()}
-              className="bg-green-950 hover:bg-green-900"
+              className="bg-green-950 hover:bg-green-900 text-white"
             >
               {currentStep === 3 ? "Selesai" : "Selanjutnya"}
             </Button>

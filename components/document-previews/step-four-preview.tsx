@@ -97,7 +97,7 @@ export const StepFourPreview = () => {
 
       {/* Top Stats Cards */}
       <div className="grid grid-cols-2 gap-4">
-        <div className="bg-[#EDFAE0] dark:bg-green-900/20 rounded-xl p-6 relative overflow-hidden">
+        <div className="bg-lime-50 dark:bg-green-900/20 rounded-xl p-6 relative overflow-hidden">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <div className="size-12 bg-gradient-to-b from-[#A6E564] to-[#054135]  rounded-full flex items-center justify-center">
@@ -118,7 +118,7 @@ export const StepFourPreview = () => {
           </div>
         </div>
 
-        <div className="bg-[#EDFAE0] dark:bg-green-900/20 rounded-xl p-6 relative overflow-hidden">
+        <div className="bg-lime-50 dark:bg-green-900/20 rounded-xl p-6 relative overflow-hidden">
           <div className="flex items-center gap-4">
             <div className="size-12 bg-gradient-to-b from-[#A6E564] to-[#054135]  rounded-full flex items-center justify-center">
               <BarChart className="text-white text-xl" />
@@ -159,6 +159,19 @@ export const StepFourPreview = () => {
             <div className="h-64">
               <ResponsiveContainer width="100%" height="100%">
                 <ComposedChart data={chartData}>
+                  <defs>
+                    <linearGradient
+                      id="barGradient"
+                      x1="0"
+                      y1="0"
+                      x2="0"
+                      y2="1"
+                    >
+                      <stop offset="0%" stopColor="#054135" />
+                      <stop offset="100%" stopColor="#A6E564" />
+                    </linearGradient>
+                  </defs>
+
                   <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
                   <XAxis
                     dataKey="month"
@@ -178,9 +191,10 @@ export const StepFourPreview = () => {
                       borderRadius: "8px",
                     }}
                   />
+
                   <Bar
                     dataKey="pendapatan"
-                    fill="#16a34a"
+                    fill="url(#barGradient)"
                     radius={[4, 4, 0, 0]}
                     name="Total Pendapatan"
                   />

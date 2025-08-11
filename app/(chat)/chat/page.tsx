@@ -13,7 +13,6 @@ export default async function ChatPage() {
     redirect("/api/auth/guest");
   }
 
-  // Check if user has completed profile setup
   const cookieStore = await cookies();
   const hasCompletedSetup = cookieStore.get("profile-setup-completed");
 

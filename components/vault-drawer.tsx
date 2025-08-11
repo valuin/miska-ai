@@ -1,54 +1,83 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
-import type { ChangeEvent, Dispatch, SetStateAction } from "react";
+import { useState, useEffect, useMemo, Dispatch, SetStateAction } from "react";
+import Image from "next/image";
 import {
   Drawer,
   DrawerTrigger,
   DrawerContent,
-  DrawerHeader,
-  DrawerTitle,
-  DrawerDescription,
   DrawerClose,
-  DrawerFooter,
 } from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { cn } from "@/lib/utils";
-import { FileIcon, LoaderIcon, PlusIcon, TrashIcon } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import {
+  FileIcon,
+  Search,
+  SlidersHorizontal,
+  Trash2,
+  TrashIcon,
+  X,
+} from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
-import { upload } from "@vercel/blob/client";
-import type { Attachment } from "ai";
-
-function VaultUploadingList({ uploads }: { uploads: Attachment[] }) {
-  return (
-    <div className="flex flex-row gap-2 overflow-x-scroll items-end mb-2">
-      {uploads.map((upload, index) => (
-        <div
-          key={`${upload.name}-${index}`}
-          data-testid="input-attachment-preview"
-          className="flex flex-col gap-2 relative w-full"
-        >
-          <div className="w-full bg-muted-foreground/10 rounded-md relative flex flex-row items-center gap-2 p-2">
-            <FileIcon className="size-4" />
-            <LoaderIcon className="animate-spin text-zinc-500" />
-            <span className="text-xs text-zinc-500 max-w-full truncate">
-              {upload.name}
-            </span>
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
+import { DialogTitle } from "./ui/dialog";
 
 export interface UserUpload {
   id: string;
   filename: string;
   url: string;
   createdAt: string;
+  size?: number;
 }
+
+const formatFileSize = (bytes?: number) => {
+  if (!bytes) return "";
+  if (bytes < 1024) return `${bytes} Bytes`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+};
+
+const getFileIcon = (filename: string) => {
+  const extension = filename.split(".").pop()?.toLowerCase();
+  if (extension === "pdf") {
+    return "/images/pdf-file.png";
+  }
+  if (extension === "xlsx" || extension === "xls" || extension === "csv") {
+    return "/images/xls-file.png";
+  }
+
+  return "/images/doc-file.png";
+};
+
+const groupUploadsByDate = (uploads: UserUpload[]) => {
+  const groups: { [key: string]: UserUpload[] } = {
+    "Diunggah Hari Ini": [],
+    "Diunggah Kemarin": [],
+    Lainnya: [],
+  };
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const yesterday = new Date(today);
+  yesterday.setDate(yesterday.getDate() - 1);
+
+  uploads.forEach((upload) => {
+    const uploadDate = new Date(upload.createdAt);
+    uploadDate.setHours(0, 0, 0, 0);
+
+    if (uploadDate.getTime() === today.getTime()) {
+      groups["Diunggah Hari Ini"].push(upload);
+    } else if (uploadDate.getTime() === yesterday.getTime()) {
+      groups["Diunggah Kemarin"].push(upload);
+    } else {
+      groups.Lainnya.push(upload);
+    }
+  });
+
+  return groups;
+};
 
 export function VaultList({
   uploads,
@@ -166,137 +195,22 @@ export function VaultList({
   );
 }
 
-function FileUpload({ fetchUserUploads }: { fetchUserUploads: () => void }) {
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [attachments, setAttachments] = useState<Array<Attachment>>([]);
-  const [uploadQueue, setUploadQueue] = useState<Array<string>>([]);
-
-  const uploadFile = async (file: File): Promise<Attachment | undefined> => {
-    try {
-      const newBlob = await upload(file.name, file, {
-        access: "public",
-        handleUploadUrl: "/api/files/upload-blob",
-        multipart: true,
-      });
-
-      const processResponse = await fetch("/api/files/process-document", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          fileUrl: newBlob.url,
-          filename: file.name,
-          contentType: file.type,
-        }),
-      });
-
-      if (!processResponse.ok) {
-        throw new Error("Failed to process document");
-      }
-
-      const processResult = await processResponse.json();
-
-      const saveResponse = await fetch("/api/vault/save", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          tempDocumentId: processResult.document.id,
-        }),
-      });
-
-      if (saveResponse.ok) {
-        toast.success("Document saved to vault successfully!");
-        fetchUserUploads();
-      } else {
-        toast.error("Failed to save document to vault");
-      }
-
-      return {
-        url: newBlob.url,
-        name: file.name,
-        contentType: file.type,
-      };
-    } catch (error) {
-      toast.error("Failed to process file, please try again!");
-    }
-  };
-
-  const handleFileChange = useCallback(
-    async (event: ChangeEvent<HTMLInputElement>) => {
-      const files = Array.from(event.target.files || []);
-
-      setUploadQueue(files.map((file) => file.name));
-
-      try {
-        const uploadPromises = files.map((file) => uploadFile(file));
-
-        // clear the input
-        event.target.value = "";
-        event.target.files = null;
-
-        const uploadedAttachments = await Promise.all(uploadPromises);
-        const successfullyUploadedAttachments = uploadedAttachments.filter(
-          (attachment) => attachment !== undefined
-        );
-
-        setAttachments((currentAttachments) => [
-          ...currentAttachments,
-          ...successfullyUploadedAttachments,
-        ]);
-      } catch (error) {
-      } finally {
-        setUploadQueue([]);
-      }
-    },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    []
-  );
-
-  return (
-    <div className="w-full">
-      <input
-        type="file"
-        className="fixed -top-4 -left-4 size-0.5 opacity-0 pointer-events-none"
-        ref={fileInputRef}
-        multiple
-        onChange={handleFileChange}
-        tabIndex={-1}
-      />
-      {(attachments.length > 0 || uploadQueue.length > 0) && (
-        <VaultUploadingList uploads={attachments} />
-      )}
-      <div
-        className={cn(
-          "relative w-full rounded-lg border border-dashed border-muted-foreground/20",
-          "flex flex-row gap-2 items-center cursor-pointer justify-center h-24"
-        )}
-        onClick={() => fileInputRef.current?.click()}
-      >
-        <PlusIcon className="size-4" />
-        <span className="text-sm">Upload files to your vault</span>
-      </div>
-    </div>
-  );
-}
-
 export function VaultDrawer({ width }: { width?: number }) {
   const [uploads, setUploads] = useState<UserUpload[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [isOpen, setIsOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedUploads, setSelectedUploads] = useState<UserUpload[]>([]);
 
   const fetchUserUploads = async () => {
     setIsLoading(true);
     try {
       const response = await fetch("/api/vault/documents");
-      if (!response.ok) {
-        throw new Error("Failed to fetch vault documents");
-      }
+      if (!response.ok) throw new Error("Gagal mengambil dokumen");
       const data = await response.json();
       setUploads(data.documents || []);
     } catch (error) {
+      toast.error("Gagal mengambil dokumen dari arsip.");
       setUploads([]);
     } finally {
       setIsLoading(false);
@@ -309,12 +223,43 @@ export function VaultDrawer({ width }: { width?: number }) {
     }
   }, [isOpen]);
 
+  const handleDelete = async (id: string) => {
+    const response = await fetch("/api/vault/documents", {
+      method: "DELETE",
+      body: JSON.stringify({ documentId: id }),
+    });
+    if (response.ok) {
+      toast.success("Dokumen berhasil dihapus.");
+      setUploads((current) => current.filter((u) => u.id !== id));
+      setSelectedUploads((current) => current.filter((u) => u.id !== id));
+    } else {
+      toast.error("Gagal menghapus dokumen.");
+    }
+  };
+
+  const handleSelect = (upload: UserUpload, isChecked: boolean) => {
+    setSelectedUploads((current) => {
+      if (isChecked) {
+        return [...current, upload];
+      } else {
+        return current.filter((u) => u.id !== upload.id);
+      }
+    });
+  };
+
+  const filteredUploads = useMemo(() => {
+    return uploads.filter((upload) =>
+      upload.filename.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [uploads, searchTerm]);
+
+  const groupedUploads = useMemo(
+    () => groupUploadsByDate(filteredUploads),
+    [filteredUploads]
+  );
+
   return (
-    <Drawer
-      direction="right"
-      shouldScaleBackground={false}
-      onOpenChange={setIsOpen}
-    >
+    <Drawer direction="right" shouldScaleBackground onOpenChange={setIsOpen}>
       <DrawerTrigger asChild>
         <Button
           variant="outline"
@@ -325,42 +270,128 @@ export function VaultDrawer({ width }: { width?: number }) {
       </DrawerTrigger>
       <DrawerContent
         direction="right"
-        className="fixed right-0 top-0 h-full w-[90vw] pl-4 pt-4 max-w-sm z-50 bg-background border-l flex flex-col"
+        className="fixed right-0 top-0 h-full w-[95vw] max-w-lg z-50 bg-white flex flex-col p-0"
         style={{ borderRadius: 0, left: "auto" }}
       >
-        <DrawerHeader>
-          <DrawerTitle>Document Vault</DrawerTitle>
-          <DrawerDescription>
-            These files will be accessible to your agents.
-          </DrawerDescription>
-        </DrawerHeader>
-        <div className="p-4 flex flex-col gap-4 flex-1">
-          <div className="flex flex-col gap-2 flex-1">
-            {/* Files */}
-            <div className="flex-1 min-h-0">
-              <div className="rounded-lg border border-muted-foreground/20 bg-background max-h-96 overflow-y-auto">
-                <VaultList
-                  uploads={uploads}
-                  setUploads={setUploads}
-                  isLoading={isLoading}
-                  isSelectable={false}
-                  isDeletable={true}
-                />
-              </div>
+        <div className="p-6">
+          <div className="flex justify-between items-center">
+            <DialogTitle className="text-xl font-semibold text-gray-800">
+              Pilih File dari Arsip Dokumen
+            </DialogTitle>
+            <DrawerClose asChild>
+              <Button variant="ghost" size="icon" className="size-8">
+                <X className="size-5" />
+              </Button>
+            </DrawerClose>
+          </div>
+          <p className="text-sm text-gray-500 mt-1">
+            Centang untuk melanjutkan
+          </p>
+        </div>
+
+        {/* Search & Filter */}
+        <div className="p-6 border-gray-200">
+          <div className="flex items-center gap-4">
+            <div className="relative grow">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-gray-400" />
+              <Input
+                placeholder="Cari..."
+                className="pl-9"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
             </div>
-            {/* Add Files */}
-            <div className="pt-2">
-              <FileUpload fetchUserUploads={fetchUserUploads} />
-            </div>
+            <Button variant="outline">
+              <SlidersHorizontal className="mr-2 size-4" />
+              Filter
+            </Button>
           </div>
         </div>
-        <DrawerFooter>
-          <DrawerClose asChild>
-            <Button variant="secondary" className="w-full">
-              Close
+
+        <div className="grow overflow-y-auto p-6 space-y-6">
+          {isLoading
+            ? Array.from({ length: 5 }).map((_, i) => (
+                <div
+                  key={i}
+                  className="flex items-center gap-4 rounded-lg border p-3"
+                >
+                  <Skeleton className="size-5 rounded-sm" />
+                  <Skeleton className="size-8" />
+                  <div className="grow space-y-2">
+                    <Skeleton className="h-4 w-3/4" />
+                    <Skeleton className="h-3 w-1/4" />
+                  </div>
+                </div>
+              ))
+            : Object.entries(groupedUploads).map(([groupName, groupUploads]) =>
+                groupUploads.length > 0 ? (
+                  <div key={groupName}>
+                    <h3 className="text-sm font-bold text-slate-950 mb-3">
+                      {groupName}
+                    </h3>
+                    <div className="space-y-2">
+                      {groupUploads.map((upload) => (
+                        <div
+                          key={upload.id}
+                          className="flex items-center gap-3 rounded-lg border bg-gray-50 p-3 hover:bg-gray-100 transition-colors"
+                        >
+                          <Checkbox
+                            id={upload.id}
+                            onCheckedChange={(checked) =>
+                              handleSelect(upload, checked as boolean)
+                            }
+                            checked={selectedUploads.some(
+                              (u) => u.id === upload.id
+                            )}
+                          />
+                          <Image
+                            src={getFileIcon(upload.filename)}
+                            alt="file type icon"
+                            width={32}
+                            height={32}
+                            className="size-8"
+                          />
+                          <div className="grow">
+                            <p className="text-sm font-medium text-gray-800 truncate">
+                              {upload.filename}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              {formatFileSize(upload.size)}
+                            </p>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="size-8 shrink-0 text-gray-500 hover:text-red-500"
+                            onClick={() => handleDelete(upload.id)}
+                          >
+                            <Trash2 className="size-4" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : null
+              )}
+        </div>
+
+        {/* Footer Kustom */}
+        <div className="p-6 border-gray-200 bg-white mt-auto">
+          <div className="flex justify-end gap-4">
+            <DrawerClose asChild>
+              <Button variant="outline">Kembali</Button>
+            </DrawerClose>
+            <Button
+              className="bg-lime-950 hover:bg-[#04352b] text-white"
+              disabled={selectedUploads.length === 0}
+              onClick={() => {
+                toast.info(`${selectedUploads.length} dokumen dipilih.`);
+              }}
+            >
+              Pilih Dokumen
             </Button>
-          </DrawerClose>
-        </DrawerFooter>
+          </div>
+        </div>
       </DrawerContent>
     </Drawer>
   );

@@ -1,4 +1,3 @@
-import 'server-only';
 
 import { and, desc, eq, lt } from 'drizzle-orm';
 import { ChatSDKError } from '../../errors';
@@ -64,7 +63,6 @@ export async function saveDocumentToVault(data: {
   try {
     const documentId = generateUUID();
 
-    // Save document
     await db.insert(documentVault).values({
       id: documentId,
       userId: data.userId,

@@ -48,7 +48,8 @@ export interface RegisterActionState {
     | 'success'
     | 'failed'
     | 'user_exists'
-    | 'invalid_data';
+    | 'invalid_data'
+    | 'password_missmatch';
 }
 
 export const register = async (

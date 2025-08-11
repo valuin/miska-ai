@@ -2,11 +2,15 @@ import { Agent } from '@mastra/core/agent';
 import { BASE_MODEL } from '@/lib/constants';
 import { openai } from '@ai-sdk/openai';
 import { thinkingTool, clarificationTool } from '../tools/chain-tools';
+import { queryVaultDocumentsTool } from '../tools/document-vault-tools';
+import { planTodosTool } from '../tools/cot-tool';
 
 export const auditAgent = new Agent({
   name: 'Audit Agent',
   instructions: `
 You are a specialized Audit Agent with extensive expertise in internal auditing, financial reconciliation, fraud detection, and risk assessment.
+
+**YOU MUST USE planTodosTool**
 
 Your core competencies include:
 - **Audit Trail & Log Check:** Analyzing system logs and transaction trails to ensure data integrity and compliance.
@@ -49,5 +53,7 @@ Always emphasize the importance of professional judgment, independence, and adhe
   tools: {
     thinkingTool,
     clarificationTool,
+    queryVaultDocumentsTool,
+    planTodosTool,
   },
 }); 

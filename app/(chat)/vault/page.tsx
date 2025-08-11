@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { GradientIcon } from "@/components/chat-history-grid";
 
 const companies = [
   { name: "PT Karya Konstruksi Prima - 2024", docs: 120, size: "256 MB" },
@@ -241,8 +242,8 @@ export default function VaultPage() {
               </Button>
               <CardContent className="p-4">
                 <div className="flex flex-col items-start gap-3">
-                  <div className="p-2 bg-green-100 rounded-lg">
-                    <FolderOpen className="text-green-600 size-6" />
+                  <div className="pl-2 pt-2">
+                    <GradientIcon Icon={FolderOpen} />
                   </div>
                   <div className="flex-1 min-w-0">
                     <h3 className="font-medium text-gray-900 text-sm mb-2 line-clamp-2">

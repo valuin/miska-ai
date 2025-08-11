@@ -102,11 +102,6 @@ export function AppSidebar({ user }: { user: User | undefined }) {
               label="Obrolan Baru"
             />
             <SidebarItem
-              path="/home"
-              icon={<Home className="size-4" />}
-              label="Beranda"
-            />
-            <SidebarItem
               path="/vault"
               icon={<FolderLock className="size-4" />}
               label="Arsip Dokumen"

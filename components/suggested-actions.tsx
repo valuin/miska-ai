@@ -1,11 +1,12 @@
 "use client";
 
-import { motion } from "framer-motion";
-import { Button } from "./ui/button";
-import { memo } from "react";
 import type { UseChatHelpers } from "@ai-sdk/react";
+import { motion } from "framer-motion";
+import { BrainCircuit, File, Lightbulb, Scale } from "lucide-react";
+import { memo } from "react";
+import { GradientIcon } from "./chat-history-grid";
+import { Button } from "./ui/button";
 import type { VisibilityType } from "./visibility-selector";
-import { DollarSign, BarChart, Search, BrainCircuit } from "lucide-react";
 
 interface SuggestedActionsProps {
   chatId: string;
@@ -28,8 +29,8 @@ function PureSuggestedActions({
         </span>
       ),
       icon: (
-        <div className="rounded-full p-4 bg-green-200">
-          <DollarSign className="size-4" />
+        <div className="rounded-full p-4 bg-lime-50 flex items-center justify-center">
+          <GradientIcon Icon={File} size={20} />
         </div>
       ),
       label: "Laporan laba rugi, neraca, dan arus kas",
@@ -41,8 +42,8 @@ function PureSuggestedActions({
         <span className="flex items-center gap-1.5">Analisis Pajak & SPT</span>
       ),
       icon: (
-        <div className="rounded-full p-4 bg-green-200">
-          <BarChart className="size-4" />
+        <div className="rounded-full p-4 bg-lime-50 flex items-center justify-center">
+          <GradientIcon Icon={Lightbulb} size={20} />
         </div>
       ),
       label: "Validasi NPWP dan generate SPT PPN",
@@ -54,8 +55,8 @@ function PureSuggestedActions({
         <span className="flex items-center gap-1.5">Audit & Compliance</span>
       ),
       icon: (
-        <div className="rounded-full p-4 bg-green-200">
-          <Search className="size-4" />
+        <div className="rounded-full p-4 bg-lime-50 flex items-center justify-center">
+          <GradientIcon Icon={Scale} size={20} />
         </div>
       ),
       label: "Evaluasi internal control dan risk assessment",
@@ -67,8 +68,8 @@ function PureSuggestedActions({
         <span className="flex items-center gap-1.5">Super Agent Assistant</span>
       ),
       icon: (
-        <div className="rounded-full p-4 bg-green-200">
-          <BrainCircuit className="size-4" />
+        <div className="rounded-full p-4 bg-lime-50 flex items-center justify-center">
+          <GradientIcon Icon={BrainCircuit} size={20} />
         </div>
       ),
       label: "AI yang bisa mengatur semua agent",

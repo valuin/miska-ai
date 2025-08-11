@@ -5,7 +5,6 @@ import { Button } from "./ui/button";
 import { ClarificationMessage } from "./clarification-message";
 import { cn, sanitizeText } from "@/lib/utils";
 import { DefaultToolResult } from "./default-tool-result";
-import { DocumentPreview } from "./document-preview";
 import { DocumentToolCall, DocumentToolResult } from "./document";
 import { Markdown } from "./markdown";
 import { memo, useState } from "react";
@@ -248,7 +247,11 @@ const PurePreviewMessage = ({
                       ) : toolName === "searxngTool" ? (
                         <Sources args={args} streaming={true} />
                       ) : toolName === "createDocument" ? (
-                        <DocumentPreview isReadonly={isReadonly} args={args} />
+                        <DocumentToolCall
+                          type="create"
+                          args={args}
+                          isReadonly={isReadonly}
+                        />
                       ) : toolName === "updateDocument" ? (
                         <DocumentToolCall
                           type="update"
@@ -283,9 +286,7 @@ const PurePreviewMessage = ({
 
                 if (state === "result") {
                   const { result } = toolInvocation;
-                  // Custom: Show ToolCallBadge with file(s) for queryVaultDocumentsTool
                   if (toolName === "queryVaultDocumentsTool") {
-                    // Try to extract filenames from result
                     let filenames: string[] = [];
                     if (Array.isArray(result?.results)) {
                       filenames = Array.from(
@@ -321,16 +322,16 @@ const PurePreviewMessage = ({
                       ) : toolName === "optionsTool" ? (
                         <Options options={result.options} append={append} />
                       ) : toolName === "workflowTool" ? (
-                        // todo: remove the json streaming twice as tools and as response im already too tired to do this myself
                         <WorkflowDisplay result={result} />
                       ) : toolName === "clarificationTool" ? (
                         <ClarificationMessage result={result} append={append} />
                       ) : toolName === "planTodosTool" ? (
                         <PlanDisplay data={result} />
                       ) : toolName === "createDocument" ? (
-                        <DocumentPreview
-                          isReadonly={isReadonly}
+                        <DocumentToolResult
+                          type="create"
                           result={result}
+                          isReadonly={isReadonly}
                         />
                       ) : toolName === "listVaultDocumentsTool" ? (
                         <VaultList

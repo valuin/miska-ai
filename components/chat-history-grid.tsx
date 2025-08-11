@@ -2,7 +2,14 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { MessageSquare, Clock } from "lucide-react";
+import {
+  MessageSquare,
+  Clock,
+  Landmark,
+  BarChart3,
+  SearchCheck,
+  FileText,
+} from "lucide-react";
 import { fetcher } from "@/lib/utils";
 import type { Chat } from "@/lib/db/schema";
 import useSWRInfinite from "swr/infinite";
@@ -13,6 +20,34 @@ export interface ChatHistory {
 }
 
 const PAGE_SIZE = 20;
+
+export const GradientIcon = ({
+  Icon,
+  size = 32,
+}: {
+  Icon: any;
+  size?: number;
+}) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox={`0 0 ${size} ${size}`}
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <defs>
+      <linearGradient id="iconGradient" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stopColor="#054135" />
+        <stop offset="100%" stopColor="#A6E564" />
+      </linearGradient>
+    </defs>
+    <Icon
+      stroke="url(#iconGradient)"
+      fill="url(#iconGradient)"
+      strokeWidth={1.5}
+    />
+  </svg>
+);
 
 export function getChatHistoryPaginationKey(
   pageIndex: number,
@@ -51,30 +86,30 @@ export function ChatHistoryGrid({
 
   const getTypeIcon = (title: string) => {
     const lowerTitle = title.toLowerCase();
+
     if (
       lowerTitle.includes("akuntan") ||
       lowerTitle.includes("laporan") ||
       lowerTitle.includes("keuangan")
     ) {
-      return "💰";
+      return <GradientIcon Icon={Landmark} />;
     } else if (
       lowerTitle.includes("pajak") ||
       lowerTitle.includes("ppn") ||
       lowerTitle.includes("spt")
     ) {
-      return "📊";
+      return <GradientIcon Icon={BarChart3} />;
     } else if (
       lowerTitle.includes("audit") ||
       lowerTitle.includes("compliance")
     ) {
-      return "🔍";
+      return <GradientIcon Icon={SearchCheck} />;
     } else {
-      return "📄";
+      return <GradientIcon Icon={FileText} />;
     }
   };
 
   const getStatusColor = (chat: Chat) => {
-    // You can add logic here based on chat properties
     return "text-green-600 bg-green-100";
   };
 
@@ -145,7 +180,9 @@ export function ChatHistoryGrid({
           >
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between">
-                <span className="text-2xl">{getTypeIcon(chat.title)}</span>
+                <div className="rounded-full bg-lime-50 self-center pl-2 pt-2">
+                  {getTypeIcon(chat.title)}
+                </div>
                 <span
                   className={`text-xs px-2 py-1 rounded-full ${getStatusColor(chat)}`}
                 >
@@ -166,7 +203,7 @@ export function ChatHistoryGrid({
         ))}
       </div>
 
-      {chatsFromHistory.length > 8 && (
+      {chatsFromHistory.length > 24 && (
         <div className="text-center">
           <Button
             variant="outline"

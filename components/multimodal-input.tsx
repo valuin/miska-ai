@@ -28,7 +28,6 @@ import { Textarea } from "./ui/textarea";
 import type { UserUpload } from "./vault-drawer";
 import type { VisibilityType } from "./visibility-selector";
 import { VaultDrawer } from "./vault-drawer";
-import { useMessageCountStore } from "./chat-with-preview";
 import Integrations from "./integrations";
 
 // MessageInputSection: handles textarea, input, and keyboard events
@@ -120,8 +119,6 @@ function PureMultimodalInput({
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { width } = useWindowSize();
   console.log(width);
-
-  const { messageCount, increment } = useMessageCountStore();
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploadQueue, setUploadQueue] = useState<Array<string>>([]);
@@ -240,10 +237,6 @@ function PureMultimodalInput({
   const submitForm = useCallback(() => {
     window.history.replaceState({}, "", `/chat/${chatId}`);
 
-    if (messageCount < 4) {
-      increment();
-    }
-
     let userPrompt = input;
     let restoreInput = false;
     if (selectedVaultFileNames && selectedVaultFileNames.length > 0) {
@@ -292,8 +285,6 @@ function PureMultimodalInput({
     input,
     selectedVaultFileNames,
     setInput,
-    messageCount,
-    increment,
   ]);
 
   const { isAtBottom, scrollToBottom } = useScrollToBottom();
