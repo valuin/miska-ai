@@ -29,15 +29,21 @@ export const FinancialsProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     setIsLoading(true);
+
     const pathParts = pathname.split("/");
-    const idFromPath = pathParts[pathParts.length - 1];
+    const idFromPath = pathParts.find((part) => part.length === 36); // Basic UUID check
 
     if (idFromPath) {
       setChatId(idFromPath);
     }
 
-    if (documentPreview?.workbookId) {
-      setWorkbookId(documentPreview.workbookId);
+    if (documentPreview) {
+      if (documentPreview.workbookId) {
+        setWorkbookId(documentPreview.workbookId);
+      }
+      if (documentPreview.chatId) {
+        setChatId(documentPreview.chatId);
+      }
     }
 
     setIsLoading(false);

@@ -51,30 +51,46 @@ export const StepFourPreview = ({
   const [dataLoaded, setDataLoaded] = useState(false);
 
   useEffect(() => {
-    const fetchFinancialData = async (workbookId: string, chatId: string) => {
+    let eventSource: EventSource;
+
+    const connectToStream = (workbookId: string, chatId: string) => {
       setLoading(true);
-      try {
-        const response = await fetch(
-          `/api/financials/${workbookId}?chatId=${chatId}`
+      eventSource = new EventSource(
+        `/api/financials/${workbookId}?chatId=${chatId}`
+      );
+
+      eventSource.onmessage = (event) => {
+        const eventData = JSON.parse(event.data);
+        console.log(
+          "📊 Data yang diterima dari stream (Step Four):",
+          eventData
         );
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const data = await response.json();
-        if (data && data.finalResultData) {
-          setFinalResultData(data.finalResultData);
+
+        if (
+          (eventData.type === "initial-data" ||
+            eventData.type === "update-data") &&
+          eventData.data.finalResultData
+        ) {
+          setFinalResultData(eventData.data.finalResultData);
           setDataLoaded(true);
+        } else if (eventData.type === "error") {
+          console.error("❌ Error dari stream:", eventData.error);
+          setDataLoaded(false);
+          eventSource.close();
         }
-      } catch (error) {
-        console.error("Error fetching financial data for step four:", error);
-        setDataLoaded(false);
-      } finally {
         setLoading(false);
-      }
+      };
+
+      eventSource.onerror = (error) => {
+        console.error("❌ Error koneksi EventSource:", error);
+        setDataLoaded(false);
+        setLoading(false);
+        eventSource.close();
+      };
     };
 
     if (workbookId && contextChatId) {
-      fetchFinancialData(workbookId, contextChatId);
+      connectToStream(workbookId, contextChatId);
     } else if (documentPreview && documentPreview.content?.finalResultData) {
       setFinalResultData(documentPreview.content.finalResultData);
       setDataLoaded(true);
@@ -83,6 +99,13 @@ export const StepFourPreview = ({
       setLoading(false);
       setDataLoaded(false);
     }
+
+    return () => {
+      if (eventSource) {
+        eventSource.close();
+        console.log("🏁 Koneksi stream ditutup (Step Four).");
+      }
+    };
   }, [workbookId, contextChatId, documentPreview]);
 
   if (loading) {

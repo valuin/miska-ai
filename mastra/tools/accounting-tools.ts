@@ -10,6 +10,8 @@ import { openai } from "@ai-sdk/openai";
 import {
   createFinancialWorkbook,
   createFinancialStepData,
+  updateFinancialStepData,
+  deleteFinancialStepData,
 } from "@/lib/db/queries/financial";
 import type {
   JurnalUmumEntry,
@@ -237,10 +239,10 @@ async function parseFinancialContent(
             saldoTotal: z.string(),
           })
         ),
-        jurnalPenyesuaian: z.object({
+        jurnalPenyesuaian: z.array(z.object({
           debit: z.string(),
           kredit: z.string(),
-        }),
+        })),
       }),
        dateRange: z.object({
         start: z.string().describe("Start date in YYYY-MM-DD format"),
@@ -355,36 +357,43 @@ ${content}
 ---
 `;
         }
-        if (documentType.includes("perhitungan_persediaan")) {
-          return `You are a Senior Accountant AI specializing in inventory management and cost accounting. Your task is to create a comprehensive Inventory Calculation Report.
+       if (documentType.includes("perhitungan_persediaan")) {
+  return `You are a Senior Accountant AI specializing in inventory management and cost accounting. Your task is to create a comprehensive Inventory Calculation Report by synthesizing data from ALL available financial documents in the vault.
 
-**Task:** Generate a detailed inventory report for the specified period, calculating Cost of Goods Sold (COGS) and Ending Inventory Value using the chosen valuation method.
+**Task:** Generate a detailed inventory report for the specified period, calculating Cost of Goods Sold (COGS) and Ending Inventory Value. You must structure the output strictly according to the Zod schema.
 
-**Parameters (to be determined from context):**
-*   **Period Start Date:** e.g., '2025-01-01'
-*   **Period End Date:** e.g., '2025-12-31'
-*   **Valuation Method:** e.g., 'FIFO', 'Weighted-Average'
+**Methodology & Data Sourcing Instructions (MUST BE FOLLOWED):**
+Instead of looking at a single file, you must analyze the entire collection of provided documents to find the necessary data points. Follow these steps:
 
-**Instructions:**
-1.  **Analyze Source Data:** Use the provided text containing beginning inventory, purchases, and sales transactions.
-2.  **Inventory Card:** Create a chronological inventory card.
-    *   Start with the beginning inventory balance.
-    *   Record each purchase, adding a new cost layer to the balance.
-    *   For each sale, calculate COGS based on the specified valuation method:
-        *   **FIFO:** Use units from the OLDEST (first-in) cost layer.
-        *   **Weighted-Average:** Recalculate the weighted-average cost after each new purchase (Total Balance Value / Total Balance Units). Use this average cost for COGS.
-3.  **Final Calculations:**
-    *   **Ending Inventory:** The final balance on the inventory card.
-    *   **Total COGS:** Sum of all values in the 'COGS (Out)' column.
-    *   **Total Purchases:** Sum of all values in the 'Purchases (In)' column.
-4.  **Format Output:** Structure the output strictly according to the Zod schema, including the executive summary, the detailed inventory card, and the final adjustment journal entry.
+1.  **Determine Beginning Inventory:**
+    * **Action:** First, search all documents for terms like 'Saldo Awal Persediaan', 'Beginning Inventory', or a balance sheet from the end of the previous period.
+    * **Assumption:** If no explicit starting balance is found after analyzing all documents, apply a standard accounting assumption: the beginning inventory is zero. State this assumption in your reasoning.
 
-**Text to parse from document "${filename}":**
+2.  **Identify and Aggregate Purchases:**
+    * **Action:** Search for documents detailing operational costs or expenses (e.g., 'data_beban_operasional_2025.pdf'). Look for tables or sections specifically labeled 'Pembelian Bahan Bangunan', 'Material Purchases', or similar.
+    * **Process:** Extract every line item from this section, noting the date, description, quantity, and total value. These will form the 'Masuk (In)' transactions for your inventory card.
+
+3.  **Determine Cost of Goods Sold (COGS / HPP):**
+    * **Action:** For a construction business model, we assume materials purchased are directly consumed by projects. Therefore, for every 'Masuk' transaction you record, create a corresponding 'Keluar (Out)' transaction for the same amount.
+    * **Process:** The total of these 'Keluar' transactions will be your HPP. The valuation method to state is **FIFO**, as you are expensing the items in the order they were purchased.
+
+4.  **Calculate Final Values & Create Inventory Card:**
+    * **Ending Inventory:** Calculate using the formula: Beginning Inventory + Total Purchases - HPP. (Based on our assumption, this will be zero).
+    * **Inventory Card:** Create a chronological card showing:
+        * The beginning balance.
+        * Each purchase transaction as a 'Masuk' entry, updating the balance.
+        * Each corresponding usage transaction as a 'Keluar' entry, updating the balance.
+    * **Final Adjustment Journal:** Create the journal entry to move the cost from the inventory asset to the HPP expense account.
+
+5.  **Format Output:**
+    * Structure the final JSON output strictly according to the Zod schema, populating the 'summary', 'kartuPersediaan', and 'jurnalPenyesuaian' sections based on your analysis.
+
+**Text to parse from ALL relevant documents in the vault:**
 ---
-${content}
+${content}  // This variable should contain the aggregated text from all relevant source files.
 ---
 `;
-        }
+}
         if (documentType.includes("laba_rugi") || documentType.includes("final_result")) {
           return `Anda adalah seorang Analis Keuangan Strategis AI. Tugas Anda adalah menganalisis secara holistik kumpulan dokumen keuangan yang disediakan untuk menyusun Dashboard Analisis Keuangan yang komprehensif, mencakup KPI, rasio keuangan, perbandingan bulanan, dan analisis kualitatif.
 
@@ -983,7 +992,7 @@ export const parseVaultFinancialDocumentTool = createTool({
             parsingConfidence: parsedData.confidence,
           },
           message: `Successfully processed ${parsedData.transactions.length} entries from ${filename} and saved to database.`,
-          content: {
+          content: JSON.stringify({
             jurnalData: parsedData.jurnalData,
             bukuData: parsedData.bukuData,
             neracaData: parsedData.neracaData,
@@ -996,7 +1005,7 @@ export const parseVaultFinancialDocumentTool = createTool({
             perubahanEkuitasData: parsedData.perubahanEkuitasData,
             arusKasData: parsedData.arusKasData,
             finalResultData: parsedData.finalResultData,
-          },
+          }),
           workbookId,
           databaseStatus: {
             inserted: true,
@@ -1069,6 +1078,39 @@ export const parseVaultFinancialDocumentTool = createTool({
           inserted: false,
           stepsSaved: [],
         },
+      };
+    }
+  },
+});
+
+export const updateFinancialDataTool = createTool({
+  id: "update-financial-data",
+  description: "Update existing financial data entries in the database.",
+  inputSchema: z.object({
+    stepDataId: z.string().describe("The ID of the financial step data to update."),
+    updates: z.any().describe("An object containing the fields to update."),
+  }),
+  outputSchema: z.object({
+    success: z.boolean(),
+    message: z.string(),
+    updatedData: z.any().optional(),
+  }),
+  execute: async ({ context }) => {
+    const { stepDataId, updates } = context;
+    try {
+      const updatedData = await updateFinancialStepData(stepDataId, {
+        jsonData: updates,
+      });
+      return {
+        success: true,
+        message: `Successfully updated data for step ID ${stepDataId}.`,
+        updatedData,
+      };
+    } catch (error: any) {
+      console.error(`Error updating financial data for step ID ${stepDataId}:`, error);
+      return {
+        success: false,
+        message: `Failed to update data: ${error.message}`,
       };
     }
   },

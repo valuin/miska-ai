@@ -74,46 +74,73 @@ export const StepTwoPreview = ({
     setLoading(false);
   }, []);
 
-  const fetchFinancialData = async (workbookId: string, chatId: string) => {
-    console.log(
-      `🚀 Memulai fetch untuk workbookId: ${workbookId} dan chatId: ${chatId}`
-    );
-    setLoading(true);
-    try {
-      const response = await fetch(
+  const fetchFinancialData = React.useCallback(
+    (workbookId: string, chatId: string) => {
+      console.log(
+        `🚀 Memulai koneksi stream untuk workbookId: ${workbookId} dan chatId: ${chatId}`
+      );
+      setLoading(true);
+
+      const eventSource = new EventSource(
         `/api/financials/${workbookId}?chatId=${chatId}`
       );
 
-      console.log("✅ Response status:", response.status);
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
+      eventSource.onmessage = (event) => {
+        const eventData = JSON.parse(event.data);
+        console.log("📊 Data yang diterima dari stream (Step Two):", eventData);
 
-      const data = await response.json();
-      console.log("📊 Data yang diterima dari API:", data);
+        if (
+          eventData.type === "initial-data" ||
+          eventData.type === "update-data"
+        ) {
+          parseAndSetTableData({ content: eventData.data });
+        } else if (eventData.type === "error") {
+          console.error("❌ Error dari stream:", eventData.error);
+          setDataLoaded(false);
+          setLoading(false);
+          eventSource.close();
+        }
+      };
 
-      if (data) {
-        parseAndSetTableData({ content: data });
-      }
-    } catch (error) {
-      console.error("❌ Error fetching financial data:", error);
-      setDataLoaded(false);
-    } finally {
-      setLoading(false);
-      console.log("🏁 Proses fetch selesai.");
-    }
-  };
+      eventSource.onerror = (error) => {
+        console.error("❌ Error koneksi EventSource:", error);
+        setDataLoaded(false);
+        setLoading(false);
+        eventSource.close();
+      };
+
+      return () => {
+        eventSource.close();
+        console.log("🏁 Koneksi stream ditutup (Step Two).");
+      };
+    },
+    [parseAndSetTableData]
+  );
 
   React.useEffect(() => {
+    let closeStream: (() => void) | undefined;
+
     if (workbookId && contextChatId) {
-      fetchFinancialData(workbookId, contextChatId);
+      closeStream = fetchFinancialData(workbookId, contextChatId);
     } else if (documentPreview) {
       parseAndSetTableData(documentPreview);
     } else {
       setLoading(false);
       setDataLoaded(false);
     }
-  }, [workbookId, contextChatId, documentPreview, parseAndSetTableData]);
+
+    return () => {
+      if (closeStream) {
+        closeStream();
+      }
+    };
+  }, [
+    workbookId,
+    contextChatId,
+    documentPreview,
+    fetchFinancialData,
+    parseAndSetTableData,
+  ]);
 
   return (
     <div className="w-full">

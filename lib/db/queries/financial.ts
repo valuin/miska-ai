@@ -105,6 +105,10 @@ export async function updateFinancialStepData(
   return updatedStepData;
 }
 
+export async function deleteFinancialStepData(stepDataId: string) {
+  await db.delete(financialStepsData).where(eq(financialStepsData.id, stepDataId));
+}
+
 export async function createDocumentProcessingLog(
   log: NewDocumentProcessingLog
 ) {
