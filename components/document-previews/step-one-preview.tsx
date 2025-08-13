@@ -9,6 +9,7 @@ import type { UIMessage } from "ai";
 import type { UseChatHelpers } from "@ai-sdk/react";
 import { PreviewMessage } from "../message";
 import { useCallback, useEffect, useState } from "react";
+import { useFinancials } from "./financials-context";
 
 interface StepOnePreviewProps {
   chatId?: string;
@@ -31,7 +32,7 @@ export const StepOnePreview = ({
   const [activeTab, setActiveTab] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const { documentPreview, setDocumentPreview } = useDocumentPreviewStore();
-  const [testData, settestData] = useState([]);
+  const { workbookId, chatId: contextChatId } = useFinancials();
   const [availableTabs, setAvailableTabs] = useState<string[]>([]);
   const [tableData, setTableData] = useState<Record<string, any[]>>({});
   const [dataLoaded, setDataLoaded] = useState(false);
@@ -116,7 +117,6 @@ export const StepOnePreview = ({
 
       if (data) {
         parseAndSetTableData({ content: data });
-        settestData(data);
       }
       console.log("testestes", data.jurnalData);
     } catch (error) {
@@ -128,28 +128,15 @@ export const StepOnePreview = ({
     }
   };
   useEffect(() => {
-    const workbookId = documentPreview?.workbookId;
-    const chatIdFromUrl = window.location.pathname.split("/").pop();
-
-    if (workbookId && chatIdFromUrl) {
-      fetchFinancialData(workbookId, chatIdFromUrl);
+    if (workbookId && contextChatId) {
+      fetchFinancialData(workbookId, contextChatId);
+    } else if (documentPreview) {
+      parseAndSetTableData(documentPreview);
     } else {
-      const lastMessage = messages?.[messages.length - 1];
-      if (lastMessage?.toolInvocations) {
-        for (const invocation of lastMessage.toolInvocations) {
-          if (
-            invocation.toolName === "parse-vault-financial-document" &&
-            (invocation as any).result?.content
-          ) {
-            parseAndSetTableData((invocation as any).result);
-            return;
-          }
-        }
-      }
       setLoading(false);
       setDataLoaded(false);
     }
-  }, [documentPreview, messages, parseAndSetTableData]);
+  }, [workbookId, contextChatId, documentPreview, parseAndSetTableData]);
 
   const getHeadersForTab = (tabName: string | null) => {
     switch (tabName) {
@@ -166,18 +153,6 @@ export const StepOnePreview = ({
 
   return (
     <div className="w-full">
-      {/* Tombol untuk testing fetch */}
-      <Button
-        onClick={() =>
-          fetchFinancialData(
-            "7a0e8128-0cfa-4f27-aae8-8789580b3fdf",
-            "e60668df-3083-4aa3-a892-5bdc50e24ccd"
-          )
-        }
-        className="mb-4 bg-blue-500 hover:bg-blue-600 text-white"
-      >
-        Testing Fetch
-      </Button>
       {/* AI Chat Response Preview */}
       {messages && messages.length > 0 && (
         <div className="mb-4">

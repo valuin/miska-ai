@@ -1,6 +1,7 @@
 "use client";
 import * as React from "react";
 import { useDocumentPreviewStore } from "@/lib/store/document-preview-store";
+import { useFinancials } from "./financials-context";
 import { TableComponent, SkeletonTables } from "./shared-components";
 
 import type { UIMessage } from "ai";
@@ -26,6 +27,7 @@ export const StepThreePreview = ({
   const [activeTab, setActiveTab] = React.useState<string | null>(null);
   const [loading, setLoading] = React.useState(true);
   const { documentPreview } = useDocumentPreviewStore();
+  const { workbookId, chatId: contextChatId } = useFinancials();
   const [availableTabs, setAvailableTabs] = React.useState<string[]>([]);
   const [tableData, setTableData] = React.useState<Record<string, any>>({});
   const [dataLoaded, setDataLoaded] = React.useState(false);
@@ -93,18 +95,15 @@ export const StepThreePreview = ({
   };
 
   React.useEffect(() => {
-    const workbookId = documentPreview?.workbookId;
-    const chatIdFromUrl = window.location.pathname.split("/").pop();
-
-    if (workbookId && chatIdFromUrl) {
-      fetchFinancialData(workbookId, chatIdFromUrl);
+    if (workbookId && contextChatId) {
+      fetchFinancialData(workbookId, contextChatId);
     } else if (documentPreview) {
       parseAndSetTableData(documentPreview);
     } else {
       setLoading(false);
       setDataLoaded(false);
     }
-  }, [documentPreview, parseAndSetTableData]);
+  }, [workbookId, contextChatId, documentPreview, parseAndSetTableData]);
 
   return (
     <div className="w-full">

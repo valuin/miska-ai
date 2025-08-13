@@ -1,5 +1,6 @@
 "use client";
 import { useDocumentPreviewStore } from "@/lib/store/document-preview-store";
+import { useFinancials } from "./financials-context";
 import { SkeletonTables } from "./shared-components";
 import { Input } from "../ui/input";
 import { Button } from "../ui/button";
@@ -45,6 +46,7 @@ export const StepFourPreview = ({
 }: StepFourPreviewProps) => {
   const [loading, setLoading] = useState(true);
   const { documentPreview } = useDocumentPreviewStore();
+  const { workbookId, chatId: contextChatId } = useFinancials();
   const [finalResultData, setFinalResultData] = useState<any>(null);
   const [dataLoaded, setDataLoaded] = useState(false);
 
@@ -71,11 +73,8 @@ export const StepFourPreview = ({
       }
     };
 
-    const workbookId = documentPreview?.workbookId;
-    const chatIdFromUrl = window.location.pathname.split("/").pop();
-
-    if (workbookId && chatIdFromUrl) {
-      fetchFinancialData(workbookId, chatIdFromUrl);
+    if (workbookId && contextChatId) {
+      fetchFinancialData(workbookId, contextChatId);
     } else if (documentPreview && documentPreview.content?.finalResultData) {
       setFinalResultData(documentPreview.content.finalResultData);
       setDataLoaded(true);
@@ -84,7 +83,7 @@ export const StepFourPreview = ({
       setLoading(false);
       setDataLoaded(false);
     }
-  }, [documentPreview]);
+  }, [workbookId, contextChatId, documentPreview]);
 
   if (loading) {
     return <SkeletonTables />;

@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { Chat } from "@/components/chat";
 import { DocumentPreview } from "@/components/document-preview";
+import { FinancialsProvider } from "./document-previews/financials-context";
 import type { Session } from "next-auth";
 import type { UIMessage } from "ai";
 import { create } from "zustand";
@@ -95,7 +96,9 @@ export function ChatWithPreview({
             </div>
           </div>
           <div className="flex-1 overflow-y-auto p-4 md:p-6">
-            <DocumentPreview isReadonly={isReadonly} />
+            <FinancialsProvider>
+              <DocumentPreview isReadonly={isReadonly} />
+            </FinancialsProvider>
           </div>
         </div>
       </div>
