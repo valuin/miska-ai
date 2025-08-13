@@ -3,9 +3,6 @@ import * as React from "react";
 import { useDocumentPreviewStore } from "@/lib/store/document-preview-store";
 import { useFinancials } from "./financials-context";
 import { TableComponent, SkeletonTables } from "./shared-components";
-import { Input } from "../ui/input";
-import { Button } from "../ui/button";
-import { Download } from "lucide-react";
 import { CardPersediaan } from "../analytics/card-persediaan";
 
 import type { UIMessage } from "ai";

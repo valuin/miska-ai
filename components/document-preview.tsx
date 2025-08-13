@@ -18,8 +18,8 @@ import type { ArtifactKind, UIArtifact } from "./artifact";
 import { useMessageCountStore } from "./chat-with-preview";
 import { CodeEditor } from "./code-editor";
 import { DocumentToolCall, DocumentToolResult } from "./document";
+import { FinancialsProvider } from "./document-previews/financials-context";
 import { StepFourPreview } from "./document-previews/step-four-preview";
-import { StepOnePreview } from "./document-previews/step-one-preview";
 import { StepThreePreview } from "./document-previews/step-three-preview";
 import { StepTwoPreview } from "./document-previews/step-two-preview";
 import { InlineDocumentSkeleton } from "./document-skeleton";
@@ -41,7 +41,6 @@ interface DocumentPreviewProps {
   setMessages?: UseChatHelpers["setMessages"];
   reload?: UseChatHelpers["reload"];
   append?: UseChatHelpers["append"];
-  // Add runtimeContext prop
   runtimeContext?: any;
 }
 
@@ -116,7 +115,7 @@ export function DocumentPreview({
   setMessages,
   reload,
   append,
-  runtimeContext, // Accept runtimeContext prop
+  runtimeContext,
 }: DocumentPreviewProps) {
   const { messageCount } = useMessageCountStore();
   const { artifact, setArtifact } = useArtifact();
@@ -124,12 +123,13 @@ export function DocumentPreview({
 
   // Enhanced debugging for messageCount and data flow
   useEffect(() => {
-    console.log("🔍 DocumentPreview Debug Info:");
-    console.log("- Message count:", messageCount);
-    console.log("- Has runtimeContext:", !!runtimeContext);
-    console.log("- Messages length:", messages?.length || 0);
-    console.log("- DocumentPreview store:", documentPreview);
-    console.log("- ChatId:", chatId);
+    console.log("🔍 DocumentPreview Debug Info:", {
+      messageCount,
+      hasRuntimeContext: !!runtimeContext,
+      messagesLength: messages?.length || 0,
+      documentPreview,
+      chatId
+    });
   }, [messageCount, runtimeContext, messages, documentPreview, chatId]);
 
   const hitboxRef = useRef<HTMLDivElement>(null);
@@ -154,7 +154,7 @@ export function DocumentPreview({
 
   if (previewNode) {
     console.log("✅ Rendering step-based preview for count:", messageCount);
-    return previewNode;
+    return <FinancialsProvider>{previewNode}</FinancialsProvider>;
   }
 
   // Rest of the existing logic for artifact handling

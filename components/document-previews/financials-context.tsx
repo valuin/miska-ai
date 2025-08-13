@@ -1,62 +1,61 @@
 "use client";
-
-import {
+import React, {
   createContext,
   useContext,
-  ReactNode,
   useState,
+  type ReactNode,
   useEffect,
 } from "react";
-import { usePathname } from "next/navigation";
-import { useDocumentPreviewStore } from "@/lib/store/document-preview-store";
 
 interface FinancialsContextType {
   workbookId: string | null;
+  setWorkbookId: (id: string | null) => void;
   chatId: string | null;
-  isLoading: boolean;
+  setChatId: (id: string | null) => void;
 }
 
 const FinancialsContext = createContext<FinancialsContextType | undefined>(
   undefined
 );
 
-export const FinancialsProvider = ({ children }: { children: ReactNode }) => {
-  const pathname = usePathname();
-  const { documentPreview } = useDocumentPreviewStore();
-  const [workbookId, setWorkbookId] = useState<string | null>(null);
-  const [chatId, setChatId] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+interface FinancialsProviderProps {
+  children: ReactNode;
+  chatId?: string | null;
+  workbookId?: string | null;
+}
+
+export const FinancialsProvider = ({
+  children,
+  chatId: initialChatId,
+  workbookId: initialWorkbookId,
+}: FinancialsProviderProps) => {
+  const [workbookId, setWorkbookId] = useState<string | null>(
+    initialWorkbookId || null
+  );
+  const [chatId, setChatId] = useState<string | null>(initialChatId || null);
 
   useEffect(() => {
-    setIsLoading(true);
-
-    const pathParts = pathname.split("/");
-    const idFromPath = pathParts.find((part) => part.length === 36); // Basic UUID check
-
-    if (idFromPath) {
-      setChatId(idFromPath);
+    if (initialChatId) {
+      setChatId(initialChatId);
     }
+  }, [initialChatId]);
 
-    if (documentPreview) {
-      if (documentPreview.workbookId) {
-        setWorkbookId(documentPreview.workbookId);
-      }
-      if (documentPreview.chatId) {
-        setChatId(documentPreview.chatId);
-      }
+  useEffect(() => {
+    if (initialWorkbookId) {
+      setWorkbookId(initialWorkbookId);
     }
-
-    setIsLoading(false);
-  }, [pathname, documentPreview]);
+  }, [initialWorkbookId]);
 
   return (
-    <FinancialsContext.Provider value={{ workbookId, chatId, isLoading }}>
+    <FinancialsContext.Provider
+      value={{ workbookId, setWorkbookId, chatId, setChatId }}
+    >
       {children}
     </FinancialsContext.Provider>
   );
 };
 
-export const useFinancials = (): FinancialsContextType => {
+export const useFinancials = () => {
   const context = useContext(FinancialsContext);
   if (context === undefined) {
     throw new Error("useFinancials must be used within a FinancialsProvider");

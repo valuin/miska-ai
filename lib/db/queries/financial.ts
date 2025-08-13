@@ -3,9 +3,9 @@ import {
   financialWorkbooks,
   financialStepsData,
   documentProcessingLog,
-  NewFinancialWorkbook,
-  NewFinancialStepsData,
-  NewDocumentProcessingLog,
+  type NewFinancialWorkbook,
+  type NewFinancialStepsData,
+  type NewDocumentProcessingLog,
 } from "../schema/ai/financial.schema";
 import { eq } from "drizzle-orm";
 

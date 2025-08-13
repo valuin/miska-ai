@@ -11,7 +11,6 @@ import {
   createFinancialWorkbook,
   createFinancialStepData,
   updateFinancialStepData,
-  deleteFinancialStepData,
 } from "@/lib/db/queries/financial";
 import type {
   JurnalUmumEntry,
@@ -70,8 +69,8 @@ export function parseIndonesianAmount(amountStr: string): number {
     .replace(/Rp\.?\s*/g, "")
     .replace(/\./g, "")
     .replace(/,/g, "."); // Handle comma as decimal separator
-  const parsed = parseFloat(cleanAmount);
-  return isNaN(parsed) ? 0 : parsed;
+  const parsed = Number.parseFloat(cleanAmount);
+  return Number.isNaN(parsed) ? 0 : parsed;
 }
 
 async function parseFinancialContent(
@@ -310,92 +309,101 @@ async function parseFinancialContent(
       })(),
       prompt: (() => {
         if (isBukuBesar) {
-          return `You are a Senior Accountant AI. Your task is to create a detailed General Ledger (Buku Besar) from the provided text documents.
+          return `You are a Senior Accountant AI. Your task is to create a detailed General Ledger (Buku Besar) by synthesizing data from ALL available financial documents in the vault.
 
-        **Chart of Accounts (CoA) & Saldo Normal - YOU MUST USE THESE ACCOUNTS AND RULES:**
-        *   **Aset (Debit Normal):** Kas dan Bank, Piutang Usaha, PPN Masukan, Aset Tetap - [Nama]
-        *   **Beban (Debit Normal):** Beban Bahan Bangunan, Beban Subkontraktor, Beban Gaji dan Upah, Beban Jasa, Beban Penyusutan, Beban Bunga
-        *   **Kewajiban (Kredit Normal):** Utang Usaha, Utang PPN Keluaran, Utang PPh 21, Utang PPh 23, Utang Bank, Utang Leasing, Akumulasi Penyusutan - [Nama]
-        *   **Ekuitas (Kredit Normal):** Modal Disetor
-        *   **Pendapatan (Kredit Normal):** Pendapatan Jasa Konstruksi, Pendapatan Diterima di Muka
+**Methodology & Data Sourcing Instructions (MUST BE FOLLOWED):**
+1.  **Holistic Analysis:** Read through all the text provided in the \`content\` variable. This variable contains aggregated text from all relevant source files in the user's vault.
+2.  **Source Data:** Use the General Journal entries, wherever they are found in the documents, as the primary source for posting transactions. If a General Journal is not explicitly available, infer transactions from other documents like invoices, receipts, and bank statements.
+3.  **Ledger Creation:** Create a separate ledger for each account that has activity.
+4.  **Running Balance Calculation:** For each transaction, you must calculate the running balance based on the account's normal balance.
+    *   **Debit Normal Balance Formula:** New Balance = Previous Balance + Debit - Credit
+    *   **Credit Normal Balance Formula:** New Balance = Previous Balance - Debit + Credit
+5.  **Starting Balance:** Assume all accounts start with a Rp 0 balance unless a starting balance is explicitly provided in a prior period's balance sheet or trial balance found within the documents.
+6.  **Chart of Accounts (CoA) & Saldo Normal - YOU MUST USE THESE ACCOUNTS AND RULES:**
+    *   **Aset (Debit Normal):** Kas dan Bank, Piutang Usaha, PPN Masukan, Aset Tetap - [Nama]
+    *   **Beban (Debit Normal):** Beban Bahan Bangunan, Beban Subkontraktor, Beban Gaji dan Upah, Beban Jasa, Beban Penyusutan, Beban Bunga
+    *   **Kewajiban (Kredit Normal):** Utang Usaha, Utang PPN Keluaran, Utang PPh 21, Utang PPh 23, Utang Bank, Utang Leasing, Akumulasi Penyusutan - [Nama]
+    *   **Ekuitas (Kredit Normal):** Modal Disetor
+    *   **Pendapatan (Kredit Normal):** Pendapatan Jasa Konstruksi, Pendapatan Diterima di Muka
+7.  **Format Output:** Structure the output strictly according to the Zod schema. Each account's ledger must be a separate object in the 'bukuBesarAccounts' array.
 
-        **Instructions:**
-        1.  **Source Data:** Use the provided General Journal text as the single source for posting transactions.
-        2.  **Ledger Creation:** Create a separate ledger for each account that appears in the General Journal.
-        3.  **Running Balance Calculation:** For each transaction, you must calculate the running balance based on the account's normal balance.
-            *   **Debit Normal Balance Formula:** New Balance = Previous Balance + Debit - Credit
-            *   **Credit Normal Balance Formula:** New Balance = Previous Balance - Debit + Credit
-        4.  **Starting Balance:** Assume all accounts start with a Rp 0 balance unless a starting balance is explicitly provided.
-        5.  **Format Output:** Structure the output strictly according to the Zod schema. Each account's ledger must be a separate object in the 'bukuBesarAccounts' array. Ensure all fields (namaAkun, kodeAkun, entri, totalSaldoAkhir) are populated correctly.
+**Text to parse from ALL relevant documents in the vault:**
+---
+${content}
+---
+`;
+        }
+        if (documentType.includes("jurnal_umum")) {
+          return `You are a Senior Accountant AI. Your task is to create a comprehensive General Journal (Jurnal Umum) by synthesizing data from ALL available financial documents in the vault.
 
-        **Text to parse from document "${filename}":**
-        ---
-        ${content}
-        ---
-        `;
+**Task:** Analyze all provided text content, identify all financial transactions, and format them into a structured General Journal according to the Zod schema.
+
+**Methodology & Data Sourcing Instructions (MUST BE FOLLOWED):**
+Instead of looking at a single file, you must analyze the entire collection of provided documents to find the necessary data points. Follow these steps:
+
+1.  **Holistic Analysis:** Read through all the text provided in the \`content\` variable. This variable contains aggregated text from all relevant source files in the user's vault.
+2.  **Transaction Identification:** Identify every distinct financial event. A transaction could be a sale, a purchase, a payment, a receipt, etc. Look for dates, amounts, and descriptions.
+3.  **Debit/Credit Assignment:** For each transaction, determine the correct debit and credit accounts based on standard double-entry accounting principles and the provided Chart of Accounts.
+4.  **Chart of Accounts (CoA) & Normal Balance - YOU MUST USE THESE ACCOUNTS AND RULES:**
+    *   **Aset (Debit Normal):** Kas dan Bank, Piutang Usaha, PPN Masukan, Aset Tetap - [Nama]
+    *   **Beban (Debit Normal):** Beban Bahan Bangunan, Beban Subkontraktor, Beban Gaji dan Upah, Beban Jasa, Beban Penyusutan, Beban Bunga
+    *   **Kewajiban (Kredit Normal):** Utang Usaha, Utang PPN Keluaran, Utang PPh 21, Utang PPh 23, Utang Bank, Utang Leasing, Akumulasi Penyusutan - [Nama]
+    *   **Ekuitas (Kredit Normal):** Modal Disetor
+    *   **Pendapatan (Kredit Normal):** Pendapatan Jasa Konstruksi, Pendapatan Diterima di Muka
+5.  **Validation:** For each journal entry, ensure that the total debit amount equals the total credit amount.
+6.  **Format Output:** Structure the final JSON output strictly according to the Zod schema. Each distinct transaction should be a separate object in the 'jurnalEntries' array.
+
+**Text to parse from ALL relevant documents in the vault:**
+---
+${content}
+---
+`;
         }
         if (documentType.includes("neraca_saldo")) {
-          return `You are a Senior Accountant AI. Your task is to create a Trial Balance (Neraca Saldo) from the provided text.
+          return `You are a Senior Accountant AI. Your task is to create a Trial Balance (Neraca Saldo) by synthesizing data from ALL available financial documents in the vault.
 
-        **Chart of Accounts (CoA) & Saldo Normal - YOU MUST USE THESE ACCOUNTS AND RULES:**
-        *   **Aset (Debit Normal):** Kas dan Bank, Piutang Usaha, PPN Masukan, Aset Tetap - [Nama]
-        *   **Beban (Debit Normal):** Beban Bahan Bangunan, Beban Subkontraktor, Beban Gaji dan Upah, Beban Jasa, Beban Penyusutan, Beban Bunga
-        *   **Kewajiban (Kredit Normal):** Utang Usaha, Utang PPN Keluaran, Utang PPh 21, Utang PPh 23, Utang Bank, Utang Leasing, Akumulasi Penyusutan - [Nama]
-        *   **Ekuitas (Kredit Normal):** Modal Disetor
-        *   **Pendapatan (Kredit Normal):** Pendapatan Jasa Konstruksi, Pendapatan Diterima di Muka
+**Methodology & Data Sourcing Instructions (MUST BE FOLLOWED):**
+1.  **Holistic Analysis:** Read through all the text provided in the \`content\` variable, which contains aggregated text from all relevant source files.
+2.  **Source Data:** Use the final balances from the General Ledger (Buku Besar) as the primary source. If the General Ledger is not available, you must analyze all other documents (journals, statements, etc.) to determine the final balance for each account.
+3.  **Normal Balance Rule:** Place the final balance of each account in the appropriate Debit or Credit column based on its normal balance.
+4.  **Chart of Accounts (CoA) & Saldo Normal - YOU MUST USE THESE ACCOUNTS AND RULES:**
+    *   **Aset (Debit Normal):** Kas dan Bank, Piutang Usaha, PPN Masukan, Aset Tetap - [Nama]
+    *   **Beban (Debit Normal):** Beban Bahan Bangunan, Beban Subkontraktor, Beban Gaji dan Upah, Beban Jasa, Beban Penyusutan, Beban Bunga
+    *   **Kewajiban (Kredit Normal):** Utang Usaha, Utang PPN Keluaran, Utang PPh 21, Utang PPh 23, Utang Bank, Utang Leasing, Akumulasi Penyusutan - [Nama]
+    *   **Ekuitas (Kredit Normal):** Modal Disetor
+    *   **Pendapatan (Kredit Normal):** Pendapatan Jasa Konstruksi, Pendapatan Diterima di Muka
+5.  **Validation:** Calculate the total for both the Debit and Credit columns. The two totals MUST be equal.
+6.  **Format Output:** Structure the output strictly according to the Zod schema. The final report must be a single, balanced Trial Balance.
 
-        **Instructions:**
-        1.  **Source Data:** Use the final balances from the General Ledger as the primary source. If not available, extract balances from the provided text.
-        2.  **Normal Balance Rule:** Place the final balance of each account in the appropriate Debit or Credit column based on its normal balance (Aset/Beban in Debit, Kewajiban/Ekuitas/Pendapatan in Credit).
-        3.  **Grouping:** Group the accounts by their classification (Aset Lancar, Aset Tetap, Kewajiban, etc.) as shown in the format below.
-        4.  **Validation:** Calculate the total for both the Debit and Credit columns. The two totals MUST be equal.
-        5.  **Format Output:** Structure the output strictly according to the Zod schema. The final report must be a single, balanced Trial Balance.
-
-**Text to parse from document "${filename}":**
+**Text to parse from ALL relevant documents in the vault:**
 ---
 ${content}
 ---
 `;
         }
        if (documentType.includes("perhitungan_persediaan")) {
-  return `You are a Senior Accountant AI specializing in inventory management and cost accounting. Your task is to create a comprehensive Inventory Calculation Report by synthesizing data from ALL available financial documents in the vault.
-
-**Task:** Generate a detailed inventory report for the specified period, calculating Cost of Goods Sold (COGS) and Ending Inventory Value. You must structure the output strictly according to the Zod schema.
+          return `You are a Senior Accountant AI. Your task is to create an Inventory Calculation Report (Laporan Perhitungan Persediaan) by synthesizing data from ALL available financial documents in the vault.
 
 **Methodology & Data Sourcing Instructions (MUST BE FOLLOWED):**
-Instead of looking at a single file, you must analyze the entire collection of provided documents to find the necessary data points. Follow these steps:
-
-1.  **Determine Beginning Inventory:**
-    * **Action:** First, search all documents for terms like 'Saldo Awal Persediaan', 'Beginning Inventory', or a balance sheet from the end of the previous period.
-    * **Assumption:** If no explicit starting balance is found after analyzing all documents, apply a standard accounting assumption: the beginning inventory is zero. State this assumption in your reasoning.
-
-2.  **Identify and Aggregate Purchases:**
-    * **Action:** Search for documents detailing operational costs or expenses (e.g., 'data_beban_operasional_2025.pdf'). Look for tables or sections specifically labeled 'Pembelian Bahan Bangunan', 'Material Purchases', or similar.
-    * **Process:** Extract every line item from this section, noting the date, description, quantity, and total value. These will form the 'Masuk (In)' transactions for your inventory card.
-
-3.  **Determine Cost of Goods Sold (COGS / HPP):**
-    * **Action:** For a construction business model, we assume materials purchased are directly consumed by projects. Therefore, for every 'Masuk' transaction you record, create a corresponding 'Keluar (Out)' transaction for the same amount.
-    * **Process:** The total of these 'Keluar' transactions will be your HPP. The valuation method to state is **FIFO**, as you are expensing the items in the order they were purchased.
-
-4.  **Calculate Final Values & Create Inventory Card:**
-    * **Ending Inventory:** Calculate using the formula: Beginning Inventory + Total Purchases - HPP. (Based on our assumption, this will be zero).
-    * **Inventory Card:** Create a chronological card showing:
-        * The beginning balance.
-        * Each purchase transaction as a 'Masuk' entry, updating the balance.
-        * Each corresponding usage transaction as a 'Keluar' entry, updating the balance.
-    * **Final Adjustment Journal:** Create the journal entry to move the cost from the inventory asset to the HPP expense account.
-
-5.  **Format Output:**
-    * Structure the final JSON output strictly according to the Zod schema, populating the 'summary', 'kartuPersediaan', and 'jurnalPenyesuaian' sections based on your analysis.
+1.  **Holistic Analysis:** Read through all the text provided in the \`content\` variable, which contains aggregated text from all relevant source files.
+2.  **Identify Inventory Method:** Determine the inventory valuation method being used (e.g., FIFO, LIFO, Weighted-Average). If not explicitly stated, assume FIFO.
+3.  **Data Extraction:** Extract all data related to inventory transactions, including:
+    *   Beginning inventory (quantity and cost)
+    *   Purchases (quantity and cost)
+    *   Sales (quantity and sale price)
+    *   Purchase returns and sales returns.
+4.  **Calculate Cost of Goods Sold (COGS):** Based on the identified inventory method, calculate the COGS for the period.
+5.  **Calculate Ending Inventory:** Calculate the value of the ending inventory based on the chosen method.
+6.  **Format Output:** Structure the output strictly according to the Zod schema. The report must clearly show the calculation of COGS and Ending Inventory.
 
 **Text to parse from ALL relevant documents in the vault:**
 ---
-${content}  // This variable should contain the aggregated text from all relevant source files.
+${content}
 ---
 `;
-}
+        }
         if (documentType.includes("laba_rugi") || documentType.includes("final_result")) {
-          return `Anda adalah seorang Analis Keuangan Strategis AI. Tugas Anda adalah menganalisis secara holistik kumpulan dokumen keuangan yang disediakan untuk menyusun Dashboard Analisis Keuangan yang komprehensif, mencakup KPI, rasio keuangan, perbandingan bulanan, dan analisis kualitatif.
+          return `Anda adalah seorang Analis Keuangan Strategis AI. Tugas Anda adalah menganalisis secara holistik SEMUA dokumen keuangan yang tersedia di vault untuk menyusun Dashboard Analisis Keuangan yang komprehensif, mencakup KPI, rasio keuangan, perbandingan bulanan, dan analisis kualitatif.
 
 Tugas Utama: Hasilkan output JSON yang lengkap sesuai skema DashboardAnalisisKeuanganSchema dengan melakukan analisis mendalam terhadap semua file yang diunggah pengguna untuk [Periode Laporan] dan membandingkannya dengan [Periode Pembanding] jika data tersedia.
 
@@ -463,7 +471,7 @@ Bagian D: Analisis Kualitatif
 Output Akhir:
 Hasilkan sebuah objek JSON tunggal yang valid dan lengkap sesuai dengan skema DashboardAnalisisKeuanganSchema.
 
-**Text to parse from document "${filename}":**
+**Text to parse from ALL relevant documents in the vault:**
 ---
 ${content}
 ---
@@ -500,7 +508,7 @@ ${content}
             *   **Depreciation (Dec 31):** Debit Beban Penyusutan, Credit Akumulasi Penyusutan - [Nama Aset].
         5.  **Format Output:** Structure the output strictly according to the provided Zod schema. Each transaction should be a single object in the 'jurnalEntries' array, containing multiple 'entri' for each debit/credit line.
 
-        **Text to parse from document "${filename}":**
+        **Text to parse from ALL relevant documents in the vault:**
         ---
         ${content}
         ---
@@ -750,6 +758,8 @@ export const parseVaultFinancialDocumentTool = createTool({
   }): Promise<any> => {
     try {
       const { filename, documentType } = context;
+      const selectedVaultFileNames =
+        runtimeContext.get("selectedVaultFileNames") || [];
 
       const classifiedCategory = await classifyFinancialText(
         Array.isArray(documentType) ? documentType.join(" ") : documentType,
@@ -767,7 +777,7 @@ export const parseVaultFinancialDocumentTool = createTool({
           schema: z.object({
             queries: z.array(z.string()),
           }),
-          prompt: `Generate 5 optimal search queries to extract financial data from a ${documentType} document named "${filename}". 
+          prompt: `Generate 5 optimal search queries to extract financial data from a ${documentType} document named \"${filename}\". 
           Focus on key accounting terms in both Indonesian and English that would help retrieve the most relevant financial information.`,
         });
         searchQueryData = result.object;
@@ -792,7 +802,7 @@ export const parseVaultFinancialDocumentTool = createTool({
           context: {
             query,
             topK: 5,
-            filenames: [filename],
+            filenames: selectedVaultFileNames.length > 0 ? selectedVaultFileNames : (filename ? [filename] : []),
           },
           runtimeContext,
         });
@@ -861,7 +871,7 @@ export const parseVaultFinancialDocumentTool = createTool({
      let workbookId = documentPreview?.workbookId;
      
      // Try to get chatId from documentPreview
-     let chatId = documentPreview?.chatId;
+     const chatId = documentPreview?.chatId;
       const stepsSaved = [];
 
       // Log parsed data information without using dataTypes property

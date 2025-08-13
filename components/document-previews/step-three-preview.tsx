@@ -7,7 +7,6 @@ import { TableComponent, SkeletonTables } from "./shared-components";
 import type { UIMessage } from "ai";
 import type { UseChatHelpers } from "@ai-sdk/react";
 import { PreviewMessage } from "../message";
-import { Button } from "../ui/button";
 
 interface StepThreePreviewProps {
   chatId?: string;
@@ -44,7 +43,7 @@ export const StepThreePreview = ({
     const newAvailableTabs: string[] = [];
 
     const dataMapping = [
-      { key: "laba_Rugi", name: "Laporan Laba Rugi" },
+      { key: "labaRugi", name: "Laporan Laba Rugi" },
       { key: "perubahanEkuitas", name: "Laporan Perubahan Ekuitas" },
       { key: "posisiKeuangan", name: "Laporan Posisi Keuangan" },
       { key: "arusKas", name: "Laporan Arus Kas" },
@@ -201,7 +200,7 @@ export const StepThreePreview = ({
               <TableComponent
                 headers={["Komponen Ekuitas", "Jumlah"]}
                 rows={tableData["Laporan Perubahan Ekuitas"]
-                  .map((e: any) => [
+                  .flatMap((e: any) => [
                     ["Modal Awal", e.modalAwal],
                     ["Laba Bersih", e.labaBersih],
                     ["Dividen", e.dividen],
@@ -210,8 +209,7 @@ export const StepThreePreview = ({
                       p.jumlah,
                     ]),
                     ["Modal Akhir", e.modalAkhir],
-                  ])
-                  .flat()}
+                  ])}
               />
             )}
           {activeTab === "Laporan Posisi Keuangan" &&

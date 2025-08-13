@@ -1,11 +1,11 @@
-import { cn } from '@/lib/utils';
-import { BaseNode } from '@/components/workflow-v2/base-node';
-import { NodeResizer } from '@xyflow/react';
-import React from 'react';
+import { cn } from "@/lib/utils";
+import { BaseNode } from "@/components/workflow-v2/base-node";
+import { NodeResizer } from "@xyflow/react";
+import React, { forwardRef, HTMLAttributes } from "react";
 
-export const ResizableNode = React.forwardRef<
+export const ResizableNode = forwardRef<
   HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement> & {
+  HTMLAttributes<HTMLDivElement> & {
     selected: boolean;
   }
 >(({ className, selected, style, children, ...props }, ref) => (
@@ -18,11 +18,11 @@ export const ResizableNode = React.forwardRef<
       maxHeight: 800,
       maxWidth: 800,
     }}
-    className={cn(className, 'h-full p-0 hover:ring-orange-500')}
+    className={cn(className, "h-full p-0 hover:ring-orange-500")}
     {...props}
   >
     <NodeResizer isVisible={selected} />
     {children}
   </BaseNode>
 ));
-ResizableNode.displayName = 'ResizableNode';
+ResizableNode.displayName = "ResizableNode";

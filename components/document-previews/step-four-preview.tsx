@@ -91,7 +91,7 @@ export const StepFourPreview = ({
 
     if (workbookId && contextChatId) {
       connectToStream(workbookId, contextChatId);
-    } else if (documentPreview && documentPreview.content?.finalResultData) {
+    } else if (documentPreview?.content?.finalResultData) {
       setFinalResultData(documentPreview.content.finalResultData);
       setDataLoaded(true);
       setLoading(false);
@@ -340,7 +340,7 @@ export const StepFourPreview = ({
                 </span>
               </div>
               <Progress
-                value={parseFloat(rasioKeuangan.currentRatio.nilai)}
+                value={Number.parseFloat(rasioKeuangan.currentRatio.nilai)}
                 className="[&>*]:bg-gradient-to-r [&>*]:from-red-500 [&>*]:via-yellow-500 [&>*]:to-green-500"
               />
             </div>
@@ -368,7 +368,7 @@ export const StepFourPreview = ({
                 </span>
               </div>
               <Progress
-                value={parseFloat(rasioKeuangan.debtToEquityRatio.nilai)}
+                value={Number.parseFloat(rasioKeuangan.debtToEquityRatio.nilai)}
                 className="[&>*]:bg-gradient-to-r [&>*]:from-red-500 [&>*]:via-yellow-500 [&>*]:to-green-500"
               />
             </div>
@@ -396,7 +396,7 @@ export const StepFourPreview = ({
                 </span>
               </div>
               <Progress
-                value={parseFloat(rasioKeuangan.returnOnEquity.nilai)}
+                value={Number.parseFloat(rasioKeuangan.returnOnEquity.nilai)}
                 className="[&>*]:bg-gradient-to-r [&>*]:from-red-500 [&>*]:via-yellow-500 [&>*]:to-green-500"
               />
             </div>

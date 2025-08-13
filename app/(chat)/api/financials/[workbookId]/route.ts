@@ -2,7 +2,6 @@ import { db } from "@/lib/db/queries/db";
 import { financialStepsData } from "@/lib/db/schema/ai/financial.schema";
 import { and, eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
-import { createDataStream } from "ai";
 
 export const dynamic = "force-dynamic";
 
@@ -21,7 +20,7 @@ async function getFinancialData(workbookId: string, chatId: string) {
   for (const step of stepsData) {
     if (step.dataType) {
       const propertyName = step.dataType
-        .replace(/_([a-z])/g, (g) => g.toUpperCase());
+        .replace(/_([a-z])/g, (g) => g[1].toUpperCase());
       responseData[propertyName] = step.jsonData || [];
     }
   }
@@ -52,21 +51,32 @@ export async function GET(
       writer.write(encoder.encode(`data: ${JSON.stringify(data)}\n\n`));
     };
 
+    let lastData: any = null;
+
     (async () => {
       try {
+        // Send initial data immediately
         const initialData = await getFinancialData(workbookId, chatId);
+        lastData = initialData;
         sendData({ type: "initial-data", data: initialData });
 
+        // Poll for updates
         const interval = setInterval(async () => {
           try {
             const updatedData = await getFinancialData(workbookId, chatId);
-            sendData({ type: "update-data", data: updatedData });
+            // Only send updates if data has changed
+            if (JSON.stringify(updatedData) !== JSON.stringify(lastData)) {
+              lastData = updatedData;
+              sendData({ type: "update-data", data: updatedData });
+            }
           } catch (error) {
             console.error("Error fetching updated financial data:", error);
-            sendData({ type: "error", error: "Failed to fetch updated data" });
+            // Optionally send an error to the client
+            // sendData({ type: "error", error: "Failed to fetch updated data" });
           }
-        }, 5000);
+        }, 1000); // Poll every 1 second
 
+        // Clean up on client disconnect
         request.signal.onabort = () => {
           clearInterval(interval);
           writer.close();
