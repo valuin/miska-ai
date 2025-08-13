@@ -2,10 +2,7 @@ import { Agent } from "@mastra/core/agent";
 import { BASE_MODEL } from "@/lib/constants";
 import { openai } from "@ai-sdk/openai";
 import { planTodosTool } from "../tools/cot-tool";
-import {
-  parseFinancialDocumentTool,
-  parseVaultFinancialDocumentTool,
-} from "../tools/accounting-tools";
+import { parseVaultFinancialDocumentTool } from "../tools/accounting-tools";
 import {
   queryVaultDocumentsTool,
   listVaultDocumentsTool,
@@ -39,7 +36,7 @@ You are a specialized Accounting Agent with comprehensive expertise in financial
 6. **Multi-format Export**: Export reports in PDF, Excel, and shareable formats
 
 **WORKFLOW FOR ACCOUNTING TASKS:**
-1. **Document Upload**: User uploads financial documents (Jurnal Umum, Buku Besar)
+1. **Document Upload**: User uploads financial documents (e.g., Jurnal Umum, Buku Besar, Laporan Laba Rugi, etc.)
 2. **Data Extraction**: Parse and extract transaction data from uploaded files
 3. **COA Mapping**: Map extracted accounts to standardized Chart of Accounts
 4. **Validation**: Validate debit/credit balances and detect errors
@@ -72,7 +69,6 @@ You are a specialized Accounting Agent with comprehensive expertise in financial
 2. listVaultDocumentsTool (to see available documents)
 3. queryVaultDocumentsTool (primary method for content extraction)
 4. parseVaultFinancialDocumentTool (fallback for structured parsing)
-5. parseFinancialDocumentTool (only if direct file URLs available)
 
 **RESPONSE PROTOCOLS:**
 - Provides step-by-step progress updates during processing
@@ -108,18 +104,18 @@ Always maintain professional standards and ensure accuracy in financial calculat
 
 **TEXT CLASSIFICATION GUIDELINES:**
 - When classifying text, respond with a category number (1-4) and a description.
-- Category 1: "Dokumen Dasar Akuntansi" (e.g., neraca saldo, jurnal umum, buku besar)
-- Category 2: "Dokumen Penyesuaian Akuntansi" (e.g., perhitungan persediaan, penyusutan aset, jurnal penyesuaian, rekonsiliasi bank, neraca penyesuaian, neraca saldo setelah penyesuaian)
-- Category 3: "Laporan Keuangan" (e.g., laporan laba rugi, laporan perubahan ekuitas, laporan posisi keuangan, laporan arus kas, catatan atas laporan keuangan)
-- Category 4: "Konfirmasi Pengguna" (e.g., setuju, cocok, selesai, lanjutkan, konfirmasi)
-- If the text does not fit any specific category, default to Category 1: "Dokumen Dasar Akuntansi (default)".
+- Category 1: "Dokumen Dasar Akuntansi" (e.g., neraca saldo, jurnal umum, buku besar).
+- Category 2: "Dokumen Penyesuaian Akuntansi" (e.g., perhitungan persediaan, penyusutan aset, jurnal penyesuaian, rekonsiliasi bank).
+- Category 3: "Laporan Keuangan" (e.g., laporan laba rugi, laporan perubahan ekuitas, laporan posisi keuangan, laporan arus kas).
+- Category 4: "Finalisasi & Dashboard" (e.g., final result, dashboard).
+- Category 5: "Konfirmasi Pengguna" (e.g., setuju, cocok, selesai, lanjutkan, konfirmasi).
+- If the text does not fit any specific category, default to Category 1.
   `,
   model: openai(BASE_MODEL),
   tools: {
     queryVaultDocumentsTool,
     listVaultDocumentsTool,
     planTodosTool,
-    parseFinancialDocumentTool,
     parseVaultFinancialDocumentTool,
   },
   defaultGenerateOptions: { maxSteps: 10 }, // Increased steps to handle fallback strategies

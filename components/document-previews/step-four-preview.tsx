@@ -1,5 +1,4 @@
 "use client";
-import * as React from "react";
 import { useDocumentPreviewStore } from "@/lib/store/document-preview-store";
 import { SkeletonTables } from "./shared-components";
 import { Input } from "../ui/input";
@@ -24,60 +23,112 @@ import {
 } from "recharts";
 import { Progress } from "../ui/progress";
 
-// Data untuk chart pendapatan vs laba bersih
-const chartData = [
-  { month: "Jan", pendapatan: 4.5, labaBersih: 6.0 },
-  { month: "Feb", pendapatan: 7.5, labaBersih: 2.2 },
-  { month: "Mar", pendapatan: 3.2, labaBersih: 8.0 },
-  { month: "Apr", pendapatan: 5.0, labaBersih: 5.5 },
-  { month: "May", pendapatan: 4.8, labaBersih: 3.8 },
-  { month: "Jun", pendapatan: 6.2, labaBersih: 5.0 },
-  { month: "Jul", pendapatan: 3.5, labaBersih: 2.8 },
-  { month: "Aug", pendapatan: 5.5, labaBersih: 6.0 },
-  { month: "Sep", pendapatan: 8.5, labaBersih: 5.8 },
-  { month: "Oct", pendapatan: 3.5, labaBersih: 7.5 },
-  { month: "Nov", pendapatan: 2.8, labaBersih: 7.8 },
-  { month: "Dec", pendapatan: 2.5, labaBersih: 1.8 },
-];
+import type { UIMessage } from "ai";
+import type { UseChatHelpers } from "@ai-sdk/react";
+import { PreviewMessage } from "../message";
+import { useEffect, useState } from "react";
 
-export const StepFourPreview = () => {
-  const [loading, setLoading] = React.useState(true);
-  const { setDocumentPreview } = useDocumentPreviewStore();
+interface StepFourPreviewProps {
+  chatId?: string;
+  messages?: Array<UIMessage>;
+  setMessages?: UseChatHelpers["setMessages"];
+  reload?: UseChatHelpers["reload"];
+  append?: UseChatHelpers["append"];
+}
 
-  React.useEffect(() => {
-    const t = setTimeout(() => setLoading(false), 1500);
-    return () => clearTimeout(t);
-  }, []);
+export const StepFourPreview = ({
+  chatId,
+  messages,
+  setMessages,
+  reload,
+  append,
+}: StepFourPreviewProps) => {
+  const [loading, setLoading] = useState(true);
+  const { documentPreview } = useDocumentPreviewStore();
+  const [finalResultData, setFinalResultData] = useState<any>(null);
+  const [dataLoaded, setDataLoaded] = useState(false);
 
-  React.useEffect(() => {
-    const data = {
-      step: 4,
-      chartData,
-      totalPendapatan: "15.3 Miliar",
-      labaBersih: "2.8 Miliar",
-      currentRatio: 85,
-      debtToEquityRatio: 45,
-      roe: 78,
+  useEffect(() => {
+    const fetchFinancialData = async (workbookId: string, chatId: string) => {
+      setLoading(true);
+      try {
+        const response = await fetch(
+          `/api/financials/${workbookId}?chatId=${chatId}`
+        );
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        if (data && data.finalResultData) {
+          setFinalResultData(data.finalResultData);
+          setDataLoaded(true);
+        }
+      } catch (error) {
+        console.error("Error fetching financial data for step four:", error);
+        setDataLoaded(false);
+      } finally {
+        setLoading(false);
+      }
     };
-    setDocumentPreview(data);
-    return () => {
-      setDocumentPreview(null);
-    };
-  }, [setDocumentPreview]);
+
+    const workbookId = documentPreview?.workbookId;
+    const chatIdFromUrl = window.location.pathname.split("/").pop();
+
+    if (workbookId && chatIdFromUrl) {
+      fetchFinancialData(workbookId, chatIdFromUrl);
+    } else if (documentPreview && documentPreview.content?.finalResultData) {
+      setFinalResultData(documentPreview.content.finalResultData);
+      setDataLoaded(true);
+      setLoading(false);
+    } else {
+      setLoading(false);
+      setDataLoaded(false);
+    }
+  }, [documentPreview]);
 
   if (loading) {
     return <SkeletonTables />;
   }
 
+  if (!dataLoaded || !finalResultData) {
+    return (
+      <div className="p-4 text-center">
+        <p className="text-gray-500">
+          Tidak ada data yang tersedia untuk langkah ini.
+        </p>
+      </div>
+    );
+  }
+
+  const { dashboard } = finalResultData;
+  const { kpiUtama, perbandinganBulanan, rasioKeuangan, analisisKualitatif } =
+    dashboard;
+
   return (
     <div className="w-full space-y-6">
+      {/* AI Chat Response Preview */}
+      {messages && messages.length > 0 && (
+        <div className="mb-4">
+          <PreviewMessage
+            chatId={chatId ?? ""}
+            message={messages[messages.length - 1]}
+            isLoading={false}
+            vote={undefined}
+            setMessages={setMessages ?? (() => {})}
+            reload={reload ?? (async () => null)}
+            isReadonly={true}
+            requiresScrollPadding={false}
+            append={append ?? (async () => null)}
+          />
+        </div>
+      )}
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-black dark:text-white mb-2">
           Dashboard Analisis
         </h1>
         <p className="text-gray-600 dark:text-gray-400 mb-4">
-          PT Karya Konstruksi Prima - 2024
+          {dashboard.companyName} - {dashboard.period}
         </p>
 
         {/* Search and Filter Bar */}
@@ -108,12 +159,15 @@ export const StepFourPreview = () => {
                   Total Pendapatan
                 </p>
                 <p className="text-2xl font-bold text-black dark:text-white">
-                  Rp 15.3 Miliar
+                  {kpiUtama.totalPendapatan.total}
                 </p>
               </div>
             </div>
-            <div className="text-green-700 px-3 py-1 rounded-full text-sm border border-green-700">
-              ↗ 12.5%
+            <div
+              className={`text-${kpiUtama.totalPendapatan.status === "naik" ? "green" : "red"}-700 px-3 py-1 rounded-full text-sm border border-${kpiUtama.totalPendapatan.status === "naik" ? "green" : "red"}-700`}
+            >
+              {kpiUtama.totalPendapatan.status === "naik" ? "↗" : "↘"}{" "}
+              {kpiUtama.totalPendapatan.perubahanPersentase}
             </div>
           </div>
         </div>
@@ -128,8 +182,14 @@ export const StepFourPreview = () => {
                 Laba Bersih
               </p>
               <p className="text-2xl font-bold text-black dark:text-white">
-                Rp 2.8 Miliar
+                {kpiUtama.labaBersih.total}
               </p>
+            </div>
+            <div
+              className={`text-${kpiUtama.labaBersih.status === "naik" ? "green" : "red"}-700 px-3 py-1 rounded-full text-sm border border-${kpiUtama.labaBersih.status === "naik" ? "green" : "red"}-700`}
+            >
+              {kpiUtama.labaBersih.status === "naik" ? "↗" : "↘"}{" "}
+              {kpiUtama.labaBersih.perubahanPersentase}
             </div>
           </div>
         </div>
@@ -158,7 +218,13 @@ export const StepFourPreview = () => {
             {/* Chart */}
             <div className="h-64">
               <ResponsiveContainer width="100%" height="100%">
-                <ComposedChart data={chartData}>
+                <ComposedChart
+                  data={perbandinganBulanan.map((item: any) => ({
+                    month: item.bulan,
+                    pendapatan: item.totalPendapatan,
+                    labaBersih: item.labaBersih,
+                  }))}
+                >
                   <defs>
                     <linearGradient
                       id="barGradient"
@@ -242,11 +308,17 @@ export const StepFourPreview = () => {
             </div>
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
-                <span className="text-gray-600 dark:text-gray-400">85%</span>
-                <span className="text-green-600 font-medium">Baik</span>
+                <span className="text-gray-600 dark:text-gray-400">
+                  {rasioKeuangan.currentRatio.nilai}
+                </span>
+                <span
+                  className={`text-${rasioKeuangan.currentRatio.interpretasi === "Sehat" ? "green" : "red"}-600 font-medium`}
+                >
+                  {rasioKeuangan.currentRatio.interpretasi}
+                </span>
               </div>
               <Progress
-                value={85}
+                value={parseFloat(rasioKeuangan.currentRatio.nilai)}
                 className="[&>*]:bg-gradient-to-r [&>*]:from-red-500 [&>*]:via-yellow-500 [&>*]:to-green-500"
               />
             </div>
@@ -264,11 +336,17 @@ export const StepFourPreview = () => {
             </div>
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
-                <span className="text-gray-600 dark:text-gray-400">45%</span>
-                <span className="text-orange-600 font-medium">Sedang</span>
+                <span className="text-gray-600 dark:text-gray-400">
+                  {rasioKeuangan.debtToEquityRatio.nilai}
+                </span>
+                <span
+                  className={`text-${rasioKeuangan.debtToEquityRatio.interpretasi === "Sehat" ? "green" : "orange"}-600 font-medium`}
+                >
+                  {rasioKeuangan.debtToEquityRatio.interpretasi}
+                </span>
               </div>
               <Progress
-                value={45}
+                value={parseFloat(rasioKeuangan.debtToEquityRatio.nilai)}
                 className="[&>*]:bg-gradient-to-r [&>*]:from-red-500 [&>*]:via-yellow-500 [&>*]:to-green-500"
               />
             </div>
@@ -286,11 +364,17 @@ export const StepFourPreview = () => {
             </div>
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
-                <span className="text-gray-600 dark:text-gray-400">78%</span>
-                <span className="text-green-600 font-medium">Sangat Baik</span>
+                <span className="text-gray-600 dark:text-gray-400">
+                  {rasioKeuangan.returnOnEquity.nilai}
+                </span>
+                <span
+                  className={`text-${rasioKeuangan.returnOnEquity.interpretasi === "Sangat Baik" ? "green" : "red"}-600 font-medium`}
+                >
+                  {rasioKeuangan.returnOnEquity.interpretasi}
+                </span>
               </div>
               <Progress
-                value={78}
+                value={parseFloat(rasioKeuangan.returnOnEquity.nilai)}
                 className="[&>*]:bg-gradient-to-r [&>*]:from-red-500 [&>*]:via-yellow-500 [&>*]:to-green-500"
               />
             </div>
@@ -309,9 +393,7 @@ export const StepFourPreview = () => {
 
         <div className="bg-gradient-to-r from-[#D2F2B1] to-[#A6E564] rounded-lg p-4 mb-4">
           <p className="text-sm text-black dark:text-white">
-            Analisis menunjukkan tahun 2024 adalah tahun pertumbuhan yang kuat
-            untuk PT KKP, dengan posisi keuangan perusahaan sangat sehat dan
-            likuid.
+            {analisisKualitatif.ringkasanAnalisis}
           </p>
         </div>
 
@@ -323,22 +405,14 @@ export const StepFourPreview = () => {
                 Poin untuk Diperhatikan:
               </h4>
               <ul className="space-y-2 text-sm text-gray-700 dark:text-gray-300">
-                <li className="flex items-start gap-2">
-                  <span>•</span>
-                  <span>
-                    <strong>Ketergantungan Kuartal 4:</strong> Hampir 40% dari
-                    laba tahunan berasal dari Q4. Perlu diwaspadai jika ada
-                    volatilitas musiman.
-                  </span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span>•</span>
-                  <span>
-                    <strong>Efisiensi Biaya:</strong> Beban Pokok Penjualan naik
-                    sedikit lebih cepat dari pendapatan. Ini menekan margin
-                    profit secara bertahap.
-                  </span>
-                </li>
+                {analisisKualitatif.poinUntukDiperhatikan.map(
+                  (poin: string, index: number) => (
+                    <li key={index} className="flex items-start gap-2">
+                      <span>•</span>
+                      <span>{poin}</span>
+                    </li>
+                  )
+                )}
               </ul>
             </div>
           </div>

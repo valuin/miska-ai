@@ -15,7 +15,7 @@ export const TableComponent = ({
   rows,
 }: {
   headers: string[];
-  rows: string[][];
+  rows: (string[] & { isBold?: boolean })[];
 }) => (
   <Table className="text-black dark:text-white">
     <TableHeader>
@@ -29,7 +29,7 @@ export const TableComponent = ({
     </TableHeader>
     <TableBody>
       {rows.map((row, ri) => (
-        <TableRow key={ri}>
+        <TableRow key={ri} className={row.isBold ? "font-bold" : ""}>
           {row.map((cell, ci) => (
             <TableCell key={ci} className="text-black dark:text-white">
               {cell}

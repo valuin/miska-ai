@@ -153,16 +153,6 @@ const getFileIcon = (fileType: string) => {
   return iconMap[fileType as keyof typeof iconMap] || "📄";
 };
 
-const getFileIconBg = (fileType: string) => {
-  const bgMap = {
-    pdf: "bg-red-50",
-    xls: "bg-green-50",
-    csv: "bg-green-50",
-    doc: "bg-blue-50",
-  };
-  return bgMap[fileType as keyof typeof bgMap] || "bg-gray-50";
-};
-
 export default function VaultPage() {
   return (
     <div className="space-y-6 p-6 bg-gray-50 min-h-screen">

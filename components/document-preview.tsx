@@ -28,18 +28,44 @@ import { ImageEditor } from "./image-editor";
 import { SpreadsheetEditor } from "./sheet-editor";
 import { Editor } from "./text-editor";
 
+import type { UIMessage } from "ai";
+import type { UseChatHelpers } from "@ai-sdk/react";
+import { useDocumentPreviewStore } from "@/lib/store/document-preview-store";
+
 interface DocumentPreviewProps {
   isReadonly: boolean;
   result?: any;
   args?: any;
+  chatId?: string;
+  messages?: Array<UIMessage>;
+  setMessages?: UseChatHelpers["setMessages"];
+  reload?: UseChatHelpers["reload"];
+  append?: UseChatHelpers["append"];
+  // Add runtimeContext prop
+  runtimeContext?: any;
 }
 
-const renderPreviewForMessageCount = (count?: number) => {
+// Updated function to pass all necessary props including runtimeContext
+const renderPreviewForMessageCount = (
+  count?: number,
+  props?: Omit<DocumentPreviewProps, "isReadonly" | "result" | "args">
+) => {
   if (!count || count < 1) return null;
-  if (count === 2) return <StepTwoPreview />;
-  if (count === 3) return <StepThreePreview />;
-  if (count === 4) return <StepFourPreview />;
-  return <StepOnePreview />;
+
+  // Ensure all props are passed to each preview component
+  const previewProps = {
+    chatId: props?.chatId,
+    messages: props?.messages,
+    setMessages: props?.setMessages,
+    reload: props?.reload,
+    append: props?.append,
+    runtimeContext: props?.runtimeContext, // Pass runtimeContext to all previews
+  };
+
+  if (count === 2) return <StepTwoPreview {...previewProps} />;
+  if (count === 3) return <StepThreePreview {...previewProps} />;
+  if (count === 4) return <StepFourPreview {...previewProps} />;
+  return <StepThreePreview {...previewProps} />;
 };
 
 const getDerivedDocument = (
@@ -85,27 +111,53 @@ export function DocumentPreview({
   isReadonly,
   result,
   args,
+  chatId,
+  messages,
+  setMessages,
+  reload,
+  append,
+  runtimeContext, // Accept runtimeContext prop
 }: DocumentPreviewProps) {
   const { messageCount } = useMessageCountStore();
   const { artifact, setArtifact } = useArtifact();
+  const { documentPreview } = useDocumentPreviewStore();
 
+  // Enhanced debugging for messageCount and data flow
+  useEffect(() => {
+    console.log("🔍 DocumentPreview Debug Info:");
+    console.log("- Message count:", messageCount);
+    console.log("- Has runtimeContext:", !!runtimeContext);
+    console.log("- Messages length:", messages?.length || 0);
+    console.log("- DocumentPreview store:", documentPreview);
+    console.log("- ChatId:", chatId);
+  }, [messageCount, runtimeContext, messages, documentPreview, chatId]);
+
+  const hitboxRef = useRef<HTMLDivElement>(null);
+  useSyncBoundingBox(artifact, setArtifact, hitboxRef);
+
+  // Declare hooks before any conditional returns
   const { data: documents, isLoading: isDocumentsFetching } = useSWR<
     Array<Document>
   >(result ? `/api/document?id=${result.id}` : null, fetcher);
 
   const previewDocument = useMemo(() => documents?.[0], [documents]);
-  const hitboxRef = useRef<HTMLDivElement>(null);
-  
-  // Debugging untuk melihat messageCount
-  useEffect(() => {
-    console.log("Current message count:", messageCount);
-  }, [messageCount]);
 
-  useSyncBoundingBox(artifact, setArtifact, hitboxRef);
+  // Check for step-based preview first with all necessary props
+  const previewNode = renderPreviewForMessageCount(messageCount, {
+    chatId,
+    messages,
+    setMessages,
+    reload,
+    append,
+    runtimeContext, // Pass runtimeContext to preview components
+  });
 
-  const previewNode = renderPreviewForMessageCount(messageCount);
-  if (previewNode) return previewNode;
+  if (previewNode) {
+    console.log("✅ Rendering step-based preview for count:", messageCount);
+    return previewNode;
+  }
 
+  // Rest of the existing logic for artifact handling
   if (artifact.isVisible) {
     if (result) {
       return (

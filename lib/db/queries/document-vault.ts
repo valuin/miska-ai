@@ -1,9 +1,10 @@
+import "server-only";
 
-import { and, desc, eq, lt } from 'drizzle-orm';
-import { ChatSDKError } from '../../errors';
-import { documentVault, documentChunks, tempDocuments } from '../schema';
-import { generateUUID } from '../../utils';
-import { db } from './db';
+import { and, desc, eq, lt } from "drizzle-orm";
+import { ChatSDKError } from "../../errors";
+import { documentVault, documentChunks, tempDocuments } from "../schema";
+import { generateUUID } from "../../utils";
+import { db } from "./db";
 
 export async function saveTempDocument(data: {
   id: string;
@@ -15,8 +16,8 @@ export async function saveTempDocument(data: {
     return await db.insert(tempDocuments).values(data);
   } catch (error) {
     throw new ChatSDKError(
-      'bad_request:database',
-      'Failed to save temporary document',
+      "bad_request:database",
+      "Failed to save temporary document"
     );
   }
 }
@@ -32,8 +33,8 @@ export async function getTempDocument(id: string, userId: string) {
     return result;
   } catch (error) {
     throw new ChatSDKError(
-      'bad_request:database',
-      'Failed to get temporary document',
+      "bad_request:database",
+      "Failed to get temporary document"
     );
   }
 }
@@ -43,8 +44,8 @@ export async function deleteTempDocument(id: string) {
     return await db.delete(tempDocuments).where(eq(tempDocuments.id, id));
   } catch (error) {
     throw new ChatSDKError(
-      'bad_request:database',
-      'Failed to delete temporary document',
+      "bad_request:database",
+      "Failed to delete temporary document"
     );
   }
 }
@@ -63,6 +64,8 @@ export async function saveDocumentToVault(data: {
   try {
     const documentId = generateUUID();
 
+    // Save document
+    console.log(data);
     await db.insert(documentVault).values({
       id: documentId,
       userId: data.userId,
@@ -82,7 +85,7 @@ export async function saveDocumentToVault(data: {
         documentId,
         vectorId,
         chunkIndex: index,
-        content: '', // Content is in vector store
+        content: "", // Content is in vector store
         metadata: {},
       }));
 
@@ -91,9 +94,10 @@ export async function saveDocumentToVault(data: {
 
     return documentId;
   } catch (error) {
+    console.log(error);
     throw new ChatSDKError(
-      'bad_request:database',
-      'Failed to save document to vault',
+      "bad_request:database",
+      "Failed to save document to vault"
     );
   }
 }
@@ -115,15 +119,15 @@ export async function getUserVaultDocuments(userId: string) {
       .orderBy(desc(documentVault.createdAt));
   } catch (error) {
     throw new ChatSDKError(
-      'bad_request:database',
-      'Failed to get user vault documents',
+      "bad_request:database",
+      "Failed to get user vault documents"
     );
   }
 }
 
 export async function deleteDocumentFromVault(
   documentId: string,
-  userId: string,
+  userId: string
 ) {
   try {
     // Get vector IDs before deletion for cleanup
@@ -132,14 +136,14 @@ export async function deleteDocumentFromVault(
       .from(documentChunks)
       .innerJoin(documentVault, eq(documentChunks.documentId, documentVault.id))
       .where(
-        and(eq(documentVault.id, documentId), eq(documentVault.userId, userId)),
+        and(eq(documentVault.id, documentId), eq(documentVault.userId, userId))
       );
 
     // Delete document (chunks will be deleted by CASCADE)
     const [deletedDoc] = await db
       .delete(documentVault)
       .where(
-        and(eq(documentVault.id, documentId), eq(documentVault.userId, userId)),
+        and(eq(documentVault.id, documentId), eq(documentVault.userId, userId))
       )
       .returning();
 
@@ -149,8 +153,8 @@ export async function deleteDocumentFromVault(
     };
   } catch (error) {
     throw new ChatSDKError(
-      'bad_request:database',
-      'Failed to delete document from vault',
+      "bad_request:database",
+      "Failed to delete document from vault"
     );
   }
 }
@@ -163,8 +167,8 @@ export async function cleanupExpiredTempDocuments() {
       .where(lt(tempDocuments.expiresAt, new Date()));
   } catch (error) {
     throw new ChatSDKError(
-      'bad_request:database',
-      'Failed to cleanup expired temporary documents',
+      "bad_request:database",
+      "Failed to cleanup expired temporary documents"
     );
   }
 }

@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import { CheckCircle, ChevronDown } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
@@ -24,9 +25,44 @@ interface PlanDisplayProps {
   data: {
     todos: Todo[];
   };
+  streaming?: boolean;
 }
 
-export function PlanDisplay({ data }: PlanDisplayProps) {
+export function PlanDisplay({ data, streaming = false }: PlanDisplayProps) {
+  const [visibleItems, setVisibleItems] = useState<number>(0);
+  const [isStreaming, setIsStreaming] = useState<boolean>(streaming);
+  
+  useEffect(() => {
+    setIsStreaming(streaming);
+    
+    if (streaming && data && data.todos) {
+      // Reset visibleItems when streaming starts
+      setVisibleItems(0);
+      
+      const interval = setInterval(() => {
+        setVisibleItems((prev) => {
+          if (prev < data.todos.length) {
+            return prev + 1;
+          }
+          clearInterval(interval);
+          return prev;
+        });
+      }, 600); // Menampilkan item baru setiap 600ms untuk efek streaming yang lebih cepat
+      
+      return () => clearInterval(interval);
+    } else if (data?.todos) {
+      // Jika tidak streaming, tampilkan semua item sekaligus
+      setVisibleItems(data.todos.length);
+    }
+  }, [streaming, data]);
+  
+  // Reset visibleItems saat streaming dimulai
+  useEffect(() => {
+    if (streaming) {
+      setVisibleItems(0);
+    }
+  }, [streaming]);
+  
   if (!data || !data.todos) {
     return null;
   }
@@ -40,11 +76,11 @@ export function PlanDisplay({ data }: PlanDisplayProps) {
       </h3>
 
       <Accordion type="single" collapsible className="w-full">
-        {todos.map((todo, index) => (
+        {todos.slice(0, visibleItems).map((todo, index) => (
           <AccordionItem
             key={index}
             value={`item-${index}`}
-            className="rounded-xl overflow-hidden border-gray-300 border mb-4"
+            className={`rounded-xl overflow-hidden border-gray-300 border mb-4 ${streaming ? 'animate-fadeIn' : ''}`}
           >
             <AccordionTrigger className="group w-full bg-[#054135] p-0 [&>svg]:hidden">
               <div className="text-white flex items-center justify-between px-6 py-4 rounded-t-xl w-full relative">

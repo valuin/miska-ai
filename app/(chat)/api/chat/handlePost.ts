@@ -57,6 +57,7 @@ interface HandleChatStreamingParams {
   id: string;
   selectedVaultFileNames?: string[];
   documentPreview?: any;
+  workbookId?: string;
 }
 
 async function handleChatStreaming({
@@ -66,24 +67,26 @@ async function handleChatStreaming({
   id,
   selectedVaultFileNames, // Extract from parameters
   documentPreview,
+  workbookId,
 }: HandleChatStreamingParams) {
   const files = messages.at(-1)?.experimental_attachments;
   await processAttachments({ files, session });
 
   const mastraRuntimeContext = new RuntimeContext<MastraRuntimeContext>();
-  mastraRuntimeContext.set('session', session);
-  mastraRuntimeContext.set('dataStream', responsePipe);
+  mastraRuntimeContext.set("session", session);
+  mastraRuntimeContext.set("dataStream", responsePipe);
   mastraRuntimeContext.set(
-    'selectedVaultFileNames',
-    selectedVaultFileNames ?? [],
-  ); // Use nullish coalescing for clarity
-  if (documentPreview) {
-    mastraRuntimeContext.set('documentPreview', documentPreview);
-    console.log(
-      '[Mastra HandleChat] successfully set documentPreview in runtimeContext:',
-      JSON.stringify(documentPreview, null, 2),
-    );
-  }
+    "selectedVaultFileNames",
+    selectedVaultFileNames ?? []
+  );
+
+  const preview = { ...documentPreview, workbookId, chatId: id };
+  mastraRuntimeContext.set("documentPreview", preview);
+
+  console.log(
+    "[Mastra HandleChat] successfully set documentPreview in runtimeContext:",
+    JSON.stringify(preview, null, 2)
+  );
 
   await streamWithMastraAgent(id, messages, {
     responsePipe,
@@ -95,8 +98,9 @@ export async function handlePost(request: Request) {
   try {
     const json = await request.json();
     const { id, message, selectedVisibilityType } =
-       postRequestBodySchema.parse(json);
-     const { documentPreview } = message;
+      postRequestBodySchema.parse(json);
+    const { documentPreview } = message;
+    const workbookId = documentPreview?.workbookId;
  
      // Debug: Show what we will forward to the streaming handler
      try {
@@ -205,6 +209,7 @@ export async function handlePost(request: Request) {
           id,
           selectedVaultFileNames: message.selectedVaultFileNames ?? [],
           documentPreview,
+          workbookId,
         }),
       onError: () => 'Oops, an error occurred!',
     });

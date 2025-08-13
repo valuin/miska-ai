@@ -3,7 +3,6 @@ import { BASE_MODEL } from '@/lib/constants';
 import { openai } from '@ai-sdk/openai';
 import { thinkingTool, clarificationTool } from '../tools/chain-tools';
 import {
-  // saveDocumentToVaultTool,
   listVaultDocumentsTool,
   queryVaultDocumentsTool,
 } from '../tools/document-vault-tools';
@@ -35,7 +34,6 @@ Always respect user privacy by filtering searches to their documents only.
   `,
   model: openai(BASE_MODEL),
   tools: {
-    // saveDocumentToVaultTool,
     listVaultDocumentsTool,
     queryVaultDocumentsTool,
     thinkingTool,

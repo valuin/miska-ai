@@ -6,54 +6,52 @@ import {
   jsonb,
   uuid,
   varchar,
-} from 'drizzle-orm/pg-core';
-import { sql } from 'drizzle-orm';
-import { user } from '../user.schema';
-import type { ArtifactKind } from '@/components/artifact';
+} from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
+import { user } from "../user.schema";
+import type { ArtifactKind } from "@/components/artifact";
+import { financialWorkbooks } from "./financial.schema";
 
-export const documentVault = pgTable('document_vault', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  userId: uuid('user_id')
+export const documentVault = pgTable("document_vault", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id")
     .notNull()
-    .references(() => user.id, { onDelete: 'cascade' }),
-  filename: text('filename').notNull(),
-  fileType: text('file_type'),
-  fileSize: integer('file_size'),
-  fileUrl: text('file_url').notNull(),
-  contentPreview: text('content_preview'),
-  kind: varchar('kind', { enum: ['text', 'code', 'image', 'sheet'] as [ArtifactKind, ...ArtifactKind[]] })
+    .references(() => user.id, { onDelete: "cascade" }),
+  filename: text("filename").notNull(),
+  fileType: text("file_type"),
+  fileSize: integer("file_size"),
+  fileUrl: text("file_url").notNull(),
+  contentPreview: text("content_preview"),
+  metadata: jsonb("metadata").default({}),
+  vectorIndexName: text("vector_index_name")
     .notNull()
-    .default('text'),
-  metadata: jsonb('metadata').default({}),
-  vectorIndexName: text('vector_index_name')
-    .notNull()
-    .default('document_vault'),
-  chunkCount: integer('chunk_count').default(0),
-  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
-  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
+    .default("document_vault"),
+  chunkCount: integer("chunk_count").default(0),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
 });
 
-export const documentChunks = pgTable('document_chunks', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  documentId: uuid('document_id')
+export const documentChunks = pgTable("document_chunks", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  documentId: uuid("document_id")
     .notNull()
-    .references(() => documentVault.id, { onDelete: 'cascade' }),
-  vectorId: text('vector_id').notNull(),
-  chunkIndex: integer('chunk_index').notNull(),
-  content: text('content').notNull(),
-  metadata: jsonb('metadata').default({}),
-  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+    .references(() => documentVault.id, { onDelete: "cascade" }),
+  vectorId: text("vector_id").notNull(),
+  chunkIndex: integer("chunk_index").notNull(),
+  content: text("content").notNull(),
+  metadata: jsonb("metadata").default({}),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
 });
 
-export const tempDocuments = pgTable('temp_documents', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  userId: uuid('user_id').notNull(),
-  filename: text('filename').notNull(),
-  processedData: jsonb('processed_data').notNull(),
-  expiresAt: timestamp('expires_at', { withTimezone: true }).default(
-    sql`NOW() + INTERVAL '1 hour'`,
+export const tempDocuments = pgTable("temp_documents", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id").notNull(),
+  filename: text("filename").notNull(),
+  processedData: jsonb("processed_data").notNull(),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).default(
+    sql`NOW() + INTERVAL '1 hour'`
   ),
-  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
 });
 
 export type DocumentVault = typeof documentVault.$inferSelect;

@@ -12,16 +12,22 @@ export type MastraRuntimeContext = {
   selectedVaultFileNames: string[];
   documentPreview: any;
   mastra: Mastra<any>;
+  threadId?: string;
 };
 
 // Fungsi untuk menginisialisasi runtimeContext dengan documentPreview
-export function initRuntimeContext(session: Session, dataStream: DataStreamWriter): MastraRuntimeContext {
+export function initRuntimeContext(
+  session: Session,
+  dataStream: DataStreamWriter,
+  threadId?: string
+): MastraRuntimeContext {
   return {
     session,
     dataStream,
     selectedVaultFileNames: [],
     documentPreview: {},
     mastra: mastra,
+    threadId: threadId,
   };
 }
 

@@ -89,52 +89,17 @@ export default async function Page({
       <div className="bg-slate-100 grid grid-cols-1">
         <div className="md:col-span-1 min-w-0 rounded-t-lg">
           {/* Extract latest document-related tool result or args */}
-          {(() => {
-            let latestDocumentResult: any = null;
-            let latestDocumentArgs: any = null;
-
-            for (let i = messagesFromDb.length - 1; i >= 0; i--) {
-              const message = messagesFromDb[i];
-              if (message.parts && Array.isArray(message.parts)) {
-                for (let j = message.parts.length - 1; j >= 0; j--) {
-                  const part = message.parts[j];
-                  if (
-                    part.type === "tool-result" &&
-                    [
-                      "createDocument",
-                      "updateDocument",
-                      "queryVaultDocumentsTool",
-                    ].includes(part.toolName)
-                  ) {
-                    latestDocumentResult = part.result;
-                    break;
-                  }
-                  if (
-                    part.type === "tool-call" &&
-                    ["createDocument", "updateDocument"].includes(part.toolName)
-                  ) {
-                    latestDocumentArgs = part.args;
-                    break;
-                  }
-                }
-              }
-              if (latestDocumentResult || latestDocumentArgs) {
-                break;
-              }
-            }
-
-            return (
-              <ChatWithPreview // Use ChatWithPreview
-                id={chat.id}
-                initialMessages={convertToUIMessages(messagesFromDb)}
-                initialChatModel={initialChatModel}
-                initialVisibilityType={chat.visibility}
-                isReadonly={session?.user?.id !== chat.userId}
-                session={session}
-                autoResume={true}
-              />
-            );
-          })()}
+          {/* Extract latest document-related tool result or args */}
+          {/* Removed IIFE to fix "Rendered fewer hooks than expected" error */}
+          <ChatWithPreview
+            id={chat.id}
+            initialMessages={convertToUIMessages(messagesFromDb)}
+            initialChatModel={initialChatModel}
+            initialVisibilityType={chat.visibility}
+            isReadonly={session?.user?.id !== chat.userId}
+            session={session}
+            autoResume={true}
+          />
         </div>
       </div>
       <DataStreamHandler id={id} />

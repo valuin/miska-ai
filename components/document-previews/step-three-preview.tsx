@@ -3,83 +3,134 @@ import * as React from "react";
 import { useDocumentPreviewStore } from "@/lib/store/document-preview-store";
 import { TableComponent, SkeletonTables } from "./shared-components";
 
-export const StepThreePreview = () => {
-  const [activeTab, setActiveTab] = React.useState(0);
+import type { UIMessage } from "ai";
+import type { UseChatHelpers } from "@ai-sdk/react";
+import { PreviewMessage } from "../message";
+import { Button } from "../ui/button";
+
+interface StepThreePreviewProps {
+  chatId?: string;
+  messages?: Array<UIMessage>;
+  setMessages?: UseChatHelpers["setMessages"];
+  reload?: UseChatHelpers["reload"];
+  append?: UseChatHelpers["append"];
+}
+
+export const StepThreePreview = ({
+  chatId,
+  messages,
+  setMessages,
+  reload,
+  append,
+}: StepThreePreviewProps) => {
+  const [activeTab, setActiveTab] = React.useState<string | null>(null);
   const [loading, setLoading] = React.useState(true);
-  const { setDocumentPreview } = useDocumentPreviewStore();
-  React.useEffect(() => {
-    const t = setTimeout(() => setLoading(false), 1500);
-    return () => clearTimeout(t);
+  const { documentPreview } = useDocumentPreviewStore();
+  const [availableTabs, setAvailableTabs] = React.useState<string[]>([]);
+  const [tableData, setTableData] = React.useState<Record<string, any>>({});
+  const [dataLoaded, setDataLoaded] = React.useState(false);
+
+  const parseAndSetTableData = React.useCallback((previewData: any) => {
+    if (!previewData) {
+      setLoading(false);
+      setDataLoaded(false);
+      return;
+    }
+
+    const content = previewData.content || previewData;
+    const newTableData: Record<string, any> = {};
+    const newAvailableTabs: string[] = [];
+
+    const dataMapping = [
+      { key: "laba_Rugi", name: "Laporan Laba Rugi" },
+      { key: "perubahanEkuitas", name: "Laporan Perubahan Ekuitas" },
+      { key: "posisiKeuangan", name: "Laporan Posisi Keuangan" },
+      { key: "arusKas", name: "Laporan Arus Kas" },
+    ];
+
+    dataMapping.forEach(({ key, name }) => {
+      if (content[key] && content[key].length > 0) {
+        newTableData[name] = content[key];
+        newAvailableTabs.push(name);
+      }
+    });
+
+    setTableData(newTableData);
+    setAvailableTabs(newAvailableTabs);
+
+    if (newAvailableTabs.length > 0) {
+      setActiveTab(newAvailableTabs[0] || null);
+      setDataLoaded(true);
+    } else {
+      setDataLoaded(false);
+    }
+
+    setLoading(false);
   }, []);
-  const tabs = [
-    "Laporan Laba Rugi",
-    "Laporan Perubahan Ekuitas",
-    "Laporan Posisi Keuangan",
-    "Laporan Arus Kas",
-    "Catatan atas Laporan Keuangan",
-  ];
 
-  const labaRugi = [
-    ["Pendapatan", "Pendapatan Jasa", "50.000.000"],
-    ["Beban", "Gaji", "15.000.000"],
-    ["Baban", "Beban Operasional Lainnya", "5.000.000"],
-    ["Total Laba Bersih", "", "30.000.000"],
-  ];
+  const fetchFinancialData = async (workbookId: string, chatId: string) => {
+    setLoading(true);
+    try {
+      const response = await fetch(
+        `/api/financials/${workbookId}?chatId=${chatId}`
+      );
 
-  const perubahanEkuitas = [
-    ["Modal Awal", "100.000.000", "-", "100.000.000"],
-    ["Laba Bersih", "-", "30.000.000", "30.000.000"],
-    ["Prive", "-", "(5.000.000)", "(5.000.000)"],
-    ["Ekuitas Akhir", "", "", "125.000.000"],
-  ];
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
 
-  const posisiKeuangan = [
-    ["Aset", "Kas", "50.000.000"],
-    ["Aset", "Piutang", "20.000.000"],
-    ["Aset", "Peralatan (net)", "40.000.000"],
-    ["Liabilitas", "Utang Usaha", "10.000.000"],
-    ["Ekuitas", "Modal Akhir", "100.000.000"],
-    ["Total", "", "150.000.000"],
-  ];
-
-  const arusKas = [
-    ["Operasional", "Kas dari pelanggan", "70.000.000"],
-    ["Operasional", "Pembayaran gaji", "(20.000.000)"],
-    ["Investasi", "Pembelian aset tetap", "(10.000.000)"],
-    ["Pendanaan", "Penambahan modal", "30.000.000"],
-    ["Saldo Akhir Kas", "", "70.000.000"],
-  ];
-
-  const catatan = [
-    ["Metode penyusutan", "Garis lurus"],
-    ["Pengakuan pendapatan", "Saat jasa diselesaikan"],
-    ["Estimasi masa manfaat aset tetap", "..."],
-    ["Rincian saldo kas dan piutang", "..."],
-  ];
+      const data = await response.json();
+      console.log(data);
+      if (data) {
+        parseAndSetTableData(data);
+      }
+    } catch (error) {
+      console.error("❌ Error fetching financial data:", error);
+      setDataLoaded(false);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   React.useEffect(() => {
-    const data = {
-      step: 3,
-      labaRugi,
-      perubahanEkuitas,
-      posisiKeuangan,
-      arusKas,
-      catatan,
-    };
-    setDocumentPreview(data);
-    return () => {
-      setDocumentPreview(null);
-    };
-  }, [setDocumentPreview]);
+    const workbookId = documentPreview?.workbookId;
+    const chatIdFromUrl = window.location.pathname.split("/").pop();
+
+    if (workbookId && chatIdFromUrl) {
+      fetchFinancialData(workbookId, chatIdFromUrl);
+    } else if (documentPreview) {
+      parseAndSetTableData(documentPreview);
+    } else {
+      setLoading(false);
+      setDataLoaded(false);
+    }
+  }, [documentPreview, parseAndSetTableData]);
 
   return (
     <div className="w-full">
+      {messages && messages.length > 0 && (
+        <div className="mb-4">
+          <PreviewMessage
+            chatId={chatId ?? ""}
+            message={messages[messages.length - 1]}
+            isLoading={false}
+            vote={undefined}
+            setMessages={setMessages ?? (() => {})}
+            reload={reload ?? (async () => null)}
+            isReadonly={true}
+            requiresScrollPadding={false}
+            append={append ?? (async () => null)}
+          />
+        </div>
+      )}
       <div className="flex border-b mb-4 overflow-x-auto">
-        {tabs.map((tab, i) => (
+        {availableTabs.map((tab) => (
           <button
-            key={i}
-            onClick={() => setActiveTab(i)}
-            className={`px-4 py-2 whitespace-nowrap ${activeTab === i ? "border-b-2 border-primary" : ""}`}
+            key={tab}
+            onClick={() => setActiveTab(tab)}
+            className={`px-4 py-2 whitespace-nowrap ${
+              activeTab === tab ? "border-b-2 border-primary" : ""
+            }`}
           >
             {tab}
           </button>
@@ -89,38 +140,101 @@ export const StepThreePreview = () => {
         <SkeletonTables />
       ) : (
         <>
-          {activeTab === 0 && (
-            <TableComponent
-              headers={["Kategori", "Nama Akun", "Jumlah (Rp)"]}
-              rows={labaRugi}
-            />
-          )}
-          {activeTab === 1 && (
-            <TableComponent
-              headers={[
-                "Komponen Ekuitas",
-                "Saldo Awal",
-                "Perubahan",
-                "Saldo Akhir",
-              ]}
-              rows={perubahanEkuitas}
-            />
-          )}
-          {activeTab === 2 && (
-            <TableComponent
-              headers={["Kategori", "Nama Akun", "Jumlah (Rp)"]}
-              rows={posisiKeuangan}
-            />
-          )}
-          {activeTab === 3 && (
-            <TableComponent
-              headers={["Aktivitas", "Deskripsi", "Jumlah (Rp)"]}
-              rows={arusKas}
-            />
-          )}
-          {activeTab === 4 && (
-            <TableComponent headers={["Judul", "Detail"]} rows={catatan} />
-          )}
+          {activeTab === "Laporan Laba Rugi" &&
+            tableData["Laporan Laba Rugi"] && (
+              <TableComponent
+                headers={[
+                  "Keterangan",
+                  "Periode Laporan",
+                  "Periode Pembanding",
+                ]}
+                rows={tableData["Laporan Laba Rugi"].report.map((item: any) => {
+                  const row: any = [
+                    item.keterangan,
+                    item.periodeLaporan,
+                    item.periodePembanding,
+                  ];
+                  if (item.isBold) {
+                    row.isBold = true;
+                  }
+                  return row;
+                })}
+              />
+            )}
+          {activeTab === "Laporan Perubahan Ekuitas" &&
+            tableData["Laporan Perubahan Ekuitas"] && (
+              <TableComponent
+                headers={["Komponen Ekuitas", "Jumlah"]}
+                rows={tableData["Laporan Perubahan Ekuitas"]
+                  .map((e: any) => [
+                    ["Modal Awal", e.modalAwal],
+                    ["Laba Bersih", e.labaBersih],
+                    ["Dividen", e.dividen],
+                    ...e.perubahanLain.map((p: any) => [
+                      p.keterangan,
+                      p.jumlah,
+                    ]),
+                    ["Modal Akhir", e.modalAkhir],
+                  ])
+                  .flat()}
+              />
+            )}
+          {activeTab === "Laporan Posisi Keuangan" &&
+            tableData["Laporan Posisi Keuangan"] && (
+              <TableComponent
+                headers={["Kategori", "Nama Akun", "Jumlah (Rp)"]}
+                rows={tableData["Laporan Posisi Keuangan"].flatMap((e: any) => [
+                  ...e.asetLancar.map((a: any) => [
+                    "Aset Lancar",
+                    a.akun,
+                    a.jumlah,
+                  ]),
+                  ...e.asetTetap.map((a: any) => [
+                    "Aset Tetap",
+                    a.akun,
+                    a.jumlah,
+                  ]),
+                  ...e.kewajibanJangkaPendek.map((k: any) => [
+                    "Kewajiban Jangka Pendek",
+                    k.akun,
+                    k.jumlah,
+                  ]),
+                  ...e.kewajibanJangkaPanjang.map((k: any) => [
+                    "Kewajiban Jangka Panjang",
+                    k.akun,
+                    k.jumlah,
+                  ]),
+                  ...e.ekuitas.map((eq: any) => [
+                    "Ekuitas",
+                    eq.akun,
+                    eq.jumlah,
+                  ]),
+                ])}
+              />
+            )}
+          {activeTab === "Laporan Arus Kas" &&
+            tableData["Laporan Arus Kas"] && (
+              <TableComponent
+                headers={["Aktivitas", "Keterangan", "Jumlah (Rp)"]}
+                rows={tableData["Laporan Arus Kas"].flatMap((e: any) => [
+                  ...e.aktivitasOperasi.map((o: any) => [
+                    "Operasi",
+                    o.keterangan,
+                    o.jumlah,
+                  ]),
+                  ...e.aktivitasInvestasi.map((i: any) => [
+                    "Investasi",
+                    i.keterangan,
+                    i.jumlah,
+                  ]),
+                  ...e.aktivitasPendanaan.map((p: any) => [
+                    "Pendanaan",
+                    p.keterangan,
+                    p.jumlah,
+                  ]),
+                ])}
+              />
+            )}
         </>
       )}
     </div>

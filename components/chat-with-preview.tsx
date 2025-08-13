@@ -43,7 +43,7 @@ export function ChatWithPreview({
   autoResume,
 }: ChatWithPreviewProps) {
   const [started, setStarted] = useState(initialMessages.length > 0);
-  const { messageCount, setMessageCount, increment } = useMessageCountStore();
+  const { setMessageCount } = useMessageCountStore();
 
   useEffect(() => {
     // Reset the message count to 0 when the component unmounts
@@ -95,13 +95,6 @@ export function ChatWithPreview({
             </div>
           </div>
           <div className="flex-1 overflow-y-auto p-4 md:p-6">
-            {(() => {
-              console.log(
-                "[ChatWithPreview] Rendering DocumentPreview with messageCount:",
-                messageCount
-              );
-              return null;
-            })()}
             <DocumentPreview isReadonly={isReadonly} />
           </div>
         </div>

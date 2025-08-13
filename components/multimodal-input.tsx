@@ -1,8 +1,8 @@
 "use client";
 
+import { classifyFinancialText } from "@/app/(chat)/actions";
 import { useScrollToBottom } from "@/hooks/use-scroll-to-bottom";
 import { useVaultFilesStore } from "@/lib/store/vault-files-store";
-import { useMessageCountStore } from "./chat-with-preview";
 import type { UseChatHelpers } from "@ai-sdk/react";
 import { upload } from "@vercel/blob/client";
 import type { Attachment, UIMessage } from "ai";
@@ -21,17 +21,18 @@ import {
 } from "react";
 import { toast } from "sonner";
 import { useLocalStorage, useWindowSize } from "usehooks-ts";
+import { useMessageCountStore } from "./chat-with-preview";
 import { ArrowUpIcon, PaperclipIcon, StopIcon } from "./icons";
+import Integrations from "./integrations";
 import { MultiSelect } from "./multi-select";
 import { PreviewAttachment } from "./preview-attachment";
 import { Button } from "./ui/button";
 import { Textarea } from "./ui/textarea";
+import { VaultDrawer } from "./vault-drawer";
 import type { UserUpload } from "./vault-drawer";
 import type { VisibilityType } from "./visibility-selector";
-import { VaultDrawer } from "./vault-drawer";
-import Integrations from "./integrations";
-import { classifyFinancialText } from "@/app/(chat)/actions";
 
+// Komponen ini tidak berubah
 function MessageInputSection({
   input,
   status,
@@ -88,6 +89,7 @@ declare global {
   }
 }
 
+// Komponen utama dengan logika yang diperbaiki
 function PureMultimodalInput({
   chatId,
   input,
@@ -119,19 +121,21 @@ function PureMultimodalInput({
 }) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { width } = useWindowSize();
-  console.log(width);
-
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploadQueue, setUploadQueue] = useState<Array<string>>([]);
 
+  // --- PERBAIKAN UTAMA ADA DI FUNGSI INI ---
   const uploadFile = async (file: File): Promise<Attachment | undefined> => {
     const toastId = toast.loading(`Uploading "${file.name}"...`);
     try {
+      // 1. Upload ke Vercel Blob
       const newBlob = await upload(file.name, file, {
         access: "public",
         handleUploadUrl: "/api/files/upload-blob",
         multipart: true,
       });
+
+      // 2. Proses dokumen
       const processResponse = await fetch("/api/files/process-document", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -142,19 +146,48 @@ function PureMultimodalInput({
         }),
       });
 
-      if (!processResponse.ok) throw new Error("Failed to process document");
+      if (!processResponse.ok) {
+        throw new Error("Failed to process document");
+      }
 
       const processResult = await processResponse.json();
 
+      // 3. Simpan ke Vault jika 'canSaveToVault' adalah true
       if (processResult.success && processResult.document.canSaveToVault) {
-        toast.success(`"${file.name}" uploaded and processed.`);
+        try {
+          const saveResponse = await fetch("/api/vault/save", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              tempDocumentId: processResult.document.id,
+            }),
+          });
+
+          if (saveResponse.ok) {
+            toast.success(`"${file.name}" uploaded and saved to your vault.`);
+          } else {
+            // Jika gagal menyimpan ke vault, beri tahu pengguna
+            const errorData = await saveResponse.json();
+            toast.error(
+              `Uploaded "${file.name}", but failed to save to vault: ${errorData.error}`
+            );
+          }
+        } catch (error) {
+          toast.error(
+            `Uploaded "${file.name}", but a network error occurred while saving to vault.`
+          );
+        }
       } else if (processResult.success) {
+        // Jika berhasil diunggah tetapi tidak bisa disimpan ke vault
         toast.success(`"${file.name}" uploaded successfully.`);
+      } else {
+        // Jika proses dokumen gagal
+        throw new Error(processResult.error || "Failed to process document");
       }
 
       return { url: newBlob.url, name: file.name, contentType: file.type };
-    } catch (error) {
-      toast.error("Failed to upload and process file.");
+    } catch (error: any) {
+      toast.error(error.message || "Failed to upload and process file.");
     } finally {
       toast.dismiss(toastId);
     }
@@ -163,6 +196,8 @@ function PureMultimodalInput({
   const handleFileChange = useCallback(
     async (event: ChangeEvent<HTMLInputElement>) => {
       const files = Array.from(event.target.files || []);
+      if (files.length === 0) return;
+
       setUploadQueue(files.map((file) => file.name));
       try {
         const uploadedAttachments = await Promise.all(files.map(uploadFile));
@@ -171,14 +206,15 @@ function PureMultimodalInput({
         );
         setAttachments((curr) => [...curr, ...successfulUploads]);
       } catch (error) {
+        // Error sudah ditangani di dalam uploadFile dengan toast
       } finally {
         setUploadQueue([]);
         if (event.target) {
-          event.target.value = "";
+          event.target.value = ""; // Reset input untuk re-upload
         }
       }
     },
-    [setAttachments]
+    [setAttachments] // Dependensi sudah benar
   );
 
   const unattachFile = (name: string) => {
@@ -187,6 +223,7 @@ function PureMultimodalInput({
     );
   };
 
+  // Sisa dari hook dan fungsi tidak berubah secara signifikan
   useEffect(() => {
     if (textareaRef.current) {
       adjustHeight();
@@ -196,7 +233,9 @@ function PureMultimodalInput({
   const adjustHeight = () => {
     if (textareaRef.current) {
       textareaRef.current.style.height = "auto";
-      textareaRef.current.style.height = `${textareaRef.current.scrollHeight + 2}px`;
+      textareaRef.current.style.height = `${
+        textareaRef.current.scrollHeight + 2
+      }px`;
     }
   };
 
@@ -215,7 +254,6 @@ function PureMultimodalInput({
   useEffect(() => {
     if (textareaRef.current) {
       const domValue = textareaRef.current.value;
-
       const finalValue = domValue || localStorageInput || "";
       setInput(finalValue);
       adjustHeight();
@@ -232,7 +270,6 @@ function PureMultimodalInput({
   };
 
   const { selectedVaultFileNames } = useVaultFilesStore();
-
   const { setMessageCount } = useMessageCountStore();
 
   const submitForm = useCallback(async () => {
@@ -248,19 +285,13 @@ function PureMultimodalInput({
       restoreInput = true;
     }
 
-    let systemPrompt: string | undefined = undefined;
+    const body: { systemPrompt?: string } = {};
     if (selectedVaultFileNames && selectedVaultFileNames.length > 0) {
-      systemPrompt = `Vault Files Selected: ${selectedVaultFileNames.join(
+      body.systemPrompt = `Vault Files Selected: ${selectedVaultFileNames.join(
         ", "
       )}`;
     }
 
-    const body: { systemPrompt?: string } = {};
-    if (systemPrompt) {
-      body.systemPrompt = systemPrompt;
-    }
-
-    // Use the classifyFinancialText function to determine message count based on input
     const category = await classifyFinancialText(input);
     setMessageCount(category);
 
@@ -392,6 +423,7 @@ function PureMultimodalInput({
   );
 }
 
+// Komponen VaultFilesSection tidak berubah
 function VaultFilesSection({
   onAttachmentsChange,
   disabled,
@@ -493,6 +525,7 @@ export const MultimodalInput = memo(
   }
 );
 
+// Tombol-tombol ini tidak berubah
 function PureStopButton({
   stop,
   setMessages,
